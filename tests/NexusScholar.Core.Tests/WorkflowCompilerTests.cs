@@ -118,6 +118,17 @@ public sealed class WorkflowCompilerTests
     }
 
     [TestMethod]
+    public void Compile_requires_explicit_workflow_compile_input()
+    {
+        var protocol = BuildApprovedProtocol();
+
+        var error = Assert.ThrowsExactly<WorkflowRuleException>(
+            () => new WorkflowCompiler().Compile(protocol));
+
+        Assert.AreEqual(WorkflowErrorCodes.ExplicitCompileInputRequired, error.Category);
+    }
+
+    [TestMethod]
     public void Compile_rejects_schema_closure_violations()
     {
         var protocol = BuildApprovedProtocol();
@@ -216,6 +227,32 @@ public sealed class WorkflowCompilerTests
         var invalidHybrid = BuildInput(protocol, BuildTemplate(invalidHybrid: true));
         var hybridError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(invalidHybrid));
         Assert.AreEqual(WorkflowErrorCodes.InvalidHybridNode, hybridError.Category);
+
+        var noRoles = BuildInput(protocol, BuildTemplate(approvalWithNoRoles: true));
+        var noRolesError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(noRoles));
+        Assert.AreEqual(WorkflowErrorCodes.InvalidApprovalRequirement, noRolesError.Category);
+
+        var zeroApprovals = BuildInput(protocol, BuildTemplate(approvalWithZeroMinimum: true));
+        var zeroApprovalError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(zeroApprovals));
+        Assert.AreEqual(WorkflowErrorCodes.InvalidApprovalRequirement, zeroApprovalError.Category);
+    }
+
+    [TestMethod]
+    public void Compile_rejects_invalid_gate_authority_references()
+    {
+        var protocol = BuildApprovedProtocol();
+
+        var unknownPolicy = BuildInput(protocol, BuildTemplate(unknownGatePolicy: true));
+        var policyError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(unknownPolicy));
+        Assert.AreEqual(WorkflowErrorCodes.UnknownGatePolicy, policyError.Category);
+
+        var unknownArtifact = BuildInput(protocol, BuildTemplate(unknownGateArtifactRef: true));
+        var artifactError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(unknownArtifact));
+        Assert.AreEqual(WorkflowErrorCodes.UnknownGateArtifactReference, artifactError.Category);
+
+        var unknownDecision = BuildInput(protocol, BuildTemplate(unknownGateDecisionRef: true));
+        var decisionError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(unknownDecision));
+        Assert.AreEqual(WorkflowErrorCodes.UnknownGateDecisionReference, decisionError.Category);
     }
 
     [TestMethod]
@@ -226,9 +263,13 @@ public sealed class WorkflowCompilerTests
         var waiverError = Assert.ThrowsExactly<WorkflowRuleException>(() => new WorkflowCompiler().Compile(BuildInput(protocol, template)));
         Assert.AreEqual(WorkflowErrorCodes.ExpiredWaiver, waiverError.Category);
 
-        var futureWaiverProtocol = BuildApprovedProtocol(withWaiver: true, waiverExpiresAt: Clock.UtcNow.AddDays(1));
+        var futureWaiverProtocol = BuildApprovedProtocol(withDecision: false, withWaiver: true, waiverExpiresAt: Clock.UtcNow.AddDays(1));
         var futureWaiver = new WorkflowCompiler().Compile(BuildInput(futureWaiverProtocol, template));
         Assert.IsTrue(futureWaiver.WorkflowId.StartsWith("workflow-", StringComparison.Ordinal));
+        var waiverBinding = futureWaiver.ResolvedInputBindings.Single(binding => binding.SourceType == "protocol-waiver");
+        var waiverDigest = ContentDigest.Sha256CanonicalJson(futureWaiverProtocol.Waivers[0].ToCanonicalJson());
+        Assert.AreEqual(waiverDigest, waiverBinding.SourceDigest);
+        Assert.AreEqual(waiverDigest, waiverBinding.ValueDigest);
 
         var amendment = BuildAmendment(BuildApprovedProtocol(withDecision: true));
         var amendedProtocol = RecastProtocol(BuildApprovedProtocol(withDecision: true), ProtocolStatus.Approved, amendment.AmendmentId);
@@ -351,6 +392,11 @@ public sealed class WorkflowCompilerTests
         bool unknownCapabilityRef = false,
         bool approvalRoleUnknown = false,
         bool approvalAllowsAutomation = false,
+        bool approvalWithNoRoles = false,
+        bool approvalWithZeroMinimum = false,
+        bool unknownGatePolicy = false,
+        bool unknownGateArtifactRef = false,
+        bool unknownGateDecisionRef = false,
         bool invalidHybrid = false,
         bool withWaiverPolicy = false,
         bool withInvalidationPolicy = false,
@@ -457,6 +503,9 @@ public sealed class WorkflowCompilerTests
         };
 
         var roleRequirement = approvalRoleUnknown ? "mystery-role" : "methodologist";
+        var requiredRoles = approvalWithNoRoles
+            ? Array.Empty<string>()
+            : new[] { roleRequirement };
         var approvalRequirements = new[]
         {
             new WorkflowTemplateApprovalRequirement(
@@ -464,8 +513,8 @@ public sealed class WorkflowCompilerTests
                 "review-policy",
                 "1.0.0",
                 "single_reviewer",
-                new[] { roleRequirement },
-                1,
+                requiredRoles,
+                approvalWithZeroMinimum ? 0 : 1,
                 false,
                 approvalAllowsAutomation)
         };
@@ -535,9 +584,9 @@ public sealed class WorkflowCompilerTests
             new WorkflowTemplateGate(
                 "g1",
                 invalidHybrid ? "start" : approveNodeId,
-                "policy-review",
-                Array.Empty<string>(),
-                new[] { "review-type" },
+                unknownGatePolicy ? "unknown-policy" : "approve-review",
+                unknownGateArtifactRef ? new[] { "missing-artifact" } : Array.Empty<string>(),
+                unknownGateDecisionRef ? new[] { "missing-decision" } : new[] { "review-type" },
                 new[] { roleRequirement })
         };
 
@@ -571,7 +620,8 @@ public sealed class WorkflowCompilerTests
         DateTimeOffset? waiverExpiresAt = null)
     {
         var ids = new SequenceIdGenerator();
-        var requiredDecisionKey = withDecision ? "review-type" : "other-review-type";
+        var waiverSuppliesReviewType = withWaiver && !withDecision;
+        var requiredDecisionKey = withDecision || waiverSuppliesReviewType ? "review-type" : "other-review-type";
         var draft = ProtocolDraft.Create(
             ids,
             "protocol-1",
@@ -580,18 +630,41 @@ public sealed class WorkflowCompilerTests
             new CanonicalJsonObject(),
             new[]
             {
-                new RequiredDecisionDefinition(requiredDecisionKey, "Review type", "Required decision", CanonicalJsonValue.From("string"), "protocol-approval", "protocol-approval", requiredDecisionKey, false)
+                new RequiredDecisionDefinition(
+                    requiredDecisionKey,
+                    "Review type",
+                    "Required decision",
+                    CanonicalJsonValue.From("string"),
+                    "protocol-approval",
+                    "protocol-approval",
+                    requiredDecisionKey,
+                    waiverSuppliesReviewType)
             },
             Researcher,
             Clock);
 
-        draft.RecordDecision(
-            ids,
-            requiredDecisionKey,
-            CanonicalJsonValue.From("systematic-review"),
-            Researcher,
-            Clock,
-            "Decision required by workflow input.");
+        if (waiverSuppliesReviewType)
+        {
+            draft.AddUnresolvedDecision(
+                ids,
+                requiredDecisionKey,
+                "Review type unresolved under approved waiver.",
+                "Waiver authorizes workflow planning without this conduct decision.",
+                "protocol-approval",
+                Researcher,
+                Clock,
+                blocksProtocolApproval: false);
+        }
+        else
+        {
+            draft.RecordDecision(
+                ids,
+                requiredDecisionKey,
+                CanonicalJsonValue.From("systematic-review"),
+                Researcher,
+                Clock,
+                "Decision required by workflow input.");
+        }
 
         if (withWaiver)
         {

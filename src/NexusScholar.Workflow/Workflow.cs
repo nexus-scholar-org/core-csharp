@@ -58,6 +58,10 @@ public static class WorkflowErrorCodes
     public const string UnknownProducingNode = "unknown-producing-node";
     public const string UnknownCapabilityReference = "unknown-capability-reference";
     public const string UnknownApprovalRole = "unknown-approval-role";
+    public const string InvalidApprovalRequirement = "invalid-approval-requirement";
+    public const string UnknownGatePolicy = "unknown-gate-policy";
+    public const string UnknownGateArtifactReference = "unknown-gate-artifact-ref";
+    public const string UnknownGateDecisionReference = "unknown-gate-decision-ref";
     public const string AutomationApprovalAuthority = "automation-approval-authority";
     public const string InvalidHybridNode = "invalid-hybrid-node";
     public const string InvalidWaiver = "invalid-waiver";
@@ -74,6 +78,7 @@ public static class WorkflowErrorCodes
     public const string AffectedNodeNotFound = "affected-node-not-found";
     public const string WorkflowIdMismatch = "workflow-id-mismatch";
     public const string UnknownCompileParameter = "unknown-compile-parameter";
+    public const string ExplicitCompileInputRequired = "explicit-compile-input-required";
 }
 
 public sealed class WorkflowRuleException : DomainRuleException
@@ -300,18 +305,9 @@ public sealed class WorkflowCompiler
     public WorkflowDefinition Compile(ProtocolVersion protocol)
     {
         ArgumentNullException.ThrowIfNull(protocol);
-        var template = CreateLocalSampleTemplate();
-        return Compile(new WorkflowCompileInput(
-            protocol,
-            template,
-            new Dictionary<string, CanonicalJsonValue>(StringComparer.Ordinal),
-            new[]
-            {
-                new WorkflowSchemaRef(TemplateSchemaId, TemplateSchemaVersion),
-                new WorkflowSchemaRef(WorkflowSchemaId, WorkflowSchemaVersion),
-                new WorkflowSchemaRef("nexus.review.decision", "1.0.0"),
-                new WorkflowSchemaRef("nexus.workflow.artifact", "1.0.0")
-            }));
+        throw new WorkflowRuleException(
+            WorkflowErrorCodes.ExplicitCompileInputRequired,
+            "Workflow compilation requires explicit WorkflowCompileInput with a schema-closed template.");
     }
 
     public WorkflowDefinition Compile(WorkflowCompileInput input)
@@ -642,6 +638,28 @@ public sealed class WorkflowCompiler
 
         foreach (var approvalRequirement in template.ApprovalRequirements)
         {
+            if (approvalRequirement.RequiredRoles.Count == 0)
+            {
+                throw new WorkflowRuleException(
+                    WorkflowErrorCodes.InvalidApprovalRequirement,
+                    $"Approval requirement '{approvalRequirement.ApprovalRequirementId}' must require at least one human role.");
+            }
+
+            if (approvalRequirement.MinimumApprovals <= 0)
+            {
+                throw new WorkflowRuleException(
+                    WorkflowErrorCodes.InvalidApprovalRequirement,
+                    $"Approval requirement '{approvalRequirement.ApprovalRequirementId}' must require at least one approval.");
+            }
+
+            if (approvalRequirement.RequiresDistinctActors &&
+                approvalRequirement.MinimumApprovals > approvalRequirement.RequiredRoles.Count)
+            {
+                throw new WorkflowRuleException(
+                    WorkflowErrorCodes.InvalidApprovalRequirement,
+                    $"Approval requirement '{approvalRequirement.ApprovalRequirementId}' cannot require more distinct approvals than declared roles.");
+            }
+
             if (approvalRequirement.AllowsAutomation)
             {
                 throw new WorkflowRuleException(
@@ -692,6 +710,18 @@ public sealed class WorkflowCompiler
 
     private static void ValidateGates(WorkflowTemplate template, IReadOnlySet<string> nodeIds)
     {
+        var approvalRequirementIds = template.ApprovalRequirements
+            .Select(requirement => requirement.ApprovalRequirementId)
+            .ToHashSet(StringComparer.Ordinal);
+        var artifactRefs = template.ArtifactDeclarations
+            .Select(declaration => declaration.ArtifactRef)
+            .ToHashSet(StringComparer.Ordinal);
+        var decisionRefs = template.RequiredInputs
+            .SelectMany(input => string.IsNullOrWhiteSpace(input.SourceProtocolDecisionKey)
+                ? new[] { input.InputId }
+                : new[] { input.InputId, input.SourceProtocolDecisionKey! })
+            .ToHashSet(StringComparer.Ordinal);
+
         foreach (var gate in template.Gates)
         {
             if (!nodeIds.Contains(gate.TargetNodeId))
@@ -699,6 +729,33 @@ public sealed class WorkflowCompiler
                 throw new WorkflowRuleException(
                     WorkflowErrorCodes.UnknownNodeRequirement,
                     $"Gate '{gate.GateId}' targets missing node '{gate.TargetNodeId}'.");
+            }
+
+            if (!approvalRequirementIds.Contains(gate.PolicyRef))
+            {
+                throw new WorkflowRuleException(
+                    WorkflowErrorCodes.UnknownGatePolicy,
+                    $"Gate '{gate.GateId}' references unknown gate policy '{gate.PolicyRef}'.");
+            }
+
+            foreach (var artifactRef in gate.RequiredArtifactRefs)
+            {
+                if (!artifactRefs.Contains(artifactRef))
+                {
+                    throw new WorkflowRuleException(
+                        WorkflowErrorCodes.UnknownGateArtifactReference,
+                        $"Gate '{gate.GateId}' references unknown required artifact '{artifactRef}'.");
+                }
+            }
+
+            foreach (var decisionRef in gate.RequiredDecisionRefs)
+            {
+                if (!decisionRefs.Contains(decisionRef))
+                {
+                    throw new WorkflowRuleException(
+                        WorkflowErrorCodes.UnknownGateDecisionReference,
+                        $"Gate '{gate.GateId}' references unknown required decision '{decisionRef}'.");
+                }
             }
         }
     }
@@ -783,10 +840,14 @@ public sealed class WorkflowCompiler
                         $"Hybrid node '{node.NodeId}' requires at least one capability requirement.");
                 }
 
+                var approvalRequirementIds = template.ApprovalRequirements
+                    .Select(requirement => requirement.ApprovalRequirementId)
+                    .ToHashSet(StringComparer.Ordinal);
                 var humanPath = !string.IsNullOrWhiteSpace(node.ApprovalRequirementRef) ||
                     template.Gates.Any(gate =>
                         string.Equals(gate.TargetNodeId, node.NodeId, StringComparison.Ordinal) &&
-                        (gate.RequiredActorRoles.Count > 0 || gate.RequiredDecisionRefs.Count > 0));
+                        approvalRequirementIds.Contains(gate.PolicyRef) &&
+                        gate.RequiredActorRoles.Count > 0);
 
                 if (!humanPath)
                 {
@@ -880,6 +941,7 @@ public sealed class WorkflowCompiler
                     if (waivers.TryGetValue(input.InputId, out var waiver))
                     {
                         ValidateProtocolWaiver(protocol, input, waiver);
+                        var waiverDigest = ContentDigest.Sha256CanonicalJson(waiver.ToCanonicalJson());
                         bindings.Add(
                             new WorkflowResolvedInputBinding(
                                 input.InputId,
@@ -888,10 +950,8 @@ public sealed class WorkflowCompiler
                                 input.SchemaVersion,
                                 WorkflowResolvedInputSourceType.ProtocolWaiver.ToWireValue(),
                                 waiver.WaiverId,
-                                ContentDigest.Sha256CanonicalJson(CanonicalJsonValue.From(waiver.WaiverId)),
-                                input.DefaultValue is not null
-                                    ? ContentDigest.Sha256CanonicalJson(input.DefaultValue)
-                                    : ContentDigest.Sha256Utf8(""),
+                                waiverDigest,
+                                waiverDigest,
                                 waiver.WaiverId,
                                 null));
                         break;
@@ -1389,154 +1449,6 @@ public sealed class WorkflowCompiler
                 .ToArray()));
     }
 
-    private static WorkflowTemplate CreateLocalSampleTemplate()
-    {
-        var template = new WorkflowTemplate(
-            "local-sample-workflow-template",
-            "1.0.0",
-            ContentDigest.Sha256Utf8("placeholder"),
-            TemplateSchemaId,
-            TemplateSchemaVersion,
-            new[]
-            {
-                new WorkflowTemplateInput(
-                    "review-type",
-                    WorkflowTemplateInputKind.ScientificConduct,
-                    "nexus.review.decision",
-                    "1.0.0",
-                    true,
-                    "review-type"),
-                new WorkflowTemplateInput(
-                    "scope",
-                    WorkflowTemplateInputKind.ScientificConduct,
-                    "nexus.review.decision",
-                    "1.0.0",
-                    true,
-                    "scope")
-            },
-            new[]
-            {
-                new WorkflowTemplateNode(
-                    "protocol-approved",
-                    WorkflowNodeKind.Milestone,
-                    WorkflowNodeMode.Human,
-                    "Protocol approved",
-                    Array.Empty<string>(),
-                    Array.Empty<string>(),
-                    null,
-                    Array.Empty<string>(),
-                    null,
-                    null),
-                new WorkflowTemplateNode(
-                    "prepare-search",
-                    WorkflowNodeKind.HumanTask,
-                    WorkflowNodeMode.Human,
-                    "Prepare and review search plan",
-                    new[] { "review-type", "scope" },
-                    new[] { "search-plan" },
-                    null,
-                    Array.Empty<string>(),
-                    null,
-                    null),
-                new WorkflowTemplateNode(
-                    "approve-search",
-                    WorkflowNodeKind.Approval,
-                    WorkflowNodeMode.Human,
-                    "Approve executable search manifest",
-                    Array.Empty<string>(),
-                    Array.Empty<string>(),
-                    "search-approval",
-                    Array.Empty<string>(),
-                    null,
-                    null),
-                new WorkflowTemplateNode(
-                    "execute-search",
-                    WorkflowNodeKind.AutomatedTask,
-                    WorkflowNodeMode.Automated,
-                    "Execute approved search manifest",
-                    Array.Empty<string>(),
-                    Array.Empty<string>(),
-                    null,
-                    Array.Empty<string>(),
-                    null,
-                    null),
-                new WorkflowTemplateNode(
-                    "lock-corpus",
-                    WorkflowNodeKind.Approval,
-                    WorkflowNodeMode.Human,
-                    "Approve immutable corpus snapshot",
-                    Array.Empty<string>(),
-                    Array.Empty<string>(),
-                    "corpus-approval",
-                    Array.Empty<string>(),
-                    null,
-                    null)
-            },
-            new[]
-            {
-                new WorkflowTemplateEdge("protocol-approved", "prepare-search"),
-                new WorkflowTemplateEdge("prepare-search", "approve-search"),
-                new WorkflowTemplateEdge("approve-search", "execute-search"),
-                new WorkflowTemplateEdge("execute-search", "lock-corpus")
-            },
-            new[]
-            {
-                new WorkflowTemplateGate(
-                    "search-approval-gate",
-                    "approve-search",
-                    "search-approval",
-                    new[] { "search-plan" },
-                    Array.Empty<string>(),
-                    new[] { "researcher" }),
-                new WorkflowTemplateGate(
-                    "corpus-approval-gate",
-                    "lock-corpus",
-                    "corpus-approval",
-                    Array.Empty<string>(),
-                    Array.Empty<string>(),
-                    new[] { "researcher" })
-            },
-            new[]
-            {
-                new WorkflowTemplateApprovalRequirement(
-                    "search-approval",
-                    "local-human-approval",
-                    "1.0.0",
-                    "single_researcher",
-                    new[] { "researcher" },
-                    1,
-                    false,
-                    false),
-                new WorkflowTemplateApprovalRequirement(
-                    "corpus-approval",
-                    "local-human-approval",
-                    "1.0.0",
-                    "single_researcher",
-                    new[] { "researcher" },
-                    1,
-                    false,
-                    false)
-            },
-            new[]
-            {
-                new WorkflowTemplateRole("researcher", "Researcher", "Human workflow approval authority.")
-            },
-            Array.Empty<WorkflowTemplateCapabilityRequirement>(),
-            Array.Empty<WorkflowTemplateWaiverPolicy>(),
-            new[]
-            {
-                new WorkflowTemplateArtifactDeclaration(
-                    "search-plan",
-                    "workflow-artifact",
-                    "nexus.workflow.artifact",
-                    "1.0.0",
-                    "prepare-search",
-                    new[] { "search-approval-gate" })
-            },
-            Array.Empty<WorkflowTemplateInvalidationPolicy>());
-
-        return template with { TemplateDigest = ComputeTemplateDigest(template) };
-    }
 }
 
 internal sealed class SchemaRefComparer : IEqualityComparer<(string SchemaId, string SchemaVersion)>

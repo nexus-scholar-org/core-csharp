@@ -6,11 +6,11 @@
     "docs/adr/0005-workflow-template-contract.md",
     "docs/adr/0006-workflow-compiler-semantics.md"
   ],
-  "sourceCommit": "8e447641fe8b",
-  "generatorCommand": "manual local Gate 4 contract fixture",
-  "generatorVersion": "gate-4-v1",
-  "inputDigest": "sha256:1888888888888888888888888888888888888888888888888888888888888888",
-  "outputDigest": "sha256:2888888888888888888888888888888888888888888888888888888888888888",
+  "sourceCommit": "bc2e6e0353b2cc44f837750ed1dd5f570cc1c4fa",
+  "generatorCommand": "compiler-backed local Gate 4 contract fixture",
+  "generatorVersion": "gate-4-v2",
+  "inputDigest": "sha256:68ad531df0ba01416b359751d6cf1efd867404b43f420d01bd755ac5f13c32ab",
+  "outputDigest": "sha256:c740559f89b0b237a5df92fa1767804655707a2f335047ed423e442de141b50a",
   "comparisonRules": [
     "assert-gate-4-error-categories",
     "assert-local-schema-closure",
@@ -50,6 +50,22 @@
       {
         "name": "unknown approval role",
         "errorCategory": "unknown-approval-role"
+      },
+      {
+        "name": "invalid approval requirement",
+        "errorCategory": "invalid-approval-requirement"
+      },
+      {
+        "name": "unknown gate policy",
+        "errorCategory": "unknown-gate-policy"
+      },
+      {
+        "name": "unknown gate artifact reference",
+        "errorCategory": "unknown-gate-artifact-ref"
+      },
+      {
+        "name": "unknown gate decision reference",
+        "errorCategory": "unknown-gate-decision-ref"
       },
       {
         "name": "missing schema id",
@@ -114,6 +130,10 @@
       {
         "name": "workflow id mismatch",
         "errorCategory": "workflow-id-mismatch"
+      },
+      {
+        "name": "explicit compile input required",
+        "errorCategory": "explicit-compile-input-required"
       },
       {
         "name": "approval authority allows automation",

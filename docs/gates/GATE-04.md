@@ -36,11 +36,11 @@ Gate 4 remains local in scope. Do not broaden this gate into bundle, provenance,
 
 ## Dependency-Ordered Tasks
 
-1. Fixture owner: generated local Gate 4 conformance fixture metadata with fixed ids, digest metadata, schema refs, positive fixture ids, and negative category coverage.
+1. Fixture owner: generated local Gate 4 conformance fixtures with fixed ids, compiler-backed digest metadata, schema refs, positive fixture ids, and negative category coverage.
 2. Workflow owner: implemented template and workflow definition records from `ADR 0005` and `ADR 0006`.
 3. Workflow owner: implemented compiler validation for approved protocol input, duplicate nodes, unknown dependencies, cycles, schema closure, approval requirements, capability requirements, waiver handling, and invalidation planning.
 4. Architecture owner: kept workflow code inward-facing and free of persistence, UI, provider SDK, AI provider, plugin runtime, and bundle dependencies.
-5. Conformance owner: added local fixture metadata checks for positive and negative Gate 4 cases.
+5. Conformance owner: added compiler-backed local fixture checks for positive Gate 4 cases and category coverage for negative Gate 4 cases.
 6. Manager/reviewer: verified the implementation does not claim blueprint conformance, PHP compatibility, workflow execution, provenance ledger behavior, artifact storage, plugin runtime, AI execution, or persistence/API/UI support.
 
 ## Required Fixtures
@@ -64,6 +64,10 @@ Negative fixtures:
 - dependency cycle
 - waivable node without waiver policy
 - unknown approval role
+- invalid approval requirement
+- unknown gate policy
+- unknown gate artifact reference
+- unknown gate decision reference
 - missing schema id
 - unknown schema id
 - missing schema version
@@ -80,6 +84,7 @@ Negative fixtures:
 - stale protocol digest
 - stale template digest
 - workflow id mismatch
+- explicit compile input required
 - approval authority with `allows_automation = true`
 - hybrid node without capability requirement
 - hybrid node without human review or approval semantics
@@ -105,8 +110,9 @@ For this gate branch:
 - `docs/port/OPEN-CONFLICTS.md`
 - `docs/port/GOLDEN-FIXTURE-PLAN.md`
 - `src/NexusScholar.Workflow/`
+- `src/NexusScholar.Cli/Program.cs` only to replace the removed non-authoritative workflow compile overload usage
 - `tests/NexusScholar.Core.Tests/` for focused workflow domain tests
-- `tests/NexusScholar.Conformance.Tests/` for local fixture metadata checks
+- `tests/NexusScholar.Conformance.Tests/` for compiler-backed local fixture checks
 - `tests/NexusScholar.Architecture.Tests/` for dependency rules
 - `fixtures/conformance/workflow/`
 
@@ -115,7 +121,7 @@ For this gate branch:
 - No persistence, API, CLI, UI, bundle export, provenance ledger, AI execution, plugin host, PHP compatibility, or blueprint conformance claims.
 - Do not change protocol lifecycle semantics except to consume approved protocol records.
 - Do not generate PHP differential fixtures for Gate 4.
-- Do not edit `src/`, `tests/`, `fixtures/`, `specs/`, or the PHP reference in this planning branch.
+- Do not edit `specs/` or the PHP reference in this gate branch.
 
 ## Verification
 
@@ -134,7 +140,7 @@ Verification boundary:
 
 ## Exit Checklist
 
-- `ADR 0005` and `ADR 0006` close `CF-003`, `CF-006`, and `CF-007` for local Gate 4 planning scope.
+- `ADR 0005` and `ADR 0006` close `CF-003`, `CF-006`, and `CF-007` for local Gate 4 implementation scope.
 - Workflow compilation starts only from approved protocol versions.
 - Drafts, suggestions, projections, and automation outputs cannot authorize workflow conduct.
 - Workflow graph output is deterministic and covered by local contract fixtures and tests.
