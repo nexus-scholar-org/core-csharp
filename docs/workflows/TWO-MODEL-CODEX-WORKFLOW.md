@@ -4,7 +4,7 @@
 
 This repository uses a two-model operating model for Codex work:
 
-- `gpt-5.5` is the manager, architect, reviewer, gate owner, and final acceptance authority.
+- `gpt-5.5` is the manager, architect, reviewer, gate owner, and final Codex recommendation authority.
 - `gpt-5.3-codex-spark` is the implementation worker for constrained code, fixture, test, refactor, and documentation tasks.
 
 The split is encoded in `.codex/config.toml`, project-scoped `.codex/agents/*.toml` files, branch naming, task contracts, and review prompts. Do not rely on informal memory to decide which model owns a task.
@@ -13,7 +13,7 @@ The split is encoded in `.codex/config.toml`, project-scoped `.codex/agents/*.to
 
 GPT-5.5 owns:
 
-- gate planning and acceptance
+- gate planning and acceptance recommendations
 - architecture and dependency direction
 - source-of-truth conflict detection
 - ADR consistency
@@ -40,7 +40,7 @@ Spark owns:
 
 Spark implements only manager-approved tasks.
 
-GPT-5.5 reviews all gate-affecting changes before acceptance. Passing tests are necessary evidence, not acceptance.
+GPT-5.5 reviews all gate-affecting changes before acceptance is recommended. Passing tests are necessary evidence, not acceptance. The human operator remains the acceptance and merge authority.
 
 ## Agent Map
 
@@ -72,7 +72,7 @@ Use one branch or worktree per coherent task:
 2. Spark implements in a worktree branch.
 3. GPT-5.5 reviews read-only.
 4. Spark fixes only blocking and important findings.
-5. GPT-5.5 reviews the delta and accepts or rejects.
+5. GPT-5.5 reviews the delta and recommends accept or reject.
 6. Hosted CI must pass before gate evidence is accepted.
 
 Recommended branch names:

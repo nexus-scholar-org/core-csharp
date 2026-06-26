@@ -17,6 +17,10 @@ Rules:
 - Do not weaken tests.
 - Do not update golden fixtures to make tests pass.
 - Do not claim blueprint conformance or PHP compatibility.
+- Stop if the task requires a decision not present in the prompt.
+- Stop if source-of-truth levels conflict, behavior requires a new ADR, fixture expectations are unclear, or the change would resolve an open conflict implicitly.
+- Stop if tests require live provider or live LLM access.
+- Stop if the requested change would weaken protocol immutability, human authority, provenance, or digest boundaries.
 - Prefer small, boring, test-backed changes.
 - Run the requested verification commands.
 - End with files changed, tests run, and unresolved risks.

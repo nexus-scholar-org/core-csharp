@@ -8,7 +8,7 @@ Manager/reviewer:
 
 Implementation:
 
-- codex-spark5.3
+- gpt-5.3-codex-spark
 
 ## Goal
 
@@ -45,6 +45,7 @@ Do not claim:
 - PHP compatibility
 - protocol conformance
 - bundle conformance
+- scientific validity of a model output
 - gate acceptance
 
 unless the task explicitly permits the claim and cites the required evidence.
