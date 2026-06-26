@@ -1,42 +1,46 @@
 # Codex Branch Board
 
-Source: branch probes run at branch closeout time with the two-model workflow branch checked out.
+Source: post-merge branch probes run from local `main` after the manual GitHub merge of `cdx/two-model-codex-workflow`.
 
-## Active Branch Classes
+## Main Baseline
 
-- `cdx/two-model-codex-workflow` status: active
-- `cdx/main-gate2-merge` status: merged
-- `main` status: merged
-- `cdx/gate-3-protocol-lifecycle` status: merged
-- `cdx/gate-3-planning-decisions` status: merged
-- `cdx/gate-2-digest-kernel-cleanup` status: merged
-- `cdx/run-gate-zero-discovery` status: merged
-- `cdx/run-gate-0-discovery` status: merged
+- Current `main` commit: `467d5f2` (`Merge pull request #1 from nexus-scholar/cdx/two-model-codex-workflow`).
+- Gate 0 through Gate 3 are merged into `main`.
+- `cdx/two-model-codex-workflow` is merged into `main`.
 
-- `cdx/two-model-codex-workflow` active lane contains process commit `4ec0eec` (`chore: configure two-model Codex workflow`) and carries Gates 0-3 via `0339d99`.
+## Branch Classes
 
-## Requested Classification Buckets
-
-- merged: `cdx/main-gate2-merge`, `main`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/run-gate-zero-discovery`, `cdx/run-gate-0-discovery`
-- cleanup: `cdx/run-gate-zero-discovery`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/gate-3-planning-decisions`, `cdx/gate-3-protocol-lifecycle`
-- active: `cdx/two-model-codex-workflow`
-- blocked: none
+- merged: `main`, `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/run-gate-zero-discovery`, `cdx/run-gate-0-discovery`
+- cleanup: `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/run-gate-zero-discovery`
+- active: `main`
+- blocked: Gate 4 implementation branch work until `CF-003`, `CF-006`, and `CF-007` are resolved
 - stale: `cdx/run-gate-0-discovery`, `cdx/main-gate2-merge`
 - review: none identified by current git state
-- next_action: next product branch should open Gate 4 planning decisions next; implementation remains blocked until blockers are resolved.
 
-Cleanup candidates above are confirmed by `git branch --merged main` output.
+Cleanup candidates above are confirmed by `git branch --merged main`. Remote merge state also confirms `origin/cdx/two-model-codex-workflow` is merged into `origin/main`.
 
-## Containment Summary
-- Commit `d925796` (`gate-3-planning-decisions`) is in `cdx/gate-3-planning-decisions` and `cdx/gate-3-protocol-lifecycle`.
-- Commit `5e5dde1` (`gate-2-digest-kernel-cleanup`) is in `cdx/gate-2-digest-kernel-cleanup`, `cdx/gate-3-planning-decisions`, and `cdx/gate-3-protocol-lifecycle`.
-- Commit `b513d6a` (`gate-3-protocol-lifecycle` closeout) is the current `cdx/gate-3-protocol-lifecycle` head.
-- Commit `e17ec4f` (`run-gate-zero-discovery`) is in `cdx/gate-2-digest-kernel-cleanup`, `cdx/gate-3-planning-decisions`, and `cdx/gate-3-protocol-lifecycle`.
-- Commit `0339d99` (`Merge Gate 3 protocol lifecycle`) is in `cdx/main-gate2-merge`, `main`, and `cdx/two-model-codex-workflow`.
+## Safe Cleanup Candidates
 
-## Current Gate State
-- Gate 0: merged to main baseline.
-- Gate 1: merged to main baseline.
-- Gate 2: merged to main baseline.
-- Gate 3: merged to main baseline and currently carried into two-model workflow head.
-- Gate 4: planning decisions required before implementation; active blockers: CF-003 workflow compiler contract, CF-006 schema closure, CF-007 hybrid workflow mode semantics.
+- `cdx/two-model-codex-workflow`
+- `cdx/main-gate2-merge`
+- `cdx/gate-3-protocol-lifecycle`
+- `cdx/gate-3-planning-decisions`
+- `cdx/gate-2-digest-kernel-cleanup`
+- `cdx/run-gate-zero-discovery`
+
+## Not Safe To Delete
+
+- `main`
+- `cdx/run-gate-0-discovery`
+
+`cdx/run-gate-0-discovery` is stale, but it is not listed as a preferred cleanup candidate in this board refresh because it remains the root local bootstrap lane and may still be useful for audit recovery.
+
+## Next Work
+
+- Gate 4 is the next planning work.
+- Gate 4 implementation is blocked until `CF-003`, `CF-006`, and `CF-007` are resolved.
+- PHP Shared identity reconnaissance is allowed only as docs-only parallel work.
+
+## Unresolved Ambiguity
+
+- Local `main` still has no configured upstream tracking branch, so plain `git pull` failed and refresh required `git pull origin main`.
