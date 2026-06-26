@@ -1,0 +1,12 @@
+{
+  "fixtureId": "protocol-invalid-amendment-v1",
+  "sourceKind": "local-gate-3-contract",
+  "sourceRefs": ["docs/adr/0003-protocol-record-contract.md", "docs/adr/0004-protocol-approval-semantics.md"],
+  "sourceCommit": "d925796846e9",
+  "generatorCommand": "manual local Gate 3 contract fixture",
+  "generatorVersion": "gate-3-v1",
+  "inputDigest": "sha256:2097efccdbe8aab65f6bb8a315789ac382a33dfe427d105eca799483faa2a2a4",
+  "outputDigest": "sha256:2097efccdbe8aab65f6bb8a315789ac382a33dfe427d105eca799483faa2a2a4",
+  "comparisonRules": ["assert-error-category", "no-php-compatibility-claim"],
+  "case": { "negative": true, "operation": "create-amendment", "errorCategory": "invalid-amendment" }
+}
