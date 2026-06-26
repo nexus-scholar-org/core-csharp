@@ -103,6 +103,18 @@ public sealed class RepositoryPolicyTests
             $"Forbidden live-call or provider symbols found:{Environment.NewLine}{string.Join(Environment.NewLine, violations)}");
     }
 
+    [TestMethod]
+    public void Architecture_guard_file_paths_are_normalized_cross_platform()
+    {
+        Assert.AreEqual(
+            "tests/NexusScholar.Architecture.Tests/RepositoryPolicyTests.cs",
+            NormalizeRelativePath(@"tests\NexusScholar.Architecture.Tests\RepositoryPolicyTests.cs"));
+
+        Assert.AreEqual(
+            "tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs",
+            NormalizeRelativePath("tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs"));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
@@ -121,9 +133,16 @@ public sealed class RepositoryPolicyTests
 
     private static bool IsArchitectureGuardFile(string root, string path)
     {
-        var relative = MakeRelative(root, path);
-        return string.Equals(relative, @"tests\NexusScholar.Architecture.Tests\DependencyRulesTests.cs", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(relative, @"tests\NexusScholar.Architecture.Tests\RepositoryPolicyTests.cs", StringComparison.OrdinalIgnoreCase);
+        var relative = NormalizeRelativePath(MakeRelative(root, path));
+
+        return string.Equals(
+                relative,
+                "tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs",
+                StringComparison.OrdinalIgnoreCase)
+            || string.Equals(
+                relative,
+                "tests/NexusScholar.Architecture.Tests/RepositoryPolicyTests.cs",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsBuildArtifact(string path)
@@ -135,5 +154,13 @@ public sealed class RepositoryPolicyTests
     private static string MakeRelative(string root, string path)
     {
         return Path.GetRelativePath(root, path);
+    }
+
+    private static string NormalizeRelativePath(string path)
+    {
+        return path
+            .Replace('\\', '/')
+            .Replace(Path.DirectorySeparatorChar, '/')
+            .Replace(Path.AltDirectorySeparatorChar, '/');
     }
 }
