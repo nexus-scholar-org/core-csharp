@@ -66,6 +66,7 @@ public sealed class SearchImportService
             parserId,
             parserVersion,
             sourceFileDigest,
+            DigestScope.RawArtifactBytes.ToString(),
             importedBy,
             importedAt,
             request.OriginalQueryText,

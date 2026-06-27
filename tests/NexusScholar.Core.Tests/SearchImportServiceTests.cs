@@ -54,6 +54,7 @@ public sealed class SearchImportServiceTests
         var trace = new SearchImportService().Parse("trace-import-digest", request, sourceBytes);
 
         Assert.AreEqual(expectedDigest, trace.Metadata.SourceFileDigest);
+        Assert.AreEqual(DigestScope.RawArtifactBytes.ToString(), trace.Metadata.SourceFileDigestScope);
         var record = trace.ImportedRecords[0];
         Assert.IsNotNull(record.RawRecordText);
         Assert.AreEqual(record.RawRecordDigest, ContentDigest.Sha256Utf8(record.RawRecordText!).ToString());
@@ -72,6 +73,7 @@ public sealed class SearchImportServiceTests
         Assert.AreEqual("scopus-csv", trace.Metadata.ExportFormat);
         Assert.AreEqual(ParserId, trace.Metadata.ParserId);
         Assert.AreEqual(ParserVersion, trace.Metadata.ParserVersion);
+        Assert.AreEqual(DigestScope.RawArtifactBytes.ToString(), trace.Metadata.SourceFileDigestScope);
         Assert.AreEqual(ImportedBy, trace.Metadata.ImportedBy);
         Assert.AreEqual(ImportedAt, trace.Metadata.ImportedAt);
         Assert.AreEqual(1, trace.Metadata.RecordCount);

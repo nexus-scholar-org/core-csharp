@@ -5,7 +5,7 @@
 - local parser slice for `acquisition_kind = imported-export`
 - formats implemented: `ris`, `bibtex`, `scopus-csv`
 - supported metadata fields persisted in `SearchImportMetadata`
-- raw file digests computed from exact source bytes with `raw-artifact-bytes` scope
+- raw file digests computed from exact source bytes with `raw-artifact-bytes` scope carried in metadata
 - parser warning/error preservation
 - no title-only deduplication in Search trace
 - no source-specific id promotion to `WorkIdNamespace`
@@ -20,6 +20,17 @@
 - conformance fixture presence and manifest cases:
   - `tests/NexusScholar.Conformance.Tests/SearchFixtureTests.cs`
   - added 9 imported search fixture files under `fixtures/conformance/search/`
+  - source-file digest fixture asserts canonical `sha256:<hex>` rendering and `raw-artifact-bytes` scope
+
+## Local Verification
+
+- `dotnet build NexusScholar.Core.slnx -c Release`
+- `dotnet test NexusScholar.Core.slnx -c Release --no-build`
+  - Architecture: 13 passed
+  - Conformance: 52 passed
+  - Core: 141 passed
+- `dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore`
+- `powershell -ExecutionPolicy Bypass -File .\scripts\verify.ps1`
 
 ## Conformance Fixtures Added
 

@@ -1,5 +1,7 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NexusScholar.Kernel;
 using NexusScholar.Search;
 
 namespace NexusScholar.Conformance.Tests;
@@ -56,6 +58,22 @@ public sealed class SearchFixtureTests
         {
             Assert.IsTrue(files.Contains(expectedFile), $"Missing fixture '{expectedFile}'.");
         }
+    }
+
+    [TestMethod]
+    public void Search_import_source_file_digest_fixture_matches_exact_bytes_and_scope()
+    {
+        using var document = LoadFixture("search-import-source-file-digest.json");
+        var @case = document.RootElement.GetProperty("case");
+        var request = ReadImportRequest(@case.GetProperty("request"));
+        var sourceBytes = Encoding.UTF8.GetBytes(@case.GetProperty("sourceFileText").GetString() ?? string.Empty);
+        var expected = @case.GetProperty("expected");
+
+        var trace = new SearchImportService().Parse("trace-import-digest-fixture", request, sourceBytes);
+
+        Assert.AreEqual(expected.GetProperty("expectedSourceFileDigest").GetString(), trace.Metadata.SourceFileDigest);
+        Assert.AreEqual(expected.GetProperty("sourceFileDigestScope").GetString(), trace.Metadata.SourceFileDigestScope);
+        Assert.AreEqual(DigestScope.RawArtifactBytes.ToString(), trace.Metadata.SourceFileDigestScope);
     }
 
     [TestMethod]
@@ -389,6 +407,19 @@ public sealed class SearchFixtureTests
             root.GetProperty("offset").GetInt32(),
             root.GetProperty("includeRawData").GetBoolean(),
             selected.ToArray());
+    }
+
+    private static SearchImportRequest ReadImportRequest(JsonElement root)
+    {
+        return new SearchImportRequest(
+            root.GetProperty("sourceDatabaseOrTool").GetString() ?? string.Empty,
+            root.GetProperty("exportFormat").GetString() ?? string.Empty,
+            root.GetProperty("parserId").GetString() ?? string.Empty,
+            root.GetProperty("parserVersion").GetString() ?? string.Empty,
+            root.GetProperty("importedBy").GetString() ?? string.Empty,
+            root.GetProperty("importedAt").GetString() ?? string.Empty,
+            root.TryGetProperty("originalQueryText", out var originalQueryText) ? originalQueryText.GetString() : null,
+            root.TryGetProperty("exportedAt", out var exportedAt) ? exportedAt.GetString() : null);
     }
 
     private static int? ReadNullableInt(JsonElement root, string propertyName)

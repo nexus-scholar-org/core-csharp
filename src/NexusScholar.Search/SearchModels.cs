@@ -236,6 +236,7 @@ public sealed record SearchImportMetadata(
     string ParserId,
     string ParserVersion,
     string SourceFileDigest,
+    string SourceFileDigestScope,
     string ImportedBy,
     string ImportedAt,
     string? OriginalQueryText,
@@ -306,8 +307,7 @@ public sealed record SearchImportTrace(
         "no-php-compatibility-claim",
         "no-live-provider-network",
         "no-network-requests",
-        "no-google-scholar-scraping",
-        "no-import-parser"
+        "no-google-scholar-scraping"
     };
 
     public string TraceSummary()

@@ -72,6 +72,7 @@ Forbidden:
   - `parser_id`
   - `parser_version`
   - `source_file_digest` derived from exact source bytes
+  - `source_file_digest_scope = raw-artifact-bytes`
   - `imported_by`
   - `imported_at`
   - optional `original_query_text`
