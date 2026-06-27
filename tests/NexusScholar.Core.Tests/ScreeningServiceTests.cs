@@ -591,6 +591,31 @@ public sealed class ScreeningServiceTests
             ScreeningErrorCodes.AppProjectionNotCoreAuthority,
             Assert.ThrowsExactly<ScreeningRuleException>(() => service.AddDecision(badConflictRef)).Category);
 
+        foreach (var appProjectionRef in new[] { "screening_batch:123", "screening_audit:456" })
+        {
+            var badAppProjection = new ScreeningDecision(
+                $"decision-{appProjectionRef.Replace(':', '-')}",
+                candidateSet.CandidateSetId,
+                "candidate-1",
+                null,
+                null,
+                ScreeningStages.TitleAbstract,
+                ScreeningVerdicts.Include,
+                ScreeningActor.Human("human-app-1"),
+                DateTimeOffset.UtcNow,
+                "Reject app projection rows.",
+                null,
+                titleCriteria.CriteriaId,
+                titleCriteria.ComputeDigest().ToString(),
+                [appProjectionRef],
+                Array.Empty<string>(),
+                Array.Empty<string>());
+
+            Assert.AreEqual(
+                ScreeningErrorCodes.AppProjectionNotCoreAuthority,
+                Assert.ThrowsExactly<ScreeningRuleException>(() => service.AddDecision(badAppProjection)).Category);
+        }
+
         var badFullTextRef = new ScreeningDecision(
             "decision-fulltext-path",
             candidateSet.CandidateSetId,
@@ -612,6 +637,31 @@ public sealed class ScreeningServiceTests
         Assert.AreEqual(
             ScreeningErrorCodes.LocalPathNotArtifactIdentity,
             Assert.ThrowsExactly<ScreeningRuleException>(() => service.AddDecision(badFullTextRef)).Category);
+
+        foreach (var malformedFullTextRef in new[] { "raw-artifact-bytes:not-a-digest", "artifact:fulltext-1301-v1" })
+        {
+            var malformedFullTextDecision = new ScreeningDecision(
+                $"decision-{malformedFullTextRef.Replace(':', '-').Replace('@', '-')}",
+                candidateSet.CandidateSetId,
+                "candidate-1",
+                null,
+                null,
+                ScreeningStages.FullText,
+                ScreeningVerdicts.Include,
+                ScreeningActor.Human("human-app-1"),
+                DateTimeOffset.UtcNow,
+                "Reject non-digest full-text artifact refs.",
+                null,
+                fullTextCriteria.CriteriaId,
+                fullTextCriteria.ComputeDigest().ToString(),
+                [malformedFullTextRef],
+                Array.Empty<string>(),
+                Array.Empty<string>());
+
+            Assert.AreEqual(
+                ScreeningErrorCodes.FullTextArtifactRequired,
+                Assert.ThrowsExactly<ScreeningRuleException>(() => service.AddDecision(malformedFullTextDecision)).Category);
+        }
     }
 
     [TestMethod]

@@ -618,8 +618,28 @@ public sealed class ScreeningService
 
     private static bool IsFullTextArtifactEvidenceRef(string value)
     {
-        return value.StartsWith("artifact:", StringComparison.Ordinal) ||
-            value.StartsWith("raw-artifact-bytes:", StringComparison.Ordinal);
+        const string rawArtifactBytesPrefix = "raw-artifact-bytes:";
+        const string artifactDigestMarker = "@raw-artifact-bytes:";
+
+        if (value.StartsWith(rawArtifactBytesPrefix, StringComparison.Ordinal))
+        {
+            return ContentDigest.TryParse(value[rawArtifactBytesPrefix.Length..], out _);
+        }
+
+        if (value.StartsWith("artifact:", StringComparison.Ordinal))
+        {
+            var markerIndex = value.IndexOf(artifactDigestMarker, StringComparison.Ordinal);
+            if (markerIndex < 0)
+            {
+                return false;
+            }
+
+            var digestStart = markerIndex + artifactDigestMarker.Length;
+            return digestStart < value.Length &&
+                ContentDigest.TryParse(value[digestStart..], out _);
+        }
+
+        return false;
     }
 
     private static string BuildConflictId(
