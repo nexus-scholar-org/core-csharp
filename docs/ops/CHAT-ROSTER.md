@@ -1,26 +1,28 @@
 # Chat Roster
 
-Branch-derived Codex lane roster from current git state after the manual GitHub merge of the workflow branch.
+Branch-derived Codex lane roster from current git state after the Gate 5 provenance merge.
 
-## Active lanes
+## Active Lanes
 
-- Lane `main`: merged baseline `main`, commit `467d5f2` (`Merge pull request #1 from nexus-scholar/cdx/two-model-codex-workflow`).
-- Lane `two-model-codex-workflow`: merged workflow branch `cdx/two-model-codex-workflow`, head `4ad8ba6`.
+- Lane `main`: merged baseline containing Gate 0 through Gate 5, Gate 5 merge commit `360ed8b`.
+- Lane `gate-5-provenance`: merged closeout branch `cdx/gate-5-provenance`, head `360ed8b`.
+- Lane `gate-4-workflow`: merged implementation branch `cdx/gate-4-workflow`, head `9ccc795`.
+- Lane `gate-4-workflow-planning`: merged planning branch `cdx/gate-4-workflow-planning`, head `3cf28ce`.
 - Lane `gate-3-protocol-lifecycle`: merged closeout branch `cdx/gate-3-protocol-lifecycle`, head `b513d6a`.
 - Lane `gate-3-planning-decisions`: merged planning branch `cdx/gate-3-planning-decisions`, head `d925796`.
 - Lane `gate-2-digest-kernel-cleanup`: merged kernel cleanup branch `cdx/gate-2-digest-kernel-cleanup`, head `5e5dde1`.
 - Lane `gate-2`: merged evidence branch `cdx/run-gate-zero-discovery`, head `e17ec4f`.
 - Lane `gate-0`: stale bootstrap branch `cdx/run-gate-0-discovery`, head `ee46eb4`.
 
-## Branch containment relationships
+## Branch Containment Relationships
 
-- `main` contains the workflow merge commit `467d5f2`.
-- `main` also contains `0339d99` (`Merge Gate 3 protocol lifecycle`), which closes Gate 0 through Gate 3 into the baseline.
-- `two-model-codex-workflow` is now a merged historical lane rather than an active delivery branch.
+- `main` contains Gate 0 through Gate 5.
+- `main` contains the two-model workflow setup branch and the Gate 9 shared-identity ADR/reconnaissance branch.
+- `cdx/gate-5-provenance` is now a merged historical lane rather than an active delivery branch.
 
-## Status notes
+## Status Notes
 
-- Gate 4 is next planning work.
-- Gate 4 implementation remains blocked by `CF-003`, `CF-006`, and `CF-007`.
-- PHP Shared identity reconnaissance is allowed only as docs-only parallel work.
-- Cleanup-safe merged lanes now include `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, and `cdx/run-gate-zero-discovery`.
+- Gate 5 local provenance ledger scope is merged.
+- Gate 6 bundle/artifact contract planning is the next sequential gate and remains blocked on `CF-002`; snapshot equality questions under `CF-014` also need attention before claiming bundle/snapshot parity.
+- Gate 9 shared identity implementation can continue as optional parallel local C# work, without PHP compatibility, Search, Deduplication, Screening, or snapshot semantics claims.
+- Cleanup-safe merged lanes now include `cdx/gate-5-provenance`, `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-4-workflow`, `cdx/gate-4-workflow-planning`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, and `cdx/run-gate-zero-discovery`.
