@@ -1,6 +1,6 @@
 # Merge Queue
 
-Source: live status from branch probes after Gate 5 merge.
+Source: live status from branch probes after Gate 9 merge.
 
 ## Completed Merges
 
@@ -11,18 +11,20 @@ Source: live status from branch probes after Gate 5 merge.
 - `cdx/gate-4-workflow-planning` (merged to `main`)
 - `cdx/gate-4-workflow` (merged to `main`)
 - `cdx/gate-5-provenance` (merged to `main`)
+- `cdx/gate-9-shared-identity` (merged to `main`)
 - `cdx/two-model-codex-workflow` (historical merged workflow setup branch)
 - `cdx/shared-identity-adr-0007` (reconnaissance planning branch)
 
 ## Current Queue
 
-- `main` includes Gate 5 at `360ed8be5db1b41081255612da95fb27af11825b`.
-- Gate 5 merge-candidate CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28272279336`.
-- Next sequential planning target: Gate 6 bundle/artifact contract.
-- Optional parallel branch: `cdx/gate-9-shared-identity`.
+- `main` includes Gate 9 at `efde929b142256b6b29906924377eb6607734d6c`.
+- Gate 9 merge-candidate CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28273143941`.
+- Next primary branch: `cdx/gate-6-bundle-planning`.
+- Gate 6 implementation is blocked until bundle/artifact and snapshot equality decisions are frozen.
 
 ## Cleanup Candidates
 
+- `cdx/gate-9-shared-identity`
 - `cdx/gate-5-provenance`
 - `cdx/two-model-codex-workflow`
 - `cdx/main-gate2-merge`
