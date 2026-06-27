@@ -1,6 +1,6 @@
 # Gate 9 Evidence: Shared Scientific Identity
 
-Status: local verification passed; hosted CI pending for final branch head.
+Status: local verification passed; hosted CI passed on branch dispatch.
 
 ## Scope
 
@@ -70,7 +70,12 @@ Still out of scope:
 
 ## Hosted CI
 
-- Pending final pushed branch run.
+- `gate-01` workflow dispatch on `cdx/gate-9-shared-identity`: passed.
+- Commit: `2540421c2a38894a1db77991ed8a2b1e5009e068`
+- Run: `https://github.com/nexus-scholar/core-csharp/actions/runs/28273080916`
+- Matrix:
+  - `verify (ubuntu-latest)`: passed.
+  - `verify (windows-latest)`: passed.
 
 ## Explicit Claims Not Made
 
