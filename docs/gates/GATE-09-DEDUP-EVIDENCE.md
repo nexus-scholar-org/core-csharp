@@ -1,6 +1,6 @@
 # Gate 9 Dedup Evidence
 
-Status: local implementation and review-blocker fixes applied; gate evidence is replay-based and remains pending hosted CI, review, and merge approval.
+Status: local implementation and review-blocker fixes applied; hosted CI and read-only review are green for implementation head, and gate remains pending merge to `main`.
 
 ## Scope Implemented Locally
 
@@ -62,6 +62,27 @@ powershell -ExecutionPolicy Bypass -File .\scripts\verify.ps1
 - Architecture tests: 14 passed
 - Core tests: 160 passed
 - Conformance tests: 55 passed
+
+## Hosted Verification
+
+- Run: `https://github.com/nexus-scholar/core-csharp/actions/runs/28297950887`
+- Commit: `984c049f5dc97df331d707d52806cd5722cbe431`
+- `verify (ubuntu-latest)`: success
+- `verify (windows-latest)`: success
+- Steps passed on both: checkout, .NET setup, restore, build, test, format
+
+## Read-Only Review
+
+- Reviewer role: `manager_reviewer`
+- Verdict: safe to merge for local Gate 9 Dedup scope
+- Blocking findings: none
+- Unsafe claims: none found
+
+Non-blocking follow-ups:
+
+- Fixture `sourceCommit` remains a local hand-authored source label, not a PHP-golden source commit.
+- `outputDigest` currently pins canonical expected replay summaries; a later comparator can pin a fuller canonical actual-result replay summary.
+- Additional negative fixture families remain planned for empty corpus, singleton corpus, disconnected evidence graph, duplicate evidence overwrite, and source-specific ID promotion attempts.
 
 ## Conflict Summary
 

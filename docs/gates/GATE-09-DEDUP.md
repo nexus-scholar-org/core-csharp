@@ -1,6 +1,6 @@
 # Gate 9 Deduplication
 
-Status: local implementation behavior and review-blocker fixes applied on `cdx/gate-9-dedup-local`; gate remains pending final hosted CI, review, and merge.
+Status: local implementation behavior and review-blocker fixes applied on `cdx/gate-9-dedup-local`; hosted CI and read-only review are green for implementation head, and gate remains pending merge to `main`.
 
 ## Goal
 
