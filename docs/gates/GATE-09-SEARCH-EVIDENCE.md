@@ -1,6 +1,38 @@
 # Gate 9 Search Evidence
 
-Status: local verification recorded for `cdx/gate-9-search-local`; hosted Windows/Linux evidence pending after push.
+Status: local and hosted verification recorded for `cdx/gate-9-search-local`.
+
+## Hosted CI
+
+Implementation commit:
+
+```text
+7ea3e99d2a2ea9cc9beef40ee46c97c91cd915e3
+```
+
+Hosted CI run:
+
+```text
+https://github.com/nexus-scholar/core-csharp/actions/runs/28290056865
+```
+
+Hosted matrix:
+
+```text
+verify (ubuntu-latest): success
+verify (windows-latest): success
+```
+
+Steps passed on both:
+
+```text
+checkout
+setup .NET
+restore
+build
+test
+format
+```
 
 ## Scope Accepted Locally
 
@@ -63,10 +95,10 @@ NexusScholar.Core.Tests: 130 passed
 Total: 194 passed, 0 failed
 ```
 
-Hosted verification is required before merge:
+After evidence updates, rerun the hosted matrix on the final branch head before merge.
 
 ```text
-hosted Windows/Linux matrix after push
+hosted Windows/Linux matrix after final evidence push
 ```
 
 ## Conflict Status
