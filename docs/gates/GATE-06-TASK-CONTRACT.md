@@ -1,6 +1,6 @@
-# Gate 6 Task Contract: Bundle and Artifact Planning
+# Gate 6 Task Contract: Bundle and Artifact Implementation
 
-Mode: planning only until ADR 0009 is reviewed and accepted.
+Mode: implementation may proceed only against `ADR 0009`. Do not claim blueprint conformance or PHP compatibility.
 
 Branch:
 
@@ -10,7 +10,7 @@ cdx/gate-6-bundle-planning
 
 ## Objective
 
-Prepare Gate 6 for implementation by freezing the local portable bundle and artifact contract. Do not change `src/`, `tests/`, or `fixtures/` in this planning branch.
+Implement the local portable bundle and artifact contract accepted in `docs/adr/0009-portable-bundle-and-artifact-contract.md`.
 
 ## Read First
 
@@ -37,41 +37,50 @@ Prepare Gate 6 for implementation by freezing the local portable bundle and arti
 - `docs/adr/0009-portable-bundle-and-artifact-contract.md`
 - `docs/gates/GATE-06.md`
 - `docs/gates/GATE-06-TASK-CONTRACT.md`
+- `docs/gates/GATE-06-EVIDENCE.md`
 - `docs/port/OPEN-CONFLICTS.md`
 - `docs/port/GOLDEN-FIXTURE-PLAN.md`
+- `src/NexusScholar.Artifacts/**`
+- `src/NexusScholar.Bundles/**`
+- `tests/NexusScholar.Core.Tests/**`
+- `tests/NexusScholar.Architecture.Tests/**`
+- `tests/NexusScholar.Conformance.Tests/**`
+- `fixtures/conformance/artifacts/**`
+- `fixtures/conformance/bundles/**`
 
 ## Forbidden Paths
 
-- `src/**`
-- `tests/**`
-- `fixtures/**`
 - `specs/**`
 - PHP reference repo
+- persistence, EF Core, SQLite, filesystem database adapters
+- API/UI/cloud sync
+- provider/network calls
+- Search, Deduplication, Screening, Citation Network, Full Text, or Reporting ports
+- plugin host/runtime
+- AI governance behavior
+- workflow execution engine
 
-## Required ADR 0009 Decisions
+## Behavior To Implement
 
-ADR 0009 must define:
+Implement the local contract from `ADR 0009`:
 
-- bundle manifest identity;
-- bundle manifest schema id and version;
-- bundle manifest digest input and `bundle-manifest` scope;
-- artifact entry shape;
-- artifact logical path rules;
-- raw artifact byte digest rules;
-- manifest checksum rules;
-- required versus optional bundle sections;
-- protocol approved-version binding;
-- workflow binding;
-- provenance event binding;
-- shared identity/corpus membership treatment;
-- unresolved no-id candidate treatment;
-- local snapshot equality rule;
-- verification result shape;
-- tamper report shape;
-- import safety and destructive overwrite policy;
-- deterministic ordering;
-- what is outside bundle digest;
-- future work and explicit non-claims.
+- create artifact manifest entries with logical path, artifact kind, media type, byte size, raw-byte digest, schema id, and schema version;
+- compute artifact raw-byte digests with `DigestScope.RawArtifactBytes`;
+- validate logical paths and reject absolute, drive-letter, URI, traversal, empty-segment, dot-segment, leading slash, trailing slash, backslash, and duplicate normalized paths;
+- create deterministic review-bundle manifests with schema id `nexus.review-bundle.manifest` and schema version `1.0.0`;
+- compute manifest digests with `DigestScope.BundleManifest`;
+- preserve approved protocol binding by protocol id, protocol version id, version number, status, and `protocol-content` digest;
+- preserve workflow binding by workflow id, workflow-definition digest, template identity, and bound protocol digest when included;
+- preserve provenance event bindings by event id and `provenance-event` digest when included;
+- preserve shared-identity membership using `ADR 0007` stable identifier rules when included;
+- carry no-id works only as unresolved candidates, not canonical membership identity;
+- expose immutable verification results and stable tamper categories;
+- verify artifact size and raw-byte digest before import;
+- reject unsupported required schemas;
+- reject stale manifest digest;
+- reject destructive overwrite attempts;
+- import only after all validation succeeds;
+- keep local round-trip equality limited to the `ADR 0009` Gate 6 rule.
 
 ## Fixture IDs To Plan
 

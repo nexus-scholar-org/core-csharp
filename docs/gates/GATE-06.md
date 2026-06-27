@@ -1,36 +1,36 @@
 # Gate 6: Portable Bundle and Artifact Contract
 
-Status: planning only. Do not implement source code until the contract below is reviewed and accepted.
+Status: ADR accepted for local planning. Source implementation is not part of this branch.
 
 ## Goal
 
 Define the local C# contract for portable review bundles and artifact manifests before implementing export, verification, import, tamper checks, or round-trip behavior.
 
-Gate 6 exists to make a review exportable and verifiable without Nexus Scholar cloud services. It must not silently adopt the blueprint bundle spec as authoritative while `CF-002`, `CF-005`, and `CF-014` remain open.
+Gate 6 exists to make a review exportable and verifiable without Nexus Scholar cloud services. It must not silently adopt the blueprint bundle spec as authoritative while `CF-005` remains open.
 
 ## Conflicts Addressed
 
-- `CF-002`: bundle contract is blocking because current `NexusScholar.Bundles` is a thin scaffold and the blueprint bundle spec/schema are not closed local authority.
-- `CF-014`: snapshot identity and equality affects bundle membership, round-trip equality, and import safety.
+- `CF-002`: resolved for local Gate 6 planning by `ADR 0009`; implementation and evidence remain pending.
+- `CF-014`: narrowed by `ADR 0009` for local bundle round-trip equality and import safety only; broader corpus snapshot equality remains future work.
 - `CF-005`: blueprint authority remains discovery-only; Gate 6 may use blueprint bundle materials as inputs but must not claim blueprint conformance.
 
-## Planning Decisions To Freeze
+## Accepted Planning Decision
 
-Gate 6 needs one accepted ADR before implementation, provisionally named:
+Gate 6 local planning is governed by:
 
 ```text
 docs/adr/0009-portable-bundle-and-artifact-contract.md
 ```
 
-ADR 0009 must decide:
+ADR 0009 decides:
 
-- bundle manifest identity and schema id/version;
-- bundle manifest digest material and `bundle-manifest` digest scope;
+- bundle manifest schema id/version and identity;
+- bundle manifest digest input and `bundle-manifest` digest scope;
 - artifact entry shape;
 - artifact digest rules, including raw byte digest versus manifest digest;
 - logical artifact path rules and forbidden path forms;
 - duplicate artifact path rejection;
-- required bundle sections for local Gate 6;
+- required and optional bundle sections for local Gate 6;
 - protocol version and `protocol-content` binding;
 - workflow definition/compiled workflow binding;
 - provenance ledger event inclusion rules;
@@ -71,9 +71,9 @@ Forbidden implementation paths:
 - AI governance behavior
 - workflow execution engine
 
-## Required Local Behavior After ADR Acceptance
+## Required Local Behavior For Implementation
 
-The builder should implement only local Gate 6 behavior:
+The builder should implement only the local Gate 6 behavior accepted in `ADR 0009`:
 
 - create typed artifact entries with media type, byte size, raw-byte digest, logical path, artifact kind, schema id, schema version, and optional source record digest;
 - reject blank artifact fields, invalid digests, negative size, duplicate logical paths, absolute paths, drive-letter paths, traversal paths, empty segments, and path separator drift;
