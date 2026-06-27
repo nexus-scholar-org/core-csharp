@@ -4,7 +4,7 @@ Source: live branch probes from local `main` after the Gate 9 Dedup local implem
 
 ## Main Baseline
 
-- Current product `main` head: `8fa573d` (`Record Gate 9 dedup review evidence`).
+- Latest Gate 9 Dedup product merge on `main`: `8fa573d` (`Record Gate 9 dedup review evidence`); later ops-only commits may sit on top.
 - Gate 0 through Gate 6 are merged into `main`.
 - Gate 9 shared identity is merged into `main`.
 - Gate 9 Search reconnaissance is merged into `main` as docs/planning only.
@@ -23,19 +23,17 @@ Source: live branch probes from local `main` after the Gate 9 Dedup local implem
 ## Branch Classes
 
 - merged: `main`, `cdx/gate-9-dedup-local`, `cdx/gate-9-dedup-contract`, `cdx/gate-9-dedup-recon`, `cdx/gate-9-search-import-local`, `cdx/gate-9-search-import-contract`, `cdx/gate-9-search-local`, `cdx/gate-9-search-contract`, `cdx/app-recon-cli-web-core-usage`, `cdx/gate-9-search-recon`, `cdx/gate-6-bundle-planning`, `cdx/gate-9-shared-identity`, `cdx/gate-5-provenance`, `cdx/gate-4-workflow`, `cdx/gate-4-workflow-planning`, `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/shared-identity-adr-0007`, `cdx/run-gate-zero-discovery`, `cdx/run-gate-0-discovery`
-- cleanup: `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, and `origin/cdx/gate-9-dedup-recon` are merged remote cleanup candidates; local historical branches listed above may be pruned locally when desired.
+- cleanup: no merged GitHub remote branch cleanup candidates remain; local historical branches listed above may be pruned locally when desired.
 - active: none in the local branch graph after this refresh
 - review: none
 - blocked: PHP compatibility claims, generated PHP fixtures, Screening implementation, persistence/API/UI/cloud, live provider/network behavior, Scopus API, Web of Science API, Google Scholar scraping, and app integration claims remain out of scope.
-- stale: none newly identified beyond merged historical branches and remote cleanup candidates.
+- stale: none newly identified beyond merged historical branches.
 
-Remote cleanup state from `git branch -r`: `origin/main`, `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, and `origin/cdx/gate-9-dedup-recon`.
+Remote cleanup state from `git branch -r`: only `origin/main` remains.
 
 ## Safe Cleanup Candidates
 
-- `origin/cdx/gate-9-dedup-local`
-- `origin/cdx/gate-9-dedup-contract`
-- `origin/cdx/gate-9-dedup-recon`
+- none on GitHub
 
 ## Not Safe To Delete
 

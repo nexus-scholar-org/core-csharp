@@ -30,7 +30,7 @@ Source: live status from branch probes after the Gate 9 Dedup local implementati
 - `main` includes Gate 9 Dedup local implementation at `8fa573d`.
 - Gate 9 Dedup branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28298203837`.
 - Gate 9 Dedup push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28298275746`.
-- GitHub remote branch cleanup candidates: `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, `origin/cdx/gate-9-dedup-recon`.
+- GitHub remote branch cleanup candidates: none.
 - Next primary branch: `cdx/gate-9-screening-recon`.
 - Screening work should begin as PHP behavior reconnaissance and fixture/comparator planning only.
 
@@ -49,9 +49,7 @@ Source: live status from branch probes after the Gate 9 Dedup local implementati
 
 ## Cleanup Candidates
 
-- `origin/cdx/gate-9-dedup-local`
-- `origin/cdx/gate-9-dedup-contract`
-- `origin/cdx/gate-9-dedup-recon`
+- none on GitHub
 
 ## Not Safe To Delete
 
@@ -60,4 +58,4 @@ Source: live status from branch probes after the Gate 9 Dedup local implementati
 ## Verification
 
 - `git branch --merged main` includes `cdx/gate-9-dedup-local`, `cdx/gate-9-dedup-contract`, and `cdx/gate-9-dedup-recon`.
-- `git branch -r` returns `origin/main`, `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, and `origin/cdx/gate-9-dedup-recon` as the remaining remote branches after this refresh.
+- `git branch -r` returns only `origin/main` after this refresh.

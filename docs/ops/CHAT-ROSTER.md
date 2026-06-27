@@ -4,7 +4,7 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Dedup l
 
 ## Active Lanes
 
-- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, ADR 0012 Deduplication Evidence and Cluster Contract, and Gate 9 local Dedup implementation; current product head `8fa573d`.
+- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, ADR 0012 Deduplication Evidence and Cluster Contract, and Gate 9 local Dedup implementation; latest product merge head `8fa573d`, with later ops-only commits allowed on top.
 - Lane `gate-9-dedup-local`: merged local implementation branch `cdx/gate-9-dedup-local`, head `8fa573d`.
 - Lane `gate-9-dedup-contract`: merged ADR/contract branch `cdx/gate-9-dedup-contract`, head `0249f67`.
 - Lane `gate-9-dedup-recon`: merged docs-only reconnaissance branch `cdx/gate-9-dedup-recon`, head `76933e3`.
@@ -32,7 +32,7 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Dedup l
 - `cdx/gate-9-dedup-local` is now a merged historical lane rather than an active implementation branch.
 - `cdx/gate-9-dedup-contract` is now a merged historical lane rather than an active contract branch.
 - `cdx/gate-9-dedup-recon` is now a merged historical lane rather than an active reconnaissance branch.
-- GitHub remote branch cleanup candidates remain: `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, `origin/cdx/gate-9-dedup-recon`.
+- No merged GitHub remote branch cleanup candidates remain after the post-merge remote cleanup.
 
 ## Status Notes
 
