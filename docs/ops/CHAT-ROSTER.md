@@ -1,10 +1,11 @@
 # Chat Roster
 
-Branch-derived Codex lane roster from current git state after the Gate 9 Dedup local implementation merge.
+Branch-derived Codex lane roster from current git state after the Gate 9 Screening reconnaissance merge.
 
 ## Active Lanes
 
-- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, ADR 0012 Deduplication Evidence and Cluster Contract, and Gate 9 local Dedup implementation; latest product merge head `8fa573d`, with later ops-only commits allowed on top.
+- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, ADR 0012 Deduplication Evidence and Cluster Contract, Gate 9 local Dedup implementation, and Gate 9 Screening reconnaissance; latest merge head `095a275`, with later ops-only commits allowed on top.
+- Lane `gate-9-screening-recon`: merged docs-only reconnaissance branch `cdx/gate-9-screening-recon`, head `095a275`.
 - Lane `gate-9-dedup-local`: merged local implementation branch `cdx/gate-9-dedup-local`, head `8fa573d`.
 - Lane `gate-9-dedup-contract`: merged ADR/contract branch `cdx/gate-9-dedup-contract`, head `0249f67`.
 - Lane `gate-9-dedup-recon`: merged docs-only reconnaissance branch `cdx/gate-9-dedup-recon`, head `76933e3`.
@@ -27,15 +28,17 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Dedup l
 
 ## Branch Containment Relationships
 
-- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, ADR 0011, local first-slice Search import parsers, Gate 9 Deduplication reconnaissance, ADR 0012, and local Dedup implementation.
+- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, ADR 0011, local first-slice Search import parsers, Gate 9 Deduplication reconnaissance, ADR 0012, local Dedup implementation, and Gate 9 Screening reconnaissance.
 - `main` contains the two-model workflow setup branch and the Gate 9 shared-identity ADR/reconnaissance branch.
 - `cdx/gate-9-dedup-local` is now a merged historical lane rather than an active implementation branch.
 - `cdx/gate-9-dedup-contract` is now a merged historical lane rather than an active contract branch.
 - `cdx/gate-9-dedup-recon` is now a merged historical lane rather than an active reconnaissance branch.
+- `cdx/gate-9-screening-recon` is now a merged historical lane rather than an active reconnaissance branch.
 - No merged GitHub remote branch cleanup candidates remain after the post-merge remote cleanup.
 
 ## Status Notes
 
+- Gate 9 Screening reconnaissance is merged with green branch CI and green push-triggered `main` CI.
 - Gate 9 Dedup local implementation is merged with green branch CI and green push-triggered `main` CI.
 - Dedup consumes raw Search/import sightings, not PHP's pre-deduplicated Search corpus.
 - Exact ADR 0007 identifier overlap forms automatic clusters namespace-sensitively.
@@ -44,16 +47,19 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Dedup l
 - Representative records are deterministic projections over preserved evidence.
 - Imported-export source-file digest, digest scope, raw-record digest, parser warnings, and record notices are preserved through Dedup raw candidates, source evidence, and representative projections where clustered.
 - Web hashes, representative snapshots, persisted runs, stale-run checks, and app scoring remain app projections, not Core authority.
-- Next branch should be `cdx/gate-9-screening-recon`.
+- Screening recon mapped PHP Core, CLI, and Web screening behavior and opened `CF-021` through `CF-024`.
+- Next branch should be `cdx/gate-9-screening-contract`.
 
 ## Explicit Non-Claims For Next Lane
 
-- no C# Screening implementation during reconnaissance
+- no C# Screening implementation during ADR 0013
 - no PHP compatibility
 - no PHP-generated fixtures
+- no Screening fixtures
 - no persistence/API/UI/cloud
 - no live provider/network behavior
 - no Scopus API
 - no Web of Science API
 - no Google Scholar scraping
+- no AI governance implementation
 - no app behavior made authoritative
