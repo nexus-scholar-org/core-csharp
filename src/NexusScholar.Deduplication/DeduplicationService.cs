@@ -138,6 +138,7 @@ public sealed class DeduplicationService
                         candidate.CandidateId,
                         rawCandidates[priorIndex].CandidateId,
                         BuildEvidenceReason("exact-work-id-overlap", workId),
+                        ReviewRequired: false,
                         1.0,
                         PolicyId,
                         PolicyVersion));
@@ -258,6 +259,7 @@ public sealed class DeduplicationService
                     BuildEvidenceReason(
                         "title-similarity",
                         similarity.ToString("0.####", CultureInfo.InvariantCulture)),
+                    ReviewRequired: true,
                     similarity,
                     PolicyId,
                     PolicyVersion));
@@ -369,16 +371,17 @@ public sealed class DeduplicationService
             {
                 Candidate = member,
                 Completeness = ComputeCompletenessScore(member),
+                AcceptedStableIdentifier = member.HasStableIdentifier,
                 HasDoiId = member.WorkIds.Any(id => id.StartsWith("doi:", StringComparison.Ordinal)),
                 ProviderPriority = GetProviderPriority(member.Source),
-                HasPrimaryId = member.PrimaryWorkId is not null,
-                TitleLength = member.Title.Length
+                NormalizedPrimaryIdentifier = ComputePrimaryIdentifierSortKey(member),
+                CandidateId = member.CandidateId
             })
             .OrderByDescending(item => item.Completeness)
-            .ThenByDescending(item => item.HasDoiId)
+            .ThenByDescending(item => item.AcceptedStableIdentifier)
             .ThenByDescending(item => item.ProviderPriority)
-            .ThenByDescending(item => item.HasPrimaryId)
-            .ThenByDescending(item => item.TitleLength)
+            .ThenByDescending(item => item.HasDoiId)
+            .ThenBy(item => item.NormalizedPrimaryIdentifier, StringComparer.Ordinal)
             .ThenBy(item => item.Candidate.CandidateId, StringComparer.Ordinal)
             .First();
 
@@ -409,10 +412,10 @@ public sealed class DeduplicationService
             new ReadOnlyCollection<string>(new[]
             {
                 "completeness-score",
-                "doi-preference",
+                "accepted-stable-id",
                 "provider-priority",
-                "primary-id",
-                "title-length",
+                "doi-preference",
+                "primary-identifier",
                 "candidate-id",
                 "workid-union"
             }));
@@ -441,16 +444,7 @@ public sealed class DeduplicationService
             score += 1.5;
         }
 
-        if (candidate.WorkIds.Any(id => id.StartsWith("doi:", StringComparison.Ordinal)))
-        {
-            score += 2.0;
-        }
-
         score += candidate.WorkIds.Count * 0.25;
-        if (!string.IsNullOrWhiteSpace(candidate.Title))
-        {
-            score += Math.Min(candidate.Title.Length, 24) * 0.01;
-        }
 
         return Math.Round(score, 4, MidpointRounding.AwayFromZero);
     }
@@ -553,6 +547,11 @@ public sealed class DeduplicationService
         return $"{code}:{context}|policy={PolicyId}/{PolicyVersion}";
     }
 
+    private static string ComputePrimaryIdentifierSortKey(DedupCandidateRecord candidate)
+    {
+        return candidate.PrimaryWorkId?.ToString() ?? string.Empty;
+    }
+
     private static DedupEvidence CreateSourceEvidence(DedupCandidateRecord candidate)
     {
         return new DedupEvidence(
@@ -561,6 +560,7 @@ public sealed class DeduplicationService
             candidate.CandidateId,
             candidate.CandidateId,
             $"source-trace:{candidate.Source.SourceTraceId}|source:{candidate.Source.SourceSightingId}|policy={PolicyId}/{PolicyVersion}",
+            ReviewRequired: false,
             0.0,
             PolicyId,
             PolicyVersion);
@@ -576,6 +576,7 @@ public sealed class DeduplicationService
                 candidate.CandidateId,
                 null,
                 $"source-specific-id:{sourceSpecificId}|policy={PolicyId}/{PolicyVersion}",
+                ReviewRequired: true,
                 0.0,
                 PolicyId,
                 PolicyVersion));
@@ -593,6 +594,7 @@ public sealed class DeduplicationService
             leftCandidate.CandidateId,
             rightCandidate.CandidateId,
             $"source-specific-id-overlap:{similarity.ToString("0.####", CultureInfo.InvariantCulture)}|policy={PolicyId}/{PolicyVersion}",
+            ReviewRequired: true,
             1.0,
             PolicyId,
             PolicyVersion);
@@ -606,6 +608,7 @@ public sealed class DeduplicationService
             candidate.CandidateId,
             null,
             "no-stable-identifier",
+            ReviewRequired: true,
             0.0,
             PolicyId,
             PolicyVersion);

@@ -28,6 +28,7 @@ public sealed record DedupEvidence(
     string SubjectCandidateId,
     string? ObjectCandidateId,
     string? Reason,
+    bool ReviewRequired = false,
     double? Score = null,
     string? PolicyId = null,
     string? PolicyVersion = null);

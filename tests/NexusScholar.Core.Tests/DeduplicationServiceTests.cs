@@ -89,6 +89,21 @@ public sealed class DeduplicationServiceTests
     }
 
     [TestMethod]
+    public void Fuzzy_title_below_threshold_keeps_candidates_unresolved_with_no_review_candidate()
+    {
+        var trace = BuildSearchTrace(
+            "search-trace-fuzzy-below",
+            BuildSearchSighting("crossref", 1, 1, "Neural networks in 2D geometry", hasIds: false),
+            BuildSearchSighting("crossref", 1, 2, "Graph databases for chemistry", hasIds: false));
+
+        var result = new DeduplicationService().Execute("dedup-result", new[] { trace }, [], 0.95d);
+
+        Assert.AreEqual(0, result.Clusters.Count);
+        Assert.AreEqual(0, result.ReviewRequiredCandidates.Count);
+        Assert.AreEqual(2, result.UnresolvedCandidates.Count);
+    }
+
+    [TestMethod]
     public void No_id_title_only_records_are_not_auto_merged()
     {
         var trace = BuildSearchTrace(
@@ -118,6 +133,131 @@ public sealed class DeduplicationServiceTests
         Assert.AreEqual(0.95d, result.FuzzyTitleThreshold);
         Assert.AreEqual(1, result.ReviewRequiredCandidates.Count);
         Assert.AreEqual(0, result.Clusters.Count);
+    }
+
+    [TestMethod]
+    public void Evidence_review_required_flags_reflect_contract_boundaries()
+    {
+        var search = BuildSearchTrace(
+            "search-trace-review-boundary",
+            BuildSearchSighting("openalex", 1, 1, "Exact title one", "doi", "10.1000/alpha"),
+            BuildSearchSighting("crossref", 1, 2, "Exact title one", "doi", "10.1000/alpha"),
+            BuildSearchSighting("crossref", 1, 3, "No-id duplicate title", hasIds: false),
+            BuildSearchSighting("openalex", 1, 4, "No-id duplicate title", hasIds: false));
+
+        var import = BuildImportTrace(
+            "import-trace-review-boundary",
+            BuildImportRecord(
+                "scopus-csv",
+                "Source specific review",
+                "source-1",
+                identifier: null,
+                sourceIdentifiers: new[] { "scopus:EID:2-s2.0-8500000001" },
+                unresolved: true),
+            BuildImportRecord(
+                "scopus-csv",
+                "Source specific review",
+                "source-2",
+                identifier: null,
+                sourceIdentifiers: new[] { "scopus:EID:2-s2.0-8500000001" },
+                unresolved: true));
+
+        var result = new DeduplicationService().Execute("dedup-result", [search], [import]);
+
+        Assert.IsTrue(result.Evidence.Where(entry => entry.Kind == DedupEvidenceKind.ExactIdentifier).All(entry => !entry.ReviewRequired));
+        Assert.IsTrue(result.Evidence.Where(entry => entry.Kind == DedupEvidenceKind.SourceSighting).All(entry => !entry.ReviewRequired));
+        Assert.IsTrue(result.Evidence.Where(entry => entry.Kind == DedupEvidenceKind.FuzzyTitle).All(entry => entry.ReviewRequired));
+        Assert.IsTrue(result.Evidence.Where(entry => entry.Kind == DedupEvidenceKind.NoIdCandidate).All(entry => entry.ReviewRequired));
+        Assert.IsTrue(result.Evidence.Where(entry => entry.Kind == DedupEvidenceKind.SourceSpecificIdentifier).All(entry => entry.ReviewRequired));
+
+        var sourceSpecificPair = result.Evidence
+            .FirstOrDefault(entry => entry.Kind == DedupEvidenceKind.SourceSpecificIdentifier && entry.ObjectCandidateId is not null);
+        Assert.IsNotNull(sourceSpecificPair);
+    }
+
+    [TestMethod]
+    public void No_id_same_title_candidates_do_not_merge_and_do_not_depend_on_input_source_order()
+    {
+        var firstOrder = BuildSearchTrace(
+            "search-trace-no-id-order-a",
+            BuildSearchSighting("openalex", 1, 1, "No-id title paper", hasIds: false),
+            BuildSearchSighting("crossref", 1, 2, "No-id title paper", hasIds: false));
+
+        var secondOrder = BuildSearchTrace(
+            "search-trace-no-id-order-b",
+            BuildSearchSighting("crossref", 1, 1, "No-id title paper", hasIds: false),
+            BuildSearchSighting("openalex", 1, 2, "No-id title paper", hasIds: false));
+
+        var service = new DeduplicationService();
+        var firstRun = service.Execute("dedup-result", [firstOrder], []);
+        var secondRun = service.Execute("dedup-result", [secondOrder], []);
+
+        Assert.AreEqual(1, firstRun.ReviewRequiredCandidates.Count);
+        Assert.AreEqual(1, secondRun.ReviewRequiredCandidates.Count);
+        Assert.AreEqual(2, firstRun.UnresolvedCandidates.Count);
+        Assert.AreEqual(2, secondRun.UnresolvedCandidates.Count);
+
+        var firstPair = firstRun.ReviewRequiredCandidates.Single();
+        var secondPair = secondRun.ReviewRequiredCandidates.Single();
+        var firstSignature = CandidateSignature(firstPair.CandidateAId, firstPair.CandidateBId);
+        var secondSignature = CandidateSignature(secondPair.CandidateAId, secondPair.CandidateBId);
+        Assert.AreEqual(firstSignature, secondSignature);
+    }
+
+    [TestMethod]
+    public void Representative_election_prefers_provider_priority_over_doi_tiebreak()
+    {
+        var search = BuildSearchTrace(
+            "search-trace-representative-priority",
+            BuildSearchSighting(
+                "openalex",
+                1,
+                1,
+                "Priority first",
+                "openalex",
+                "z-openalex",
+                "common-s2"),
+            BuildSearchSighting(
+                "crossref",
+                1,
+                2,
+                "Priority first",
+                "doi",
+                "10.1000/priority",
+                "common-s2"));
+
+        var result = new DeduplicationService().Execute("dedup-result", [search], []);
+
+        var cluster = result.Clusters.Single();
+        Assert.AreEqual("search:search-trace-representative-priority:1:openalex:1:1", cluster.Representative.CandidateId);
+    }
+
+    [TestMethod]
+    public void Representative_election_breaks_ties_with_normalized_primary_identifier()
+    {
+        var search = BuildSearchTrace(
+            "search-trace-representative-id",
+            BuildSearchSighting(
+                "openalex",
+                1,
+                1,
+                "Identifier order",
+                "openalex",
+                "zeta",
+                "common"),
+            BuildSearchSighting(
+                "openalex",
+                1,
+                2,
+                "Identifier order",
+                "openalex",
+                "alpha",
+                "common"));
+
+        var result = new DeduplicationService().Execute("dedup-result", [search], []);
+
+        var cluster = result.Clusters.Single();
+        Assert.AreEqual("search:search-trace-representative-id:2:openalex:1:2", cluster.Representative.CandidateId);
     }
 
     [TestMethod]
@@ -424,5 +564,25 @@ public sealed class DeduplicationServiceTests
             Array.Empty<SearchSighting>(),
             Array.Empty<SearchImportParserNotice>(),
             SearchImportTrace.DefaultNonClaims);
+    }
+
+    private static string OrderedPair(string left, string right)
+    {
+        return string.Compare(left, right, StringComparison.Ordinal) <= 0
+            ? $"{left}:{right}"
+            : $"{right}:{left}";
+    }
+
+    private static string CandidateSignature(string leftCandidateId, string rightCandidateId)
+    {
+        return OrderedPair(
+            CandidateSourceKey(leftCandidateId),
+            CandidateSourceKey(rightCandidateId));
+
+        static string CandidateSourceKey(string candidateId)
+        {
+            var parts = candidateId.Split(':');
+            return parts[^3];
+        }
     }
 }

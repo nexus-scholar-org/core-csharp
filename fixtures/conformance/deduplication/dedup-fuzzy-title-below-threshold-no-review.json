@@ -1,0 +1,51 @@
+{
+  "fixtureId": "dedup-fuzzy-title-below-threshold-no-review",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:5fbeb7f8e13d9d7a6c9f0ab12f4d8ce8c4f6e1f3c5f6a3b8d7c9e1f2a3b4c5d6",
+  "outputDigest": "sha256:7ad8f2c4e9a1b3d7f5e0a6c9d1b4f2a5e8c7d6b9a3c2f1e0d9b8a7c6e5f4d3b2",
+  "case": {
+    "scenario": "fuzzy-title-below-threshold-no-review",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-fuzzy-below-threshold",
+        "sightings": [
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Graph model embeddings in algebraic topology",
+            "workIds": ["doi:10.1000/fuzzy-low-1"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "A survey of quantum-resistant protocols",
+            "workIds": ["doi:10.1000/fuzzy-low-2"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 0,
+      "reviewRequired": 0,
+      "unresolved": 0
+    }
+  }
+}

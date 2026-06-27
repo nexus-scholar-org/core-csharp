@@ -1,6 +1,6 @@
 # Gate 9 Dedup Evidence
 
-Status: local implementation complete and pending hosted re-run on branch head.
+Status: local implementation updates applied; gate evidence is replay-based and remains pending final merge approval until all blockers are verified clear.
 
 ## Scope Implemented Locally
 
@@ -12,6 +12,7 @@ Status: local implementation complete and pending hosted re-run on branch head.
 - no-id unresolved candidates and review-only path
 - raw search/import evidence retention in cluster output
 - app projection boundary non-claims (membership hash/run/snapshot fields are non-authoritative)
+- fixture replay now asserts evidence classes, unresolved/review counts, cluster/member behavior, threshold pass-through, parser warning preservation, and source-file/raw-record digest propagation where present.
 
 ## Branch and Command Surface
 
@@ -35,6 +36,8 @@ Status: local implementation complete and pending hosted re-run on branch head.
 - `dedup-representative-merge-preserves-evidence`
 - `dedup-raw-sightings-preserved`
 - `dedup-web-app-projection-not-authority`
+- `dedup-fuzzy-title-below-threshold-no-review`
+- `dedup-source-specific-id-not-workid-review-only`
 
 ## Verification Commands
 

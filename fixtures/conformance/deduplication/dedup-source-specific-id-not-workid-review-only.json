@@ -22,6 +22,14 @@
     "importTraces": [
       {
         "traceId": "import-trace-source-specific",
+        "sourceFileDigest": "sha256:722b3210717148fd541d1cbac69acac881a1ef0bd921736477ae3992d494f7d6",
+        "sourceFileDigestScope": "raw-artifact-bytes",
+        "parserWarnings": [
+          {
+            "category": "import-trace-warning",
+            "message": "source file parser completed with warnings"
+          }
+        ],
         "records": [
           {
             "sourceDatabaseOrTool": "scopus-csv",
@@ -31,7 +39,14 @@
               "scopus:EID:2-s2.0-8500000000"
             ],
             "workIds": [],
-            "isUnresolved": true
+            "isUnresolved": true,
+            "rawRecordDigest": "sha256:af45546db0a0d3d48d725b18d8cd11ff8eee630c679d5e4a9ee528ea7b6449c8",
+            "parserWarnings": [
+              {
+                "category": "source-id-normalized",
+                "message": "source-specific ids retained as evidence-only"
+              }
+            ]
           },
           {
             "sourceDatabaseOrTool": "scopus-csv",
@@ -41,7 +56,8 @@
               "scopus:EID:2-s2.0-8500000000"
             ],
             "workIds": [],
-            "isUnresolved": true
+            "isUnresolved": true,
+            "rawRecordDigest": "sha256:acde0ae4897d7da513a5563d240cdb697a6e70df43c2857243c6ab7d5354e062"
           }
         ]
       }
@@ -49,7 +65,34 @@
     "expected": {
       "clusters": 0,
       "unresolved": 2,
-      "reviewRequired": 1
+      "reviewRequired": 1,
+      "expectedSourceFileDigest": {
+        "traceId": "import-trace-source-specific",
+        "digest": "sha256:722b3210717148fd541d1cbac69acac881a1ef0bd921736477ae3992d494f7d6"
+      },
+      "expectedRawRecordDigests": [
+        {
+          "traceId": "import-trace-source-specific",
+          "sourceRecordId": "s1",
+          "digest": "sha256:af45546db0a0d3d48d725b18d8cd11ff8eee630c679d5e4a9ee528ea7b6449c8"
+        },
+        {
+          "traceId": "import-trace-source-specific",
+          "sourceRecordId": "s2",
+          "digest": "sha256:acde0ae4897d7da513a5563d240cdb697a6e70df43c2857243c6ab7d5354e062"
+        }
+      ],
+      "expectedParserWarnings": [
+        {
+          "traceId": "import-trace-source-specific",
+          "category": "import-trace-warning"
+        },
+        {
+          "traceId": "import-trace-source-specific",
+          "sourceRecordId": "s1",
+          "category": "source-id-normalized"
+        }
+      ]
     }
   }
 }

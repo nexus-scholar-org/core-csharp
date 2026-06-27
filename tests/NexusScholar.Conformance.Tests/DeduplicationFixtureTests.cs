@@ -24,6 +24,7 @@ public sealed class DeduplicationFixtureTests
         "dedup-exact-cross-provider-id-cluster",
         "dedup-transitive-cluster",
         "dedup-fuzzy-title-review-required",
+        "dedup-fuzzy-title-below-threshold-no-review",
         "dedup-threshold-95-boundary",
         "dedup-no-id-title-only-no-auto-merge",
         "dedup-representative-election",
@@ -208,6 +209,89 @@ public sealed class DeduplicationFixtureTests
                     result.Clusters[0].Representative.CandidateId,
                     fixtureId);
             }
+
+            Assert.IsTrue(
+                result.Evidence.Where(item => item.Kind == DedupEvidenceKind.ExactIdentifier).All(item => !item.ReviewRequired),
+                $"{fixtureId}: exact identifier evidence must not require review");
+
+            Assert.IsTrue(
+                result.Evidence.Where(item => item.Kind == DedupEvidenceKind.SourceSighting).All(item => !item.ReviewRequired),
+                $"{fixtureId}: source sighting evidence must not require review");
+
+            Assert.IsTrue(
+                result.Evidence.Where(item => item.Kind == DedupEvidenceKind.FuzzyTitle).All(item => item.ReviewRequired),
+                $"{fixtureId}: fuzzy-title evidence must require review");
+
+            Assert.IsTrue(
+                result.Evidence.Where(item => item.Kind == DedupEvidenceKind.NoIdCandidate).All(item => item.ReviewRequired),
+                $"{fixtureId}: no-id evidence must require review");
+
+            Assert.IsTrue(
+                result.Evidence.Where(item => item.Kind == DedupEvidenceKind.SourceSpecificIdentifier).All(item => item.ReviewRequired),
+                $"{fixtureId}: source-specific evidence must require review");
+
+            if (expected.TryGetProperty("expectedSourceFileDigest", out var expectedSourceFileDigest))
+            {
+                var expectedTraceId = expectedSourceFileDigest.GetProperty("traceId").GetString();
+                var expectedDigest = expectedSourceFileDigest.GetProperty("digest").GetString();
+                var trace = importTraces.SingleOrDefault(item => string.Equals(item.TraceId, expectedTraceId, StringComparison.Ordinal));
+                Assert.IsNotNull(trace, $"{fixtureId}: missing expected import trace '{expectedTraceId}'");
+                Assert.AreEqual(expectedDigest, trace.Metadata.SourceFileDigest, fixtureId);
+            }
+
+            if (expected.TryGetProperty("expectedRawRecordDigests", out var expectedRawRecordDigestsElement))
+            {
+                foreach (var expectedRawRecordDigest in expectedRawRecordDigestsElement.EnumerateArray())
+                {
+                    var expectedTraceId = expectedRawRecordDigest.GetProperty("traceId").GetString();
+                    var expectedSourceRecordId = expectedRawRecordDigest.GetProperty("sourceRecordId").GetString();
+                    var expectedDigest = expectedRawRecordDigest.GetProperty("digest").GetString();
+                    var sourceRecord = importTraces
+                        .Single(item => string.Equals(item.TraceId, expectedTraceId, StringComparison.Ordinal))
+                        .ImportedRecords
+                        .Single(record => string.Equals(record.SourceRecordId, expectedSourceRecordId, StringComparison.Ordinal));
+                    Assert.AreEqual(expectedDigest, sourceRecord.RawRecordDigest, $"{fixtureId}: raw record digest mismatch");
+                }
+            }
+
+            if (expected.TryGetProperty("expectedParserWarnings", out var expectedParserWarnings))
+            {
+                var actualTraceWarnings = importTraces
+                    .SelectMany(trace => trace.ParserWarnings.Select(warning => (trace.TraceId, warning)))
+                    .ToArray();
+
+                var actualRecordWarnings = importTraces
+                    .SelectMany(trace => trace.ImportedRecords.SelectMany(record => record.Notices.Select(notice => (trace.TraceId, record.SourceRecordId, notice))))
+                    .ToArray();
+
+                foreach (var expectedParserWarning in expectedParserWarnings.EnumerateArray())
+                {
+                    var expectedTraceId = expectedParserWarning.GetProperty("traceId").GetString();
+                    var expectedCategory = expectedParserWarning.GetProperty("category").GetString();
+                    var expectedSourceRecordId = expectedParserWarning.TryGetProperty("sourceRecordId", out var sourceRecordIdElement)
+                        ? sourceRecordIdElement.GetString()
+                        : null;
+                    var expectedMessage = expectedParserWarning.TryGetProperty("message", out var messageElement)
+                        ? messageElement.GetString()
+                        : null;
+
+                    var matched = actualTraceWarnings.Any(item =>
+                        string.Equals(item.TraceId, expectedTraceId, StringComparison.Ordinal) &&
+                        string.Equals(item.warning.Category, expectedCategory, StringComparison.Ordinal) &&
+                        (expectedMessage is null || string.Equals(item.warning.Message, expectedMessage, StringComparison.Ordinal)));
+
+                    if (!matched)
+                    {
+                        matched = actualRecordWarnings.Any(item =>
+                            string.Equals(item.TraceId, expectedTraceId, StringComparison.Ordinal) &&
+                            (expectedSourceRecordId is null || string.Equals(item.SourceRecordId, expectedSourceRecordId, StringComparison.Ordinal)) &&
+                            string.Equals(item.notice.Category, expectedCategory, StringComparison.Ordinal) &&
+                            (expectedMessage is null || string.Equals(item.notice.Message, expectedMessage, StringComparison.Ordinal)));
+                    }
+
+                    Assert.IsTrue(matched, $"{fixtureId}: parser warning mismatch for category '{expectedCategory}'.");
+                }
+            }
         }
     }
 
@@ -263,6 +347,13 @@ public sealed class DeduplicationFixtureTests
             {
                 var traceId = traceElement.GetProperty("traceId").GetString() ?? $"import-trace-{traceIndex}";
                 var records = ReadImportRecords(fixtureId, traceId, traceElement);
+                var sourceFileDigest = ReadOptionalString(traceElement, "sourceFileDigest")
+                    ?? "sha256:704c4ddfcee82cca7263d381d6fd4e0bba616e6791e4de1e4e264ffe3b20a9bf";
+                var sourceFileDigestScope = ReadOptionalString(traceElement, "sourceFileDigestScope")
+                    ?? DigestScope.RawArtifactBytes.ToString();
+                var parserWarnings = traceElement.TryGetProperty("parserWarnings", out var parserWarningsElement)
+                    ? ReadParserWarnings(parserWarningsElement)
+                    : Array.Empty<SearchImportParserNotice>();
 
                 var metadata = new SearchImportMetadata(
                     SearchImportMetadata.AcquisitionKindImportedExport,
@@ -270,14 +361,14 @@ public sealed class DeduplicationFixtureTests
                     "dedup-fixture",
                     "dedup-parser",
                     "1.0.0",
-                    $"sha256:{traceId}-source-file-digest",
-                    DigestScope.RawArtifactBytes.ToString(),
+                    sourceFileDigest,
+                    sourceFileDigestScope,
                     "import-operator",
                     "2026-06-27T00:00:00Z",
                     null,
                     null,
                     records.Count,
-                    Array.Empty<SearchImportParserNotice>());
+                    parserWarnings);
 
                 return new SearchImportTrace(
                     traceId,
@@ -286,7 +377,7 @@ public sealed class DeduplicationFixtureTests
                     metadata,
                     records,
                     Array.Empty<SearchSighting>().AsReadOnly(),
-                    Array.Empty<SearchImportParserNotice>(),
+                    parserWarnings,
                     SearchImportTrace.DefaultNonClaims);
             })
             .ToArray();
@@ -354,6 +445,10 @@ public sealed class DeduplicationFixtureTests
                 var sourceIdentifiers = recordElement.TryGetProperty("sourceIdentifiers", out var sourceIdentifierElement)
                     ? ReadStringArray(sourceIdentifierElement)
                     : Array.Empty<string>();
+                var sourceNoticeRecords = recordElement.TryGetProperty("parserWarnings", out var parserWarningsElement)
+                    ? ReadParserWarnings(parserWarningsElement)
+                    : Array.Empty<SearchImportParserNotice>();
+                var rawRecordDigest = ReadOptionalString(recordElement, "rawRecordDigest");
 
                 var work = isUnresolved || workIds.Length == 0
                     ? ScholarlyWork.UnresolvedCandidate(title, $"import:{sourceRecordId}")
@@ -370,11 +465,11 @@ public sealed class DeduplicationFixtureTests
                     null,
                     null,
                     Array.Empty<string>(),
-                    null,
+                    rawRecordDigest,
                     null,
                     false,
                     null,
-                    Array.Empty<SearchImportParserNotice>());
+                    sourceNoticeRecords);
             })
             .ToArray();
     }
@@ -407,6 +502,34 @@ public sealed class DeduplicationFixtureTests
 
     private static string[] ReadStringArray(JsonElement arrayElement) =>
         arrayElement.EnumerateArray().Select(item => item.GetString() ?? string.Empty).ToArray();
+
+    private static string? ReadOptionalString(JsonElement sourceElement, string propertyName)
+    {
+        return sourceElement.TryGetProperty(propertyName, out var value) && value.ValueKind != JsonValueKind.Null
+            ? value.GetString()
+            : null;
+    }
+
+    private static int? ReadNullableInt(JsonElement sourceElement, string propertyName)
+    {
+        return sourceElement.TryGetProperty(propertyName, out var value) && value.ValueKind != JsonValueKind.Null
+            ? value.GetInt32()
+            : null;
+    }
+
+    private static SearchImportParserNotice[] ReadParserWarnings(JsonElement warningElement)
+    {
+        return warningElement.EnumerateArray()
+            .Select(warning =>
+            {
+                var category = warning.GetProperty("category").GetString() ?? string.Empty;
+                var message = warning.GetProperty("message").GetString() ?? string.Empty;
+                var recordIndex = ReadNullableInt(warning, "recordIndex");
+                var sourceRecordId = ReadOptionalString(warning, "sourceRecordId");
+                return new SearchImportParserNotice(category, message, recordIndex, sourceRecordId);
+            })
+            .ToArray();
+    }
 
     private static int GetOptionalInt(JsonElement element, string propertyName)
     {

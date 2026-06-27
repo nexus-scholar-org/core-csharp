@@ -1,6 +1,6 @@
 # Gate 9 Deduplication
 
-Status: local implementation implemented on `cdx/gate-9-dedup-local`.
+Status: local implementation behavior updates applied on `cdx/gate-9-dedup-local`; gate remains pending complete review until conformance replay blockers are resolved.
 
 ## Goal
 
@@ -47,7 +47,7 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
 
 ## Implemented Behavior
 
-- Deduplication input is raw Search trace/import sighting and import metadata evidence.
+- Deduplication input replay uses raw Search trace/import sighting and import metadata evidence from fixtures.
 - Exact duplicate clustering is namespace-sensitive and deterministic.
 - Exact identifier evidence auto-forms clusters with transitive closure.
 - Fuzzy title candidate matching is review-only:
@@ -75,6 +75,7 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
 - `tests/NexusScholar.Conformance.Tests/DeduplicationFixtureTests.cs`
   - required fixture presence
   - metadata check for local-gate-9-dedup fixture set
+  - replay-and-match of expected cluster/evidence/review/unresolved behavior against fixture expectations
 
 ## Fixture IDs (local)
 
@@ -83,11 +84,13 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
 - `dedup-transitive-cluster`
 - `dedup-fuzzy-title-review-required`
 - `dedup-threshold-95-boundary`
+- `dedup-fuzzy-title-below-threshold-no-review`
 - `dedup-no-id-title-only-no-auto-merge`
 - `dedup-representative-election`
 - `dedup-representative-merge-preserves-evidence`
 - `dedup-raw-sightings-preserved`
 - `dedup-web-app-projection-not-authority`
+- `dedup-source-specific-id-not-workid-review-only`
 
 ## Conflict Status
 

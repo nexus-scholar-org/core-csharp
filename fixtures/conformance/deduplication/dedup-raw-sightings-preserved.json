@@ -46,20 +46,36 @@
     "importTraces": [
       {
         "traceId": "import-trace-raw",
+        "sourceFileDigest": "sha256:704c4ddfcee82cca7263d381d6fd4e0bba616e6791e4de1e4e264ffe3b20a9bf",
+        "sourceFileDigestScope": "raw-artifact-bytes",
+        "parserWarnings": [
+          {
+            "category": "source-file-trimmed",
+            "message": "input file trimmed to parseable import section"
+          }
+        ],
         "records": [
           {
             "sourceDatabaseOrTool": "ris",
             "sourceRecordId": "r1",
             "title": "Imported raw evidence",
             "workIds": ["pubmed:999"],
-            "isUnresolved": false
+            "isUnresolved": false,
+            "rawRecordDigest": "sha256:c5114891ceafc670c59d1493000b13b0887629045244a7e2aed20852e0f06183",
+            "parserWarnings": [
+              {
+                "category": "record-title-case",
+                "message": "title normalized before deduplication"
+              }
+            ]
           },
           {
             "sourceDatabaseOrTool": "ris",
             "sourceRecordId": "r2",
             "title": "Unresolved import",
             "workIds": [],
-            "isUnresolved": true
+            "isUnresolved": true,
+            "rawRecordDigest": "sha256:7b6bdce0dcf03d938dba306ba6e7d011cceb09ee5c85cfba8f10f3b4ca9b57d2"
           }
         ]
       }
@@ -70,7 +86,34 @@
       "unresolved": 1,
       "reviewRequired": 0,
       "sourceSearchTraces": 1,
-      "sourceImportTraces": 1
+      "sourceImportTraces": 1,
+      "expectedSourceFileDigest": {
+        "traceId": "import-trace-raw",
+        "digest": "sha256:704c4ddfcee82cca7263d381d6fd4e0bba616e6791e4de1e4e264ffe3b20a9bf"
+      },
+      "expectedRawRecordDigests": [
+        {
+          "traceId": "import-trace-raw",
+          "sourceRecordId": "r1",
+          "digest": "sha256:c5114891ceafc670c59d1493000b13b0887629045244a7e2aed20852e0f06183"
+        },
+        {
+          "traceId": "import-trace-raw",
+          "sourceRecordId": "r2",
+          "digest": "sha256:7b6bdce0dcf03d938dba306ba6e7d011cceb09ee5c85cfba8f10f3b4ca9b57d2"
+        }
+      ],
+      "expectedParserWarnings": [
+        {
+          "traceId": "import-trace-raw",
+          "category": "source-file-trimmed"
+        },
+        {
+          "traceId": "import-trace-raw",
+          "sourceRecordId": "r1",
+          "category": "record-title-case"
+        }
+      ]
     }
   }
 }
