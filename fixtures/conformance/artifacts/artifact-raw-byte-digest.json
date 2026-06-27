@@ -1,0 +1,26 @@
+{
+  "fixtureId": "artifact-raw-byte-digest",
+  "sourceKind": "local-gate-6-contract",
+  "sourceCommit": "local-gate-6-implementation",
+  "generatorCommand": "hand-authored local Gate 6 bundle fixture",
+  "generatorVersion": "gate-6-v1",
+  "sourceRefs": [
+    "docs/adr/0009-portable-bundle-and-artifact-contract.md",
+    "docs/adr/0002-canonical-json-and-digests.md",
+    "docs/gates/GATE-06.md"
+  ],
+  "comparisonRules": [
+    "local-csharp-contract-only",
+    "no-php-compatibility-claim",
+    "no-blueprint-conformance-claim"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:7ce4cf78473f2db512ac55fba15a8a7db65fdffe43d8060a2b4f7a24aec577f8",
+  "case": {
+    "negative": false,
+    "recordType": "artifact-raw-byte-digest",
+    "digestScope": "raw-artifact-bytes",
+    "bytesUtf8": "{\"query\":\"nexus scholar\"}\n",
+    "expectedDigest": "sha256:7ce4cf78473f2db512ac55fba15a8a7db65fdffe43d8060a2b4f7a24aec577f8"
+  }
+}

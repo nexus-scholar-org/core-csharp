@@ -1,0 +1,36 @@
+{
+  "fixtureId": "bundle-manifest-with-protocol-workflow-provenance",
+  "sourceKind": "local-gate-6-contract",
+  "sourceCommit": "local-gate-6-implementation",
+  "generatorCommand": "hand-authored local Gate 6 bundle fixture",
+  "generatorVersion": "gate-6-v1",
+  "sourceRefs": [
+    "docs/adr/0009-portable-bundle-and-artifact-contract.md",
+    "docs/adr/0003-protocol-record-contract.md",
+    "docs/adr/0006-workflow-compiler-semantics.md",
+    "docs/adr/0008-provenance-ledger.md",
+    "docs/gates/GATE-06.md"
+  ],
+  "comparisonRules": [
+    "local-csharp-contract-only",
+    "no-php-compatibility-claim",
+    "no-blueprint-conformance-claim"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "case": {
+    "negative": false,
+    "schemaId": "nexus.review-bundle.manifest",
+    "schemaVersion": "1.0.0",
+    "digestScope": "bundle-manifest",
+    "includes": [
+      "protocol_binding",
+      "workflow_binding",
+      "provenance_bindings"
+    ],
+    "nonClaims": [
+      "no-php-compatibility-claim",
+      "no-blueprint-conformance-claim"
+    ]
+  }
+}

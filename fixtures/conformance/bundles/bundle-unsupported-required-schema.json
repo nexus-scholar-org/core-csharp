@@ -1,0 +1,22 @@
+{
+  "fixtureId": "bundle-unsupported-required-schema",
+  "sourceKind": "local-gate-6-contract",
+  "sourceCommit": "local-gate-6-implementation",
+  "generatorCommand": "hand-authored local Gate 6 bundle fixture",
+  "generatorVersion": "gate-6-v1",
+  "sourceRefs": [
+    "docs/adr/0009-portable-bundle-and-artifact-contract.md",
+    "docs/gates/GATE-06.md"
+  ],
+  "comparisonRules": [
+    "local-csharp-contract-only",
+    "no-php-compatibility-claim",
+    "no-blueprint-conformance-claim"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "case": {
+    "negative": true,
+    "errorCategory": "unsupported-required-schema"
+  }
+}

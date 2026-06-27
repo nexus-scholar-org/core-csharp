@@ -1,17 +1,17 @@
 # Gate 6: Portable Bundle and Artifact Contract
 
-Status: ADR accepted for local planning. Source implementation is not part of this branch.
+Status: implemented for local Gate 6 scope. Hosted CI evidence must still be checked for the exact branch head before merge.
 
 ## Goal
 
-Define the local C# contract for portable review bundles and artifact manifests before implementing export, verification, import, tamper checks, or round-trip behavior.
+Define and implement the local C# contract for portable review bundles and artifact manifests, including deterministic manifest digests, artifact byte checks, staged verification, import-safety checks, tamper categories, fixtures, and evidence.
 
 Gate 6 exists to make a review exportable and verifiable without Nexus Scholar cloud services. It must not silently adopt the blueprint bundle spec as authoritative while `CF-005` remains open.
 
 ## Conflicts Addressed
 
-- `CF-002`: resolved for local Gate 6 planning by `ADR 0009`; implementation and evidence remain pending.
-- `CF-014`: narrowed by `ADR 0009` for local bundle round-trip equality and import safety only; broader corpus snapshot equality remains future work.
+- `CF-002`: implemented for local Gate 6 bundle/artifact scope by `ADR 0009`; blueprint conformance remains unclaimed.
+- `CF-014`: implemented only for local bundle round-trip equality and import safety; broader corpus snapshot equality remains future work.
 - `CF-005`: blueprint authority remains discovery-only; Gate 6 may use blueprint bundle materials as inputs but must not claim blueprint conformance.
 
 ## Accepted Planning Decision
@@ -42,9 +42,9 @@ ADR 0009 decides:
 - what is outside bundle digest;
 - what remains future work.
 
-## Implementation Scope After ADR Acceptance
+## Implementation Scope
 
-Allowed implementation paths:
+Implemented paths:
 
 - `docs/adr/0009-portable-bundle-and-artifact-contract.md`
 - `docs/gates/GATE-06.md`
@@ -71,9 +71,9 @@ Forbidden implementation paths:
 - AI governance behavior
 - workflow execution engine
 
-## Required Local Behavior For Implementation
+## Implemented Local Behavior
 
-The builder should implement only the local Gate 6 behavior accepted in `ADR 0009`:
+The implementation is limited to the local Gate 6 behavior accepted in `ADR 0009`:
 
 - create typed artifact entries with media type, byte size, raw-byte digest, logical path, artifact kind, schema id, schema version, and optional source record digest;
 - reject blank artifact fields, invalid digests, negative size, duplicate logical paths, absolute paths, drive-letter paths, traversal paths, empty segments, and path separator drift;
@@ -88,9 +88,11 @@ The builder should implement only the local Gate 6 behavior accepted in `ADR 000
 - reject destructive overwrite attempts unless an explicit safe-import policy says otherwise;
 - expose verification results as immutable snapshots.
 
+No filesystem writes, persistence, API, UI, cloud sync, provider calls, workflow execution, plugin runtime, or AI governance behavior is implemented.
+
 ## Fixture Plan
 
-Required positive fixture IDs:
+Implemented positive fixture IDs:
 
 - `artifact-raw-byte-digest.json`
 - `artifact-manifest-entry.json`
@@ -99,7 +101,7 @@ Required positive fixture IDs:
 - `bundle-manifest-digest-stable.json`
 - `bundle-roundtrip-local-equivalence.json`
 
-Required negative fixture IDs:
+Implemented negative fixture IDs:
 
 - `artifact-invalid-digest.json`
 - `artifact-negative-size.json`
