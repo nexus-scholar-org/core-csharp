@@ -1,29 +1,32 @@
 # Codex Branch Board
 
-Source: live branch probes from local `main` after the Gate 9 Search import contract merge and GitHub branch cleanup.
+Source: live branch probes from local `main` after the Gate 9 Search import-local merge and GitHub branch cleanup.
 
 ## Main Baseline
 
-- Current `main` head: `89f065b` (`docs: tighten search import contract review findings`).
+- Current product `main` head: `970eef2` (`Record Search import hosted CI evidence`).
 - Gate 0 through Gate 6 are merged into `main`.
 - Gate 9 shared identity is merged into `main`.
 - Gate 9 Search reconnaissance is merged into `main` as docs/planning only.
 - ADR 0010 Search Trace and Plan Contract is merged into `main`.
 - Gate 9 Search local stub-provider implementation is merged into `main`.
 - ADR 0011 Search Import Source Contract is merged into `main`.
+- Gate 9 Search import local first-slice parser implementation is merged into `main`.
 - ADR 0010 branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28289131170`.
 - ADR 0010 push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28289224733`.
 - Gate 9 Search local branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290113371`.
 - Gate 9 Search push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290167673`.
 - ADR 0011 branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290630584`.
 - ADR 0011 push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290718641`.
+- Gate 9 Search import-local final branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28291884081`.
+- Gate 9 Search import-local push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28291938166`.
 - GitHub remote branch cleanup is complete; remote branches now are only `origin/main`.
 - Search local implementation is complete only for deterministic stub-provider Search traces.
-- Imported-export parser readiness is `Yes` for future local parser implementation over user-supplied export files, but no parser is implemented yet.
+- Imported-export parser implementation is complete only for the local first slice: RIS, BibTeX, Scopus CSV/export, exact source-file digest binding, local import actor, parser warnings, skipped-record evidence, no Search-time Deduplication, and no source-specific WorkId namespace promotion.
 
 ## Branch Classes
 
-- merged: `main`, `cdx/gate-9-search-import-contract`, `cdx/gate-9-search-local`, `cdx/gate-9-search-contract`, `cdx/app-recon-cli-web-core-usage`, `cdx/gate-9-search-recon`, `cdx/gate-6-bundle-planning`, `cdx/gate-9-shared-identity`, `cdx/gate-5-provenance`, `cdx/gate-4-workflow`, `cdx/gate-4-workflow-planning`, `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/shared-identity-adr-0007`, `cdx/run-gate-zero-discovery`, `cdx/run-gate-0-discovery`
+- merged: `main`, `cdx/gate-9-search-import-local`, `cdx/gate-9-search-import-contract`, `cdx/gate-9-search-local`, `cdx/gate-9-search-contract`, `cdx/app-recon-cli-web-core-usage`, `cdx/gate-9-search-recon`, `cdx/gate-6-bundle-planning`, `cdx/gate-9-shared-identity`, `cdx/gate-5-provenance`, `cdx/gate-4-workflow`, `cdx/gate-4-workflow-planning`, `cdx/two-model-codex-workflow`, `cdx/main-gate2-merge`, `cdx/gate-3-protocol-lifecycle`, `cdx/gate-3-planning-decisions`, `cdx/gate-2-digest-kernel-cleanup`, `cdx/shared-identity-adr-0007`, `cdx/run-gate-zero-discovery`, `cdx/run-gate-0-discovery`
 - cleanup: local-only historical branches listed above may be pruned locally when desired; GitHub merged branch cleanup is already complete.
 - active: none in the local branch graph after this refresh
 - review: none
@@ -41,10 +44,10 @@ Remote cleanup state should be rechecked with `git branch -r`; at this refresh o
 
 ## Next Work
 
-- Next branch: `cdx/gate-9-search-import-local`.
-- Goal: implement local import parsers over user-supplied export files.
-- Recommended first implementation slice: RIS, BibTeX, Scopus CSV/export, `source_file_digest`, local import actor, and parser warnings.
-- Do not implement live providers, provider/network calls, Scopus API, Web of Science API, Google Scholar scraping, PHP-generated fixtures, PHP compatibility, Deduplication, Screening, persistence/API/UI/cloud, or CLI/Web alignment in the import-local branch.
+- Next branch: `cdx/gate-9-dedup-recon`.
+- Goal: map PHP Deduplication behavior and prepare fixture/comparator planning before any C# Deduplication implementation.
+- Focus areas: raw duplicate input shape, exact/fuzzy duplicate evidence, threshold conflict, transitive clustering, representative election, cluster evidence, no-id candidate handling, and how Deduplication consumes Search traces/imported sightings.
+- Do not implement C# Deduplication, Screening, persistence/API/UI/cloud, provider/network calls, PHP-generated fixtures, or PHP compatibility claims in the reconnaissance branch.
 
 ## Unresolved Boundaries
 
@@ -52,4 +55,6 @@ Remote cleanup state should be rechecked with `git branch -r`; at this refresh o
 - `CF-016`: implemented for raw Search trace and no-Dedup boundary.
 - `CF-017`: implemented for local schema-closed Search plans.
 - `CF-018`: remains narrowed for app consumer boundary.
-- `CF-019`: resolved for local Search import source contract by ADR 0011; parser implementation is now allowed as a local-only future gate with explicit non-claims.
+- `CF-019`: implemented for local first-slice Search import parser behavior only; remaining parser families, live APIs, source-specific namespace expansion, PHP compatibility, and app alignment remain future.
+- `CF-011`: raw duplicate input shape remains important and should be addressed by Deduplication reconnaissance.
+- `CF-012`: title fuzzy threshold conflict remains important and should be addressed by Deduplication reconnaissance.

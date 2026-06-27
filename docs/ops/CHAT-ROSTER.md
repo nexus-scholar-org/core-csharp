@@ -1,10 +1,11 @@
 # Chat Roster
 
-Branch-derived Codex lane roster from current git state after the Gate 9 Search import contract merge and GitHub branch cleanup.
+Branch-derived Codex lane roster from current git state after the Gate 9 Search import-local merge and GitHub branch cleanup.
 
 ## Active Lanes
 
-- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, and ADR 0011 Search Import Source Contract; current head `89f065b`.
+- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, and Gate 9 Search import local first-slice implementation; current product head `970eef2`.
+- Lane `gate-9-search-import-local`: merged local implementation branch `cdx/gate-9-search-import-local`, head `970eef2`.
 - Lane `gate-9-search-import-contract`: merged ADR/contract branch `cdx/gate-9-search-import-contract`, head `89f065b`.
 - Lane `gate-9-search-local`: merged local implementation branch `cdx/gate-9-search-local`, head `9431e4b`.
 - Lane `gate-9-search-contract`: merged ADR/contract branch `cdx/gate-9-search-contract`, head `49d2a60`.
@@ -23,11 +24,12 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Search 
 
 ## Branch Containment Relationships
 
-- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, and ADR 0011.
+- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, ADR 0011, and local first-slice Search import parsers.
 - `main` contains the two-model workflow setup branch and the Gate 9 shared-identity ADR/reconnaissance branch.
 - `cdx/gate-9-search-contract` is now a merged historical lane rather than an active planning branch.
 - `cdx/gate-9-search-local` is now a merged historical lane rather than an active implementation branch.
 - `cdx/gate-9-search-import-contract` is now a merged historical lane rather than an active planning branch.
+- `cdx/gate-9-search-import-local` is now a merged historical lane rather than an active implementation branch.
 - GitHub remote branch cleanup is complete; only `origin/main` remains.
 - No local or remote branches were unmerged from `main` at the time of this refresh.
 
@@ -35,11 +37,12 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Search 
 
 - Gate 9 Search local implementation is merged with green branch CI and green push-triggered `main` CI.
 - ADR 0011 Search Import Source Contract is merged with green branch CI and green push-triggered `main` CI.
+- Gate 9 Search import local first-slice implementation is merged with green branch CI and green push-triggered `main` CI.
 - ADR 0010 defines Search output as a raw trace, not a deduplicated corpus.
 - First Search implementation is stub-provider-only.
-- Imported-export traces are admitted only as user-supplied acquisition evidence; parser implementation is now ready for a local-only implementation gate.
+- Imported-export traces are admitted only as user-supplied acquisition evidence; local first-slice parsers now cover RIS, BibTeX, and Scopus CSV/export only.
 - Search implementation readiness is complete only for local deterministic stub-provider Search.
-- Next branch should be `cdx/gate-9-search-import-local`.
+- Next branch should be `cdx/gate-9-dedup-recon`.
 - GitHub has no cleanup-safe merged remote branches left after this refresh.
 
 ## Explicit Non-Claims For Next Lane
@@ -50,7 +53,7 @@ Branch-derived Codex lane roster from current git state after the Gate 9 Search 
 - no Google Scholar scraping
 - no PHP compatibility
 - no generated PHP fixtures
-- no Deduplication
+- no Deduplication implementation
 - no Screening
 - no persistence/API/UI/cloud
 - no app behavior made authoritative
