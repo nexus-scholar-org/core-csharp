@@ -167,8 +167,10 @@ Deferred planned fixtures:
 - `search-import-parser-warning.json`
 - `search-import-no-id-candidates.json`
 - `search-import-dedup-not-applied.json`
+- `search-import-source-specific-id-not-workid.json`
+- `search-import-google-scholar-scraping-rejected.json`
 
-Coverage, deferred until a Search import contract:
+Coverage, planned by `ADR 0011` and deferred until import parser implementation:
 
 - `acquisition_kind = imported-export`
 - `source_database_or_tool`
@@ -182,6 +184,8 @@ Coverage, deferred until a Search import contract:
 - Scopus EID, Web of Science UT/accession numbers, and other source-specific ids remain source evidence unless a later ADR extends WorkId namespaces
 - DOI, arXiv, PubMed, OpenAlex, Semantic Scholar, IEEE, DOAJ, and internal ids may normalize into existing ADR 0007 namespaces when present
 - Google Scholar-derived evidence is user-supplied export evidence only, such as Publish or Perish CSV; direct Google Scholar scraping is not allowed
+- Scopus API integration and Web of Science API integration are not authorized by the import contract
+- parser errors and warnings use stable categories such as unsupported format, missing source file digest, missing required field, malformed record, unknown identifier type, duplicate source record id, parser warning preserved, and skipped record
 
 These fixtures do not authorize Scopus API integration, Web of Science API integration, Google Scholar scraping, provider SDKs, credentials, network behavior, or import parser implementation.
 
@@ -221,6 +225,7 @@ Required negative cases before implementation claim:
 - unsupported import format, if imported-export parsing is admitted later
 - missing source file digest, if imported-export parsing is admitted later
 - parser warning preserved, if imported-export parsing is admitted later
+- skipped import record preserved as warning/error evidence where possible
 - source-specific id not promoted to WorkId namespace without a later ADR
 - imported title-only duplicate not deduped by Search
 - Google Scholar scraping not allowed
@@ -317,7 +322,7 @@ Fixture and comparator design is ready enough for local implementation with expl
 - generated PHP fixture harness exists
 - PHP comparators classify the `includeRawData` cache difference and PHP Search-time deduplication difference
 - cassette-backed provider fixture generation is explicitly admitted
-- imported-export parser behavior is defined by a future Search import contract
+- imported-export parser behavior is planned by `ADR 0011`; implementation remains pending
 - Deduplication and Screening behavior are handled in later gates
 - persistence/API/UI/job/cloud behavior is admitted by a later scope
 
