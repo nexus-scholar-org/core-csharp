@@ -148,6 +148,27 @@ public sealed class DependencyRulesTests
     }
 
     [TestMethod]
+    public void Bundle_project_uses_field_level_bindings_without_outward_domain_references()
+    {
+        var bundleAssembly = typeof(ReviewBundleManifest).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name
+        };
+        var disallowed = bundleAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(
+            0,
+            disallowed.Length,
+            $"NexusScholar.Bundles must not depend on Protocol, Workflow, Provenance, or Artifacts. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
     public void Provenance_event_digest_scope_is_kernel_level()
     {
         var record = ResearchEventFactory.Create(

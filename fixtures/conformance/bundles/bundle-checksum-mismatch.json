@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:6bfe975f57be8da58d62d89c75bb016d4d8f09a91d03ffdcc452b12a1fddd440",
+  "outputDigest": "sha256:2f280e8706a31b219b8782a066cde7b9c3e72f3c5237feeeadb4e514922488f3",
   "case": {
     "negative": true,
     "errorCategory": "checksum-mismatch"

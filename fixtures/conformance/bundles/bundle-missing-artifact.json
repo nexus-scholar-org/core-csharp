@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:96ab42de1f735ad4c41824a65d4c01bec6f68386a3127c959fa05f33fe3c58a0",
+  "outputDigest": "sha256:9ae42cf3b7a88917d5b4d43ed4626767dbc8612d05a0baff21bd8abc4d943506",
   "case": {
     "negative": true,
     "errorCategory": "missing-artifact"

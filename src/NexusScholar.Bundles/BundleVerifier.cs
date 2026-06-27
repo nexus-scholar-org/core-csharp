@@ -15,7 +15,7 @@ public sealed class BundleVerifier
         var verifiedArtifacts = new List<BundleArtifactEntry>();
 
         ValidateManifestIdentity(manifest, errors);
-        ValidateProtocolBinding(manifest, errors);
+        ValidateProtocolBinding(manifest, verificationOptions, errors);
         ValidateWorkflowBinding(manifest, errors);
         ValidateRequiredSchemas(manifest, verificationOptions, errors);
         ValidateProvenanceBindings(manifest, verificationOptions, errors);
@@ -88,6 +88,7 @@ public sealed class BundleVerifier
 
     private static void ValidateProtocolBinding(
         ReviewBundleManifest manifest,
+        BundleVerificationOptions options,
         ICollection<BundleVerificationFinding> errors)
     {
         if (!manifest.ProtocolBinding.IsApproved)
@@ -103,6 +104,29 @@ public sealed class BundleVerifier
             errors.Add(new BundleVerificationFinding(
                 BundleErrorCodes.InvalidProtocolBinding,
                 "Protocol binding digest must be a canonical content digest.",
+                manifest.ProtocolBinding.ProtocolVersionId));
+            return;
+        }
+
+        if (!options.KnownProtocolContentDigests.TryGetValue(
+                manifest.ProtocolBinding.ProtocolVersionId,
+                out var knownProtocolDigest))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProtocolBinding,
+                "Protocol binding digest must match a known protocol-content envelope digest.",
+                manifest.ProtocolBinding.ProtocolVersionId));
+            return;
+        }
+
+        if (!string.Equals(
+                knownProtocolDigest.ToString(),
+                manifest.ProtocolBinding.ProtocolContentDigest.ToString(),
+                StringComparison.Ordinal))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProtocolBinding,
+                "Protocol binding digest does not match the known protocol-content envelope digest.",
                 manifest.ProtocolBinding.ProtocolVersionId));
         }
     }
@@ -181,8 +205,16 @@ public sealed class BundleVerifier
                 continue;
             }
 
-            if (options.KnownProvenanceEventDigests.TryGetValue(binding.EventId, out var knownDigest) &&
-                !string.Equals(knownDigest.ToString(), binding.EventDigest.ToString(), StringComparison.Ordinal))
+            if (!options.KnownProvenanceEventDigests.TryGetValue(binding.EventId, out var knownDigest))
+            {
+                errors.Add(new BundleVerificationFinding(
+                    BundleErrorCodes.InvalidProvenanceBinding,
+                    "Provenance binding digest must match a known provenance-event envelope digest.",
+                    binding.EventId));
+                continue;
+            }
+
+            if (!string.Equals(knownDigest.ToString(), binding.EventDigest.ToString(), StringComparison.Ordinal))
             {
                 errors.Add(new BundleVerificationFinding(
                     BundleErrorCodes.InvalidProvenanceBinding,
@@ -234,6 +266,11 @@ public sealed class BundleVerifier
                     artifact.LogicalPath));
             }
 
+            if (artifact.ProvenanceEventDigest is not null)
+            {
+                ValidateArtifactProvenanceDigest(artifact, options, errors);
+            }
+
             if (!options.ArtifactBytes.TryGetValue(artifact.LogicalPath, out var bytes))
             {
                 errors.Add(new BundleVerificationFinding(
@@ -263,6 +300,47 @@ public sealed class BundleVerifier
             }
 
             verifiedArtifacts.Add(artifact);
+        }
+    }
+
+    private static void ValidateArtifactProvenanceDigest(
+        BundleArtifactEntry artifact,
+        BundleVerificationOptions options,
+        ICollection<BundleVerificationFinding> errors)
+    {
+        if (!HasValidDigest(artifact.ProvenanceEventDigest!.Value))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProvenanceBinding,
+                "Artifact provenance event digest must be a canonical content digest.",
+                artifact.LogicalPath));
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(artifact.ProvenanceEventId))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProvenanceBinding,
+                "Artifact provenance event digest requires a provenance event id.",
+                artifact.LogicalPath));
+            return;
+        }
+
+        if (!options.KnownProvenanceEventDigests.TryGetValue(artifact.ProvenanceEventId, out var knownDigest))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProvenanceBinding,
+                "Artifact provenance event digest must match a known provenance-event envelope digest.",
+                artifact.LogicalPath));
+            return;
+        }
+
+        if (!string.Equals(knownDigest.ToString(), artifact.ProvenanceEventDigest.Value.ToString(), StringComparison.Ordinal))
+        {
+            errors.Add(new BundleVerificationFinding(
+                BundleErrorCodes.InvalidProvenanceBinding,
+                "Artifact provenance event digest does not match the known provenance-event envelope digest.",
+                artifact.LogicalPath));
         }
     }
 

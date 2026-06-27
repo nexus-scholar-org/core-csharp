@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:90e86da4d971ab4d768677d147b724e2b3915a437bc2cd5543e8e9f031f72a6f",
+  "outputDigest": "sha256:694939a9b28499aa5e8895b6c96ced8a164b62110a40ecdac7f9e5fff92f5ad2",
   "case": {
     "negative": true,
     "errorCategory": "destructive-overwrite"

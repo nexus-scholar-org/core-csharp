@@ -2,6 +2,8 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Bundles;
 using NexusScholar.Kernel;
+using NexusScholar.Protocol;
+using NexusScholar.Provenance;
 using NexusScholar.Shared;
 
 namespace NexusScholar.Core.Tests;
@@ -9,6 +11,9 @@ namespace NexusScholar.Core.Tests;
 [TestClass]
 public sealed class BundleTests
 {
+    private const string ProtocolId = "protocol-1";
+    private const string ProtocolVersionId = "protocol-version-1";
+
     private static readonly DateTimeOffset FixedTime = new(2026, 6, 27, 1, 0, 0, TimeSpan.Zero);
 
     [TestMethod]
@@ -31,10 +36,13 @@ public sealed class BundleTests
             string.Empty,
             "/absolute/path.json",
             "C:/absolute/path.json",
+            "file:///tmp/artifact.json",
             "https://example.test/artifact.json",
+            "./artifacts/search-plan.json",
             "artifacts\\artifact.json",
             "artifacts/../artifact.json",
             "artifacts/./artifact.json",
+            "artifacts/search-plan.json/.",
             "artifacts//artifact.json",
             "artifacts/"
         };
@@ -133,12 +141,39 @@ public sealed class BundleTests
     public void Verifier_rejects_duplicate_logical_paths()
     {
         var artifact = CreateArtifact();
-        var duplicate = CreateArtifact(artifactRef: "artifact-2");
+        var duplicate = CreateArtifact(artifactRef: "artifact-2", path: " artifacts/search-plan.json ");
         var result = new BundleVerifier().Verify(
             CreateManifest(artifacts: new[] { artifact, duplicate }),
             CreateOptions(artifact, ArtifactBytes()));
 
         AssertHasCategory(result, BundleErrorCodes.DuplicateArtifactPath);
+    }
+
+    [TestMethod]
+    public void Verifier_rejects_unapproved_unknown_or_stale_protocol_binding_digest()
+    {
+        var actualVersion = ApprovedProtocolVersion();
+        var actualDigest = actualVersion.ToProtocolContentDigestEnvelope().ComputeDigest();
+
+        Assert.AreEqual(DigestScope.ProtocolContent, actualVersion.ToProtocolContentDigestEnvelope().Scope);
+        Assert.AreEqual(ProtocolDigest(), actualDigest);
+
+        var unapproved = new BundleVerifier().Verify(
+            CreateManifest(protocolStatus: "draft"),
+            CreateOptions(CreateArtifact(), ArtifactBytes()));
+        var unknown = new BundleVerifier().Verify(
+            CreateManifest(),
+            CreateOptions(CreateArtifact(), ArtifactBytes()) with
+            {
+                KnownProtocolContentDigests = new Dictionary<string, ContentDigest>(StringComparer.Ordinal)
+            });
+        var stale = new BundleVerifier().Verify(
+            CreateManifest(protocolContentDigest: ContentDigest.Sha256Utf8("unscoped-protocol-payload")),
+            CreateOptions(CreateArtifact(), ArtifactBytes()));
+
+        AssertHasCategory(unapproved, BundleErrorCodes.InvalidProtocolBinding);
+        AssertHasCategory(unknown, BundleErrorCodes.InvalidProtocolBinding);
+        AssertHasCategory(stale, BundleErrorCodes.InvalidProtocolBinding);
     }
 
     [TestMethod]
@@ -207,7 +242,7 @@ public sealed class BundleTests
             artifacts: new[] { artifact },
             requiredSchemas: new[] { new BundleSchemaRef("unsupported.schema", "1.0.0") });
         var staleDigest = ContentDigest.Sha256Utf8("stale");
-        var workflowMismatch = CreateManifest(
+        var workflowVersionMismatch = CreateManifest(
             workflowBinding: new BundleWorkflowBinding(
                 "workflow-1",
                 ContentDigest.Sha256Utf8("workflow"),
@@ -216,24 +251,40 @@ public sealed class BundleTests
                 ContentDigest.Sha256Utf8("template"),
                 "wrong-protocol-version",
                 ProtocolDigest()));
+        var workflowDigestMismatch = CreateManifest(
+            workflowBinding: new BundleWorkflowBinding(
+                "workflow-1",
+                ContentDigest.Sha256Utf8("workflow"),
+                "template-1",
+                "1.0.0",
+                ContentDigest.Sha256Utf8("template"),
+                ProtocolVersionId,
+                ContentDigest.Sha256Utf8("wrong-protocol-content")));
+        var eventRecord = CreateProvenanceEvent();
         var provenanceMismatch = CreateManifest(
             provenanceBindings: new[]
             {
-                new BundleProvenanceBinding("event-1", ContentDigest.Sha256Utf8("actual"), "activity", FixedTime, "actor-1")
+                new BundleProvenanceBinding(eventRecord.EventId.ToString(), ContentDigest.Sha256Utf8("actual"), "activity", FixedTime, "actor-1")
             });
+        var provenanceUnknown = CreateManifest(
+            provenanceBindings: new[] { CreateProvenanceBinding(eventRecord) });
 
         var unsupportedResult = new BundleVerifier().Verify(manifest, CreateOptions(artifact, ArtifactBytes()));
         var staleResult = new BundleVerifier().Verify(CreateManifest(), CreateOptions(CreateArtifact(), ArtifactBytes()) with { ExpectedManifestDigest = staleDigest });
-        var workflowResult = new BundleVerifier().Verify(workflowMismatch, CreateOptions(CreateArtifact(), ArtifactBytes()));
+        var workflowVersionResult = new BundleVerifier().Verify(workflowVersionMismatch, CreateOptions(CreateArtifact(), ArtifactBytes()));
+        var workflowDigestResult = new BundleVerifier().Verify(workflowDigestMismatch, CreateOptions(CreateArtifact(), ArtifactBytes()));
         var provenanceResult = new BundleVerifier().Verify(
             provenanceMismatch,
             CreateOptions(CreateArtifact(), ArtifactBytes()) with
             {
                 KnownProvenanceEventDigests = new Dictionary<string, ContentDigest>(StringComparer.Ordinal)
                 {
-                    ["event-1"] = ContentDigest.Sha256Utf8("expected")
+                    [eventRecord.EventId.ToString()] = eventRecord.ToDigestEnvelope().ComputeDigest()
                 }
             });
+        var provenanceUnknownResult = new BundleVerifier().Verify(
+            provenanceUnknown,
+            CreateOptions(CreateArtifact(), ArtifactBytes()));
         var overwriteResult = new BundleVerifier().Verify(
             CreateManifest(),
             CreateOptions(CreateArtifact(), ArtifactBytes()) with
@@ -246,9 +297,31 @@ public sealed class BundleTests
 
         AssertHasCategory(unsupportedResult, BundleErrorCodes.UnsupportedRequiredSchema);
         AssertHasCategory(staleResult, BundleErrorCodes.StaleManifestDigest);
-        AssertHasCategory(workflowResult, BundleErrorCodes.InvalidWorkflowBinding);
+        AssertHasCategory(workflowVersionResult, BundleErrorCodes.InvalidWorkflowBinding);
+        AssertHasCategory(workflowDigestResult, BundleErrorCodes.InvalidWorkflowBinding);
         AssertHasCategory(provenanceResult, BundleErrorCodes.InvalidProvenanceBinding);
+        AssertHasCategory(provenanceUnknownResult, BundleErrorCodes.InvalidProvenanceBinding);
         AssertHasCategory(overwriteResult, BundleErrorCodes.DestructiveOverwrite);
+    }
+
+    [TestMethod]
+    public void Verifier_preserves_manifest_digest_when_tamper_or_verification_reports_change()
+    {
+        var artifact = CreateArtifact();
+        var manifest = CreateManifest(artifacts: new[] { artifact });
+        var valid = new BundleVerifier().Verify(manifest, CreateOptions(artifact, ArtifactBytes()));
+        var stale = new BundleVerifier().Verify(
+            manifest,
+            CreateOptions(artifact, ArtifactBytes()) with { ExpectedManifestDigest = ContentDigest.Sha256Utf8("stale") });
+        var tampered = new BundleVerifier().Verify(
+            manifest,
+            CreateOptions(artifact, Encoding.UTF8.GetBytes("different bytes")));
+
+        Assert.IsTrue(valid.IsValid);
+        AssertHasCategory(stale, BundleErrorCodes.StaleManifestDigest);
+        AssertHasCategory(tampered, BundleErrorCodes.ChecksumMismatch);
+        Assert.AreEqual(valid.ManifestDigest, stale.ManifestDigest);
+        Assert.AreEqual(valid.ManifestDigest, tampered.ManifestDigest);
     }
 
     [TestMethod]
@@ -270,7 +343,7 @@ public sealed class BundleTests
     private static byte[] ArtifactBytes(string value = "{\"query\":\"nexus scholar\"}\n") =>
         Encoding.UTF8.GetBytes(value);
 
-    private static ContentDigest ProtocolDigest() => ContentDigest.Sha256Utf8("protocol-content");
+    private static ContentDigest ProtocolDigest() => ApprovedProtocolVersion().ToProtocolContentDigestEnvelope().ComputeDigest();
 
     private static BundleArtifactEntry CreateArtifact(
         string artifactRef = "search-plan",
@@ -298,17 +371,19 @@ public sealed class BundleTests
         BundleWorkflowBinding? workflowBinding = null,
         IEnumerable<BundleProvenanceBinding>? provenanceBindings = null,
         IEnumerable<BundleSharedIdentityMembership>? sharedIdentityMembership = null,
-        IEnumerable<BundleUnresolvedCandidate>? unresolvedCandidates = null)
+        IEnumerable<BundleUnresolvedCandidate>? unresolvedCandidates = null,
+        string protocolStatus = BundleConstants.ApprovedProtocolStatus,
+        ContentDigest? protocolContentDigest = null)
     {
         return new ReviewBundleManifest(
             "bundle-1",
             "researcher-1",
             new BundleProtocolBinding(
-                "protocol-1",
-                "protocol-version-1",
+                ProtocolId,
+                ProtocolVersionId,
                 1,
-                BundleConstants.ApprovedProtocolStatus,
-                ProtocolDigest()),
+                protocolStatus,
+                protocolContentDigest ?? ProtocolDigest()),
             artifacts ?? new[] { CreateArtifact() },
             requiredSchemas ?? new[] { new BundleSchemaRef("nexus.workflow.artifact", "1.0.0") },
             FixedTime,
@@ -331,6 +406,7 @@ public sealed class BundleTests
         return new BundleVerificationOptions
         {
             SupportedRequiredSchemas = new[] { new BundleSchemaRef("nexus.workflow.artifact", "1.0.0") },
+            KnownProtocolContentDigests = KnownProtocolContentDigests(),
             ArtifactBytes = new Dictionary<string, byte[]>(StringComparer.Ordinal)
             {
                 [logicalPath] = bytes
@@ -338,10 +414,90 @@ public sealed class BundleTests
         };
     }
 
+    private static Dictionary<string, ContentDigest> KnownProtocolContentDigests()
+    {
+        var protocolDigest = ProtocolDigest();
+        return new Dictionary<string, ContentDigest>(StringComparer.Ordinal)
+        {
+            [ProtocolVersionId] = protocolDigest,
+            ["project-1-version"] = protocolDigest
+        };
+    }
+
+    private static ProtocolVersion ApprovedProtocolVersion()
+    {
+        var seed = CreateProtocolVersion(ContentDigest.Sha256Utf8("placeholder-protocol-content"));
+        return CreateProtocolVersion(seed.ToProtocolContentDigestEnvelope().ComputeDigest());
+    }
+
+    private static ProtocolVersion CreateProtocolVersion(ContentDigest contentDigest)
+    {
+        return new ProtocolVersion(
+            ProtocolVersionId,
+            ProtocolId,
+            "project-1",
+            1,
+            ProtocolStatus.Approved,
+            new ProtocolTemplate(
+                "template-systematic-review",
+                "1.0.0",
+                ContentDigest.Sha256Utf8("template-systematic-review@1.0.0")),
+            new ProtocolIntent(
+                "tomato disease screening",
+                "map the evidence for segmentation workflows",
+                "scoping-review"),
+            new CanonicalJsonObject().Add("review_family", "scoping"),
+            Array.Empty<RequiredDecisionDefinition>(),
+            Array.Empty<ProtocolDecision>(),
+            Array.Empty<ProtocolWaiver>(),
+            contentDigest,
+            ApprovalPolicy.ExplicitCustomSingleResearcher().PolicyId,
+            new[] { "approval-1" },
+            FixedTime);
+    }
+
+    private static ResearchEvent CreateProvenanceEvent()
+    {
+        return ResearchEventFactory.Create(
+            new FixedIdGenerator(Guid.Parse("00000000-0000-0000-0000-000000000601")),
+            new FixedClock(),
+            new ProvenanceActivity("workflow-node-completed", "Workflow node completed", false, false, false),
+            new ProvenanceEntityRef("workflow", "workflow-1"),
+            new ProvenanceAgent("researcher-1", "human"));
+    }
+
+    private static BundleProvenanceBinding CreateProvenanceBinding(ResearchEvent? record = null)
+    {
+        record ??= CreateProvenanceEvent();
+        return new BundleProvenanceBinding(
+            record.EventId.ToString(),
+            record.ToDigestEnvelope().ComputeDigest(),
+            record.Activity.ActivityId,
+            record.OccurredAt,
+            record.Agent.AgentId);
+    }
+
     private static void AssertHasCategory(BundleVerification verification, string category)
     {
         Assert.IsTrue(
             verification.Errors.Any(error => string.Equals(error.Category, category, StringComparison.Ordinal)),
             $"Expected error category '{category}' but saw: {string.Join(", ", verification.Errors.Select(error => error.Category))}");
+    }
+
+    private sealed class FixedIdGenerator : IIdGenerator
+    {
+        private readonly Guid _id;
+
+        public FixedIdGenerator(Guid id)
+        {
+            _id = id;
+        }
+
+        public Guid NewId() => _id;
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public DateTimeOffset UtcNow => FixedTime;
     }
 }

@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:577e039936d379d72bb31a0e5eb5cc4fa770f0818198c99be3c529a62c6b43d9",
+  "outputDigest": "sha256:69d1c2d68f895a5b9215c7174e590aac2ee3baa1f612af05a71245b1d95c445e",
   "case": {
     "negative": true,
     "logicalPath": "/escape.json",

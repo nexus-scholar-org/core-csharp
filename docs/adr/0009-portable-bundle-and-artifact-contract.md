@@ -136,6 +136,8 @@ Optional manifest sections:
 - `unresolved_candidates`
 - `notes`
 
+`notes` are operator-authored manifest metadata only. They are not a place for generated narrative reports, wiki content, verification reports, tamper reports, provider logs, or cache projections. Generated narrative content remains outside the bundle manifest digest unless it is deliberately exported as an artifact with a raw-byte digest.
+
 Optional sections are omitted when absent. `null` is not equivalent to omitted.
 
 ### 9. Protocol approved-version binding
@@ -150,7 +152,7 @@ The protocol binding must include:
 - `status = approved`
 - `protocol_content_digest`
 
-`protocol_content_digest` must use the `protocol-content` scope. Draft, ready-for-review, withdrawn, or superseded protocol versions cannot satisfy the binding unless a later explicit import policy accepts superseded versions for historical replay.
+`protocol_content_digest` must be the digest produced by the referenced protocol version's `protocol-content` digest envelope. A syntactically valid `sha256:*` value is not sufficient during verification; the importer must compare the binding against a known protocol-content envelope digest for the referenced protocol version id. Draft, ready-for-review, withdrawn, or superseded protocol versions cannot satisfy the binding unless a later explicit import policy accepts superseded versions for historical replay.
 
 ### 10. Workflow binding
 
@@ -176,7 +178,7 @@ When provenance events are included, each binding must include:
 - `recorded_at`
 - `actor_id`
 
-`event_digest` must use the `provenance-event` scope. Gate 6 verifies provenance references by id and digest only. It does not replay the provenance ledger or infer omitted events.
+`event_digest` must be the digest produced by the referenced event's `provenance-event` digest envelope. A syntactically valid `sha256:*` value is not sufficient during verification; the importer must compare each binding against a known provenance-event envelope digest for the referenced event id. Gate 6 verifies provenance references by id and digest only. It does not replay the provenance ledger or infer omitted events.
 
 ### 12. Shared identity and corpus membership treatment
 
@@ -241,6 +243,9 @@ Tamper findings use stable categories. Gate 6 must support at least:
 - `checksum-mismatch`
 - `stale-manifest-digest`
 - `destructive-overwrite`
+- `invalid-protocol-binding`
+- `invalid-workflow-binding`
+- `invalid-provenance-binding`
 
 Reports may include human-readable messages, but tests and fixtures must assert stable categories rather than prose.
 

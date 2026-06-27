@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:091a9f494d5e6083d1c9bd95bd32d97eaefe9bdbdcba50e217c1f83feae5a80b",
+  "outputDigest": "sha256:911b141869861213b294376df48b4491a354e9ec9b9ccb79a84346532b1405f6",
   "case": {
     "negative": true,
     "errorCategory": "duplicate-artifact-path"

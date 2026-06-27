@@ -863,6 +863,9 @@ public sealed record BundleVerificationOptions
     public IReadOnlyDictionary<string, ContentDigest> ExistingArtifactDigests { get; init; } =
         new ReadOnlyDictionary<string, ContentDigest>(new Dictionary<string, ContentDigest>(StringComparer.Ordinal));
 
+    public IReadOnlyDictionary<string, ContentDigest> KnownProtocolContentDigests { get; init; } =
+        new ReadOnlyDictionary<string, ContentDigest>(new Dictionary<string, ContentDigest>(StringComparer.Ordinal));
+
     public IReadOnlyDictionary<string, ContentDigest> KnownProvenanceEventDigests { get; init; } =
         new ReadOnlyDictionary<string, ContentDigest>(new Dictionary<string, ContentDigest>(StringComparer.Ordinal));
 }

@@ -14,7 +14,7 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "inputDigest": "sha256:40fbcdee52b58da5edff2915f2681b14028afb189d5fe0e3cfa606c16de31ccd",
   "outputDigest": "sha256:7ce4cf78473f2db512ac55fba15a8a7db65fdffe43d8060a2b4f7a24aec577f8",
   "case": {
     "negative": false,
@@ -23,6 +23,7 @@
     "logicalPath": "artifacts/search-plan.json",
     "artifactKind": "workflow-artifact",
     "schemaId": "nexus.workflow.artifact",
-    "schemaVersion": "1.0.0"
+    "schemaVersion": "1.0.0",
+    "expectedRawByteDigest": "sha256:7ce4cf78473f2db512ac55fba15a8a7db65fdffe43d8060a2b4f7a24aec577f8"
   }
 }

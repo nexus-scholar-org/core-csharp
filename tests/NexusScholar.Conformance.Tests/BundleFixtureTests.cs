@@ -3,6 +3,8 @@ using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Bundles;
 using NexusScholar.Kernel;
+using NexusScholar.Protocol;
+using NexusScholar.Provenance;
 
 namespace NexusScholar.Conformance.Tests;
 
@@ -10,6 +12,8 @@ namespace NexusScholar.Conformance.Tests;
 public sealed class BundleFixtureTests
 {
     private const string FixtureSourceKind = "local-gate-6-contract";
+    private const string ProtocolId = "protocol-1";
+    private const string ProtocolVersionId = "protocol-version-1";
     private static readonly DateTimeOffset FixedTime = new(2026, 6, 27, 1, 0, 0, TimeSpan.Zero);
 
     private static readonly string[] RequiredArtifactFixtureIds =
@@ -62,8 +66,16 @@ public sealed class BundleFixtureTests
                 string.Equals(value.GetString(), "no-php-compatibility-claim", StringComparison.Ordinal)), fixtureId);
             Assert.IsTrue(root.GetProperty("comparisonRules").EnumerateArray().Any(value =>
                 string.Equals(value.GetString(), "no-blueprint-conformance-claim", StringComparison.Ordinal)), fixtureId);
-            _ = ContentDigest.Parse(root.GetProperty("inputDigest").GetString()!);
-            _ = ContentDigest.Parse(root.GetProperty("outputDigest").GetString()!);
+            var inputDigest = ContentDigest.Parse(root.GetProperty("inputDigest").GetString()!);
+            var outputDigest = ContentDigest.Parse(root.GetProperty("outputDigest").GetString()!);
+
+            AssertNotPlaceholderDigest(inputDigest, fixtureId!);
+            AssertNotPlaceholderDigest(outputDigest, fixtureId!);
+            Assert.AreEqual(
+                ContentDigest.Sha256CanonicalJson(CanonicalJsonValue.FromJsonElement(root.GetProperty("case"))),
+                inputDigest,
+                fixtureId);
+            Assert.AreEqual(ExpectedFixtureOutputDigest(root), outputDigest, fixtureId);
         }
     }
 
@@ -85,6 +97,7 @@ public sealed class BundleFixtureTests
             var fixtureCase = entryFixture.RootElement.GetProperty("case");
             Assert.AreEqual(fixtureCase.GetProperty("logicalPath").GetString(), entry.LogicalPath);
             Assert.AreEqual(fixtureCase.GetProperty("digestScope").GetString(), BundleArtifactEntry.RawByteDigestScope.Value);
+            Assert.AreEqual(fixtureCase.GetProperty("expectedRawByteDigest").GetString(), entry.RawByteDigest.ToString());
         }
 
         foreach (var fixtureId in new[]
@@ -96,13 +109,35 @@ public sealed class BundleFixtureTests
                  })
         {
             using var document = LoadFixture(BundleFixtureDirectory(), $"{fixtureId}.json");
-            var manifest = fixtureId == "bundle-manifest-with-protocol-workflow-provenance"
-                ? CreateManifest(workflowBinding: CreateWorkflowBinding(), provenanceBindings: new[] { CreateProvenanceBinding() })
-                : CreateManifest();
-            var verification = new BundleVerifier().Verify(manifest, CreateOptions(CreateArtifact(), ArtifactBytes()));
+            var options = CreateOptions(CreateArtifact(), ArtifactBytes());
+            ReviewBundleManifest manifest;
+            if (fixtureId == "bundle-manifest-with-protocol-workflow-provenance")
+            {
+                var eventRecord = CreateProvenanceEvent();
+                manifest = CreateManifest(
+                    workflowBinding: CreateWorkflowBinding(),
+                    provenanceBindings: new[] { CreateProvenanceBinding(eventRecord) });
+                options = options with
+                {
+                    KnownProvenanceEventDigests = new Dictionary<string, ContentDigest>(StringComparer.Ordinal)
+                    {
+                        [eventRecord.EventId.ToString()] = eventRecord.ToDigestEnvelope().ComputeDigest()
+                    }
+                };
+            }
+            else
+            {
+                manifest = CreateManifest();
+            }
+
+            var verification = new BundleVerifier().Verify(manifest, options);
 
             Assert.IsTrue(verification.IsValid, fixtureId);
             Assert.AreEqual("bundle-manifest", document.RootElement.GetProperty("case").GetProperty("digestScope").GetString(), fixtureId);
+            Assert.AreEqual(
+                document.RootElement.GetProperty("case").GetProperty("expectedManifestDigest").GetString(),
+                manifest.ComputeManifestDigest().ToString(),
+                fixtureId);
             Assert.IsTrue(document.RootElement.GetProperty("case").GetProperty("nonClaims").EnumerateArray().Any(value =>
                 string.Equals(value.GetString(), "no-php-compatibility-claim", StringComparison.Ordinal)), fixtureId);
         }
@@ -208,7 +243,42 @@ public sealed class BundleFixtureTests
 
     private static byte[] ArtifactBytes() => Encoding.UTF8.GetBytes("{\"query\":\"nexus scholar\"}\n");
 
-    private static ContentDigest ProtocolDigest() => ContentDigest.Sha256Utf8("protocol-content");
+    private static void AssertNotPlaceholderDigest(ContentDigest digest, string fixtureId)
+    {
+        Assert.IsTrue(
+            digest.Value.Distinct().Count() > 1,
+            $"{fixtureId} uses a placeholder digest value.");
+    }
+
+    private static ContentDigest ExpectedFixtureOutputDigest(JsonElement root)
+    {
+        var fixtureCase = root.GetProperty("case");
+        if (fixtureCase.TryGetProperty("negative", out var negative) && negative.GetBoolean())
+        {
+            return ContentDigest.Sha256CanonicalJson(new CanonicalJsonObject()
+                .Add("errorCategory", fixtureCase.GetProperty("errorCategory").GetString()!));
+        }
+
+        if (fixtureCase.TryGetProperty("expectedDigest", out var expectedDigest))
+        {
+            return ContentDigest.Parse(expectedDigest.GetString()!);
+        }
+
+        if (fixtureCase.TryGetProperty("expectedRawByteDigest", out var expectedRawByteDigest))
+        {
+            return ContentDigest.Parse(expectedRawByteDigest.GetString()!);
+        }
+
+        if (fixtureCase.TryGetProperty("expectedManifestDigest", out var expectedManifestDigest))
+        {
+            return ContentDigest.Parse(expectedManifestDigest.GetString()!);
+        }
+
+        Assert.Fail($"Fixture '{root.GetProperty("fixtureId").GetString()}' does not declare a replayable expected output.");
+        return default;
+    }
+
+    private static ContentDigest ProtocolDigest() => ApprovedProtocolVersion().ToProtocolContentDigestEnvelope().ComputeDigest();
 
     private static BundleArtifactEntry CreateArtifact(string artifactRef = "search-plan")
     {
@@ -235,8 +305,8 @@ public sealed class BundleFixtureTests
             "bundle-1",
             "researcher-1",
             new BundleProtocolBinding(
-                "protocol-1",
-                "protocol-version-1",
+                ProtocolId,
+                ProtocolVersionId,
                 1,
                 BundleConstants.ApprovedProtocolStatus,
                 ProtocolDigest()),
@@ -266,18 +336,19 @@ public sealed class BundleFixtureTests
             "template-1",
             "1.0.0",
             ContentDigest.Sha256Utf8("template"),
-            "protocol-version-1",
+            ProtocolVersionId,
             ProtocolDigest());
     }
 
-    private static BundleProvenanceBinding CreateProvenanceBinding()
+    private static BundleProvenanceBinding CreateProvenanceBinding(ResearchEvent? record = null)
     {
+        record ??= CreateProvenanceEvent();
         return new BundleProvenanceBinding(
-            "event-1",
-            ContentDigest.Sha256Utf8("event"),
-            "workflow-node-completed",
-            FixedTime,
-            "researcher-1");
+            record.EventId.ToString(),
+            record.ToDigestEnvelope().ComputeDigest(),
+            record.Activity.ActivityId,
+            record.OccurredAt,
+            record.Agent.AgentId);
     }
 
     private static BundleVerificationOptions CreateOptions(BundleArtifactEntry artifact, byte[] bytes) =>
@@ -288,10 +359,74 @@ public sealed class BundleFixtureTests
         return new BundleVerificationOptions
         {
             SupportedRequiredSchemas = new[] { new BundleSchemaRef("nexus.workflow.artifact", "1.0.0") },
+            KnownProtocolContentDigests = new Dictionary<string, ContentDigest>(StringComparer.Ordinal)
+            {
+                [ProtocolVersionId] = ProtocolDigest(),
+                ["project-1-version"] = ProtocolDigest()
+            },
             ArtifactBytes = new Dictionary<string, byte[]>(StringComparer.Ordinal)
             {
                 [logicalPath] = bytes
             }
         };
+    }
+
+    private static ProtocolVersion ApprovedProtocolVersion()
+    {
+        var seed = CreateProtocolVersion(ContentDigest.Sha256Utf8("placeholder-protocol-content"));
+        return CreateProtocolVersion(seed.ToProtocolContentDigestEnvelope().ComputeDigest());
+    }
+
+    private static ProtocolVersion CreateProtocolVersion(ContentDigest contentDigest)
+    {
+        return new ProtocolVersion(
+            ProtocolVersionId,
+            ProtocolId,
+            "project-1",
+            1,
+            ProtocolStatus.Approved,
+            new ProtocolTemplate(
+                "template-systematic-review",
+                "1.0.0",
+                ContentDigest.Sha256Utf8("template-systematic-review@1.0.0")),
+            new ProtocolIntent(
+                "tomato disease screening",
+                "map the evidence for segmentation workflows",
+                "scoping-review"),
+            new CanonicalJsonObject().Add("review_family", "scoping"),
+            Array.Empty<RequiredDecisionDefinition>(),
+            Array.Empty<ProtocolDecision>(),
+            Array.Empty<ProtocolWaiver>(),
+            contentDigest,
+            ApprovalPolicy.ExplicitCustomSingleResearcher().PolicyId,
+            new[] { "approval-1" },
+            FixedTime);
+    }
+
+    private static ResearchEvent CreateProvenanceEvent()
+    {
+        return ResearchEventFactory.Create(
+            new FixedIdGenerator(Guid.Parse("00000000-0000-0000-0000-000000000601")),
+            new FixedClock(),
+            new ProvenanceActivity("workflow-node-completed", "Workflow node completed", false, false, false),
+            new ProvenanceEntityRef("workflow", "workflow-1"),
+            new ProvenanceAgent("researcher-1", "human"));
+    }
+
+    private sealed class FixedIdGenerator : IIdGenerator
+    {
+        private readonly Guid _id;
+
+        public FixedIdGenerator(Guid id)
+        {
+            _id = id;
+        }
+
+        public Guid NewId() => _id;
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public DateTimeOffset UtcNow => FixedTime;
     }
 }

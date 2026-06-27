@@ -13,8 +13,8 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "inputDigest": "sha256:c46fab40ff9b8c6d117b5e14cf01e0d6b0e917df25a263a0bffec426f6486b0b",
+  "outputDigest": "sha256:3f955d95d921b93e8163b59bbb8ab60a916c3ea1cc9e0a0114f7126b833dde2c",
   "case": {
     "negative": true,
     "errorCategory": "unsupported-required-schema"

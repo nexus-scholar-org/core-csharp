@@ -14,7 +14,7 @@
     "no-php-compatibility-claim",
     "no-blueprint-conformance-claim"
   ],
-  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "inputDigest": "sha256:46cbd6707d772a9c4b9cdfd7985b7d98597dca184aa20fd1e4364588bb0db98f",
   "outputDigest": "sha256:7ce4cf78473f2db512ac55fba15a8a7db65fdffe43d8060a2b4f7a24aec577f8",
   "case": {
     "negative": false,

@@ -79,11 +79,12 @@ The implementation is limited to the local Gate 6 behavior accepted in `ADR 0009
 - reject blank artifact fields, invalid digests, negative size, duplicate logical paths, absolute paths, drive-letter paths, traversal paths, empty segments, and path separator drift;
 - create deterministic bundle manifests from fixed inputs;
 - compute bundle manifest digests with `DigestScope.BundleManifest`;
-- preserve protocol approved version binding by id, version number, and `protocol-content` digest;
+- preserve protocol approved version binding by id, version number, and a known `protocol-content` envelope digest;
 - preserve workflow definition or compiled workflow binding by id and digest when included;
-- preserve provenance event references by `provenance-event` digest when included;
+- preserve provenance event references by known `provenance-event` envelope digest when included;
 - verify raw artifact byte digests against manifest entries;
-- produce stable tamper categories for missing artifact, checksum mismatch, duplicate path, unsupported required schema, stale manifest digest, and destructive overwrite attempt;
+- produce stable tamper categories for invalid protocol binding, invalid workflow binding, invalid provenance binding, missing artifact, checksum mismatch, duplicate path, unsupported required schema, stale manifest digest, and destructive overwrite attempt;
+- reject syntactically valid but untrusted protocol/provenance digest strings when no known scoped envelope digest is supplied;
 - import only after full verification succeeds;
 - reject destructive overwrite attempts unless an explicit safe-import policy says otherwise;
 - expose verification results as immutable snapshots.
@@ -113,6 +114,8 @@ Implemented negative fixture IDs:
 - `bundle-unsupported-required-schema.json`
 - `bundle-stale-manifest-digest.json`
 - `bundle-destructive-overwrite-reject.json`
+
+Fixture metadata records non-placeholder `inputDigest` and `outputDigest` values. Conformance tests recompute `inputDigest` from the canonical fixture `case` object and replay positive bundle fixtures against their expected manifest digests.
 
 ## Verification Commands
 
