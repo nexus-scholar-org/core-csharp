@@ -152,6 +152,39 @@ Coverage:
 - raw provider payloads are preserved only when requested
 - C# Search trace must not collapse raw results through `CorpusSlice` if that hides duplicate evidence
 
+### Imported External Search Exports
+
+Deferred planned fixtures:
+
+- `search-import-ris-trace.json`
+- `search-import-bibtex-trace.json`
+- `search-import-scopus-csv-trace.json`
+- `search-import-wos-export-trace.json`
+- `search-import-zotero-csl-json-trace.json`
+- `search-import-endnote-export-trace.json`
+- `search-import-publish-or-perish-csv-trace.json`
+- `search-import-source-file-digest.json`
+- `search-import-parser-warning.json`
+- `search-import-no-id-candidates.json`
+- `search-import-dedup-not-applied.json`
+
+Coverage, deferred until a Search import contract:
+
+- `acquisition_kind = imported-export`
+- `source_database_or_tool`
+- `export_format`
+- original query text, when available
+- exported/imported timestamps and actors, when available
+- `source_file_digest` over preserved or digest-bound raw exported bytes
+- parser id, parser version, parser warnings, and record count
+- source record ids and raw record digests when present
+- imported records become Search trace sightings or unresolved Search candidates
+- Scopus EID, Web of Science UT/accession numbers, and other source-specific ids remain source evidence unless a later ADR extends WorkId namespaces
+- DOI, arXiv, PubMed, OpenAlex, Semantic Scholar, IEEE, DOAJ, and internal ids may normalize into existing ADR 0007 namespaces when present
+- Google Scholar-derived evidence is user-supplied export evidence only, such as Publish or Perish CSV; direct Google Scholar scraping is not allowed
+
+These fixtures do not authorize Scopus API integration, Web of Science API integration, Google Scholar scraping, provider SDKs, credentials, network behavior, or import parser implementation.
+
 ### Persistence And Locks
 
 Planning-only fixtures:
@@ -185,6 +218,12 @@ Required negative cases before implementation claim:
 - no-id candidate not promoted to canonical identity
 - raw-data request satisfied by non-raw cache entry under the local C# cache contract
 - PHP raw-data cache ambiguity from excluding `includeRawData` classified as an intentional incompatibility
+- unsupported import format, if imported-export parsing is admitted later
+- missing source file digest, if imported-export parsing is admitted later
+- parser warning preserved, if imported-export parsing is admitted later
+- source-specific id not promoted to WorkId namespace without a later ADR
+- imported title-only duplicate not deduped by Search
+- Google Scholar scraping not allowed
 
 ## Comparator Plan
 
@@ -278,6 +317,7 @@ Fixture and comparator design is ready enough for local implementation with expl
 - generated PHP fixture harness exists
 - PHP comparators classify the `includeRawData` cache difference and PHP Search-time deduplication difference
 - cassette-backed provider fixture generation is explicitly admitted
+- imported-export parser behavior is defined by a future Search import contract
 - Deduplication and Screening behavior are handled in later gates
 - persistence/API/UI/job/cloud behavior is admitted by a later scope
 
@@ -285,7 +325,11 @@ Fixture and comparator design is ready enough for local implementation with expl
 
 - no generated PHP fixtures
 - no C# Search implementation
+- no import parser implementation
 - no provider/network implementation
+- no Scopus API integration
+- no Web of Science API integration
+- no Google Scholar scraping
 - no PHP compatibility claim
 - no Deduplication behavior
 - no Screening behavior

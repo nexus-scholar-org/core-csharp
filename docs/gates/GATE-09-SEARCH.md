@@ -81,7 +81,9 @@ The PHP Search-time deduplication boundary is not safe to port directly into C# 
 8. keep no-id works as unresolved candidates, not canonical membership identity
 9. expose provider stats and partial failures as audit evidence
 10. include `include_raw_data` in C# cache identity as an intentional incompatibility with PHP `includeRawData` cache exclusion
-11. keep provider/network adapters, persistence, jobs, API, UI, and cloud behavior outside the first local Search implementation
+11. define future Search acquisition source kinds as `stub-provider`, `live-provider`, and `imported-export`
+12. keep the first C# Search implementation `stub-provider` only
+13. keep provider/network adapters, import parsers, persistence, jobs, API, UI, and cloud behavior outside the first local Search implementation
 
 ## Required Future Implementation Shape
 
@@ -112,6 +114,8 @@ It must not return a deduplicated corpus as the Search output unless a separate 
 
 `CF-018`: narrowed for the Search consumer boundary by `ADR 0010`. CLI/Web may consume Search traces and display projections, but app display hashes, run files, database rows, job lifecycle rows, audit rows, latest pointers, and app manifests are not Core authority.
 
+`CF-019`: opened as future planning by `ADR 0010`. Imported external Search exports are admitted as future acquisition evidence, but import parser behavior, supported formats, source-specific identifier handling, and parser comparator policy remain future work. This does not block local stub-provider Search implementation.
+
 ## Fixture Plan
 
 Required planned fixture families are recorded in `docs/port/php-search-fixture-plan.md` and summarized here:
@@ -121,6 +125,7 @@ Required planned fixture families are recorded in `docs/port/php-search-fixture-
 - search plan parsing fixtures
 - provider normalization fixtures
 - raw Search trace and Deduplication-boundary fixtures
+- imported-export fixture families, deferred until a Search import contract
 - locked-project and persistence-shape fixtures only if admitted by a later scope
 
 Representative fixture IDs:
@@ -151,6 +156,17 @@ Representative fixture IDs:
 - `search-trace-raw-provider-results.json`
 - `search-trace-duplicate-provider-sightings.json`
 - `search-trace-dedup-not-applied.json`
+- `search-import-ris-trace.json`
+- `search-import-bibtex-trace.json`
+- `search-import-scopus-csv-trace.json`
+- `search-import-wos-export-trace.json`
+- `search-import-zotero-csl-json-trace.json`
+- `search-import-endnote-export-trace.json`
+- `search-import-publish-or-perish-csv-trace.json`
+- `search-import-source-file-digest.json`
+- `search-import-parser-warning.json`
+- `search-import-no-id-candidates.json`
+- `search-import-dedup-not-applied.json`
 
 ## Negative Cases
 
@@ -174,6 +190,12 @@ Required negative cases:
 - no-id candidate must not become canonical membership identity
 - raw-data request must not be satisfied by a non-raw cache entry under the local C# cache contract
 - PHP raw-data cache ambiguity must be classified as an intentional incompatibility unless a later ADR reverses `ADR 0010`
+- unsupported import format, if imported-export parsing is admitted later
+- missing source file digest, if imported-export parsing is admitted later
+- parser warning must be preserved, if imported-export parsing is admitted later
+- source-specific id must not be promoted to an ADR 0007 WorkId namespace without a later ADR
+- imported title-only duplicate must not be deduped by Search
+- Google Scholar scraping must not be allowed
 
 ## Comparator Plan
 
@@ -202,11 +224,17 @@ Implementation is still blocked for:
 - Deduplication and Screening behavior
 - bundle behavior changes
 - app behavior authority beyond Search trace consumption
+- imported-export parser implementation; a future Search import contract is required
 
 ## Explicit Claims Not Made
 
 - no C# Search behavior implemented
+- no import parser implementation
 - no provider/network behavior
+- no live provider/network behavior
+- no Scopus API integration
+- no Web of Science API integration
+- no Google Scholar scraping
 - no PHP compatibility
 - no generated PHP fixtures
 - no Deduplication behavior

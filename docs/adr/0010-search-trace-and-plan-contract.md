@@ -251,6 +251,58 @@ No C# CI path may call live scholarly providers.
 
 Provider-specific normalization may be planned from PHP evidence and local stub fixtures, but live provider parity requires a later provider/network gate or explicit Search extension ADR.
 
+### 13a. Future Search acquisition source kinds
+
+Search acquisition has three source kinds:
+
+- `stub-provider`
+- `live-provider`
+- `imported-export`
+
+The first C# Search implementation remains `stub-provider` only. `live-provider` adapters remain deferred. `imported-export` parsers also remain deferred and require a later Search import contract before implementation.
+
+The distinction is:
+
+- Live Search Provider: Nexus performs the query.
+- Imported Search Source: the user performs the query externally and Nexus imports the exported evidence.
+
+`imported-export` traces are user-supplied evidence, not live provider integrations. ADR 0010 admits them as future Search acquisition evidence, but it does not authorize Scopus API integration, Web of Science API integration, Google Scholar scraping, provider SDKs, credentials, or network behavior.
+
+Future imported-export traces should support evidence from:
+
+- RIS
+- BibTeX
+- Scopus CSV or export files
+- Web of Science export files
+- Zotero/CSL JSON
+- EndNote export files
+- Publish or Perish CSV or other Google Scholar-derived user exports
+
+Google Scholar scraping is not authorized. Imported Google Scholar-derived evidence may be accepted only as user-supplied export evidence, such as a Publish or Perish CSV, not by scraping Scholar directly.
+
+Future imported-export trace records should carry, at contract level:
+
+- `acquisition_kind = imported-export`
+- `source_database_or_tool`
+- `export_format`
+- `original_query_text`, when available
+- `exported_at`, when available
+- `imported_at`, when available
+- `exported_by` or `imported_by`, when available
+- `source_file_digest`
+- `parser_id`
+- `parser_version`
+- `parser_warnings`
+- `record_count`
+- source record ids, when present
+- raw record digest or raw record payload digest, when applicable
+
+Raw exported file bytes must be preserved or digest-bound. `source_file_digest` should use the accepted raw-byte digest rule, preferably the `raw-artifact-bytes` scope when the export is represented as an artifact. Local file paths must not become Search identity. Parser output is a normalized projection over raw import evidence.
+
+Imported records become Search trace sightings or unresolved Search candidates. They must preserve source database or source tool context. They must not become deduplicated corpus membership, must not use title-only identity, and must not call Deduplication. No-id imported records remain unresolved candidates.
+
+ADR 0010 does not expand the `ADR 0007` `WorkIdNamespace` set. DOI, arXiv, PubMed, OpenAlex, Semantic Scholar, IEEE, DOAJ, and internal identifiers may still normalize into existing ADR 0007 namespaces when present. Scopus EID, Web of Science UT/accession numbers, and other source-specific ids must be represented as `source_record_id` or `source_identifier` evidence until a later ADR decides whether to extend WorkId namespaces.
+
 ### 14. Runtime duration and generated query id comparator policy
 
 Generated query ids and runtime durations are not semantic compatibility anchors unless a fixture pins them.
@@ -299,6 +351,7 @@ Future gates must still decide:
 - PHP-generated Search fixtures;
 - provider-specific normalization implementation;
 - live provider/network adapters;
+- imported-export parser contracts and source-specific import comparators;
 - Search persistence;
 - API/UI/cloud integration;
 - Deduplication behavior;
@@ -332,6 +385,12 @@ Rejected.
 
 Live provider behavior introduces network, credentials, retries, rate limits, provider availability, and moving external APIs before the local trace contract is tested.
 
+### Treat imported exports as live provider behavior
+
+Rejected.
+
+Imported exports are user-supplied evidence files. They need raw-byte preservation, parser metadata, warnings, and source-record context. They do not authorize Nexus to query live provider APIs or scrape provider websites.
+
 ### Treat CLI/Web run files or display hashes as Core authority
 
 Rejected.
@@ -353,6 +412,7 @@ Negative:
 - C# Search will intentionally differ from PHP in Search-time deduplication and `includeRawData` cache identity.
 - PHP compatibility remains unclaimed until generated fixtures and comparators classify differences.
 - Live provider behavior remains unavailable in C# Core.
+- Imported-export parsing remains unavailable until a later Search import contract defines parser behavior.
 - App behavior still needs later alignment beyond Search trace consumption.
 
 ## Migration Effect
@@ -362,6 +422,8 @@ No persisted C# data is migrated by this ADR.
 Future C# Search implementation must treat any existing scaffold or app-derived Search output as non-authoritative until transformed into the ADR 0010 Search trace shape.
 
 PHP aggregate results that already deduplicated Search output cannot be treated as raw Search traces unless the raw provider sightings can be reconstructed from source evidence.
+
+Externally exported Search files cannot be treated as canonical Search traces until a future import contract binds raw exported bytes, parser metadata, parser warnings, and normalized trace output.
 
 ## Fixture Effect
 
@@ -376,7 +438,22 @@ Search fixtures must be updated or interpreted under ADR 0010:
 - keep `search-trace-duplicate-provider-sightings.json`;
 - keep `search-trace-dedup-not-applied.json`;
 - add or keep all-failed provider fixture coverage;
+- add future imported-export fixture coverage, deferred until a Search import contract;
 - add app consumer projection checks that display hashes and app run ids are outside Search trace identity.
+
+Future imported-export fixture ids should include:
+
+- `search-import-ris-trace.json`;
+- `search-import-bibtex-trace.json`;
+- `search-import-scopus-csv-trace.json`;
+- `search-import-wos-export-trace.json`;
+- `search-import-zotero-csl-json-trace.json`;
+- `search-import-endnote-export-trace.json`;
+- `search-import-publish-or-perish-csv-trace.json`;
+- `search-import-source-file-digest.json`;
+- `search-import-parser-warning.json`;
+- `search-import-no-id-candidates.json`;
+- `search-import-dedup-not-applied.json`.
 
 Comparators must classify the PHP `includeRawData` cache exclusion and PHP Search-time deduplication as intentional incompatibilities for local C# Search unless a later ADR reverses this decision.
 
@@ -390,6 +467,8 @@ Comparators must classify the PHP `includeRawData` cache exclusion and PHP Searc
 
 `CF-018` is narrowed for the Search consumer boundary. CLI/Web can consume Search traces and display projections, but app hashes, files, rows, and UI status are not Core authority. Broader app alignment for Protocol, Provenance, Bundle, Deduplication, Screening, Full Text, Snapshot, API/UI/cloud, and AI governance remains future work.
 
+`CF-019` is opened as future planning for imported Search source contracts. ADR 0010 admits `imported-export` traces as future acquisition evidence, but actual import parser behavior, supported formats, source-specific identifier handling, and parser comparator policy remain future work. This does not block local stub-provider Search implementation.
+
 ## Reversal Conditions
 
 Revise this ADR only if:
@@ -398,16 +477,21 @@ Revise this ADR only if:
 2. a later accepted Deduplication ADR defines a different Search handoff shape with equivalent raw-evidence preservation;
 3. provider/network implementation evidence requires a versioned Search trace schema change;
 4. a later app-alignment ADR promotes specific CLI/Web fields into Core records with digest and migration rules;
-5. a later schema policy replaces the schema-closed local Search plan rule.
+5. a later Search import ADR defines a different acquisition record for imported external exports;
+6. a later schema policy replaces the schema-closed local Search plan rule.
 
 ## Explicit Claims Not Made
 
 - no C# Search implementation
 - no source code changes
+- no import parser implementation
 - no generated fixtures
 - no PHP compatibility claim
 - no provider/network behavior
 - no live provider calls
+- no Scopus API integration
+- no Web of Science API integration
+- no Google Scholar scraping
 - no Search persistence schema
 - no API, UI, job, command, or cloud behavior
 - no Deduplication implementation
