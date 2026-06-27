@@ -114,8 +114,8 @@ Criteria records carry:
 - `exclude`
 - optional `review_guidance`
 - optional `full_text_requirements`
-- optional `protocol_binding`
-- optional `workflow_binding`
+- `protocol_binding` for final scientific Screening decisions
+- `workflow_binding` when an accepted workflow or candidate-set contract governs the Screening stage
 - `criteria_digest`
 
 The criteria digest uses `ADR 0002` canonical JSON digest rules:
@@ -126,6 +126,10 @@ The criteria digest uses `ADR 0002` canonical JSON digest rules:
 - content: criteria fields that affect screening decisions
 
 The digest value itself is excluded from its digest input. Criteria key order must not affect digest equality. List order remains semantic.
+
+`protocol_binding` records the approved protocol version id and `protocol-content` digest that authorize the Screening criteria. It is required for final scientific Screening decisions. Criteria without protocol binding may be used only for exploratory, app-local, imported, or proposal evidence; they cannot produce final include/exclude/needs-review decisions, satisfy downstream handoff requirements, or stand in for protocol-authorized conduct. Draft, superseded, withdrawn, stale, or digest-mismatched protocol bindings are invalid for final Screening decisions.
+
+`workflow_binding` records the workflow definition or candidate-set workflow reference when Screening is produced under an accepted workflow. It is required when the accepted candidate set or Screening stage claims workflow governance, and optional only for local candidate-set paths that are not yet workflow-managed. When present, both protocol and workflow bindings are part of the criteria digest input.
 
 PHP's raw `sha256(json_encode(normalized_criteria))` hash is source evidence for PHP behavior only. It is not the local C# criteria digest rule.
 

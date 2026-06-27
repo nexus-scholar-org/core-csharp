@@ -31,7 +31,7 @@ Coverage:
 - Screening consumes a post-Dedup reviewable candidate set or locked snapshot, not raw Search traces directly.
 - Explicit work ids must belong to the accepted candidate set.
 - Unlocked or mutable corpus inputs are rejected when the accepted policy requires a lock.
-- No-id candidates can be represented only according to the later Screening ADR.
+- No-id candidates can be represented only under `ADR 0013` as unresolved candidates with source evidence; Screening them does not create stable scientific identity.
 
 ### Criteria And Digest
 

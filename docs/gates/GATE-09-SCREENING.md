@@ -32,6 +32,7 @@ This document covers the Screening part of Gate 9 PHP behavior porting. It now i
 
 Allowed paths:
 
+- `docs/adr/0013-screening-decision-and-conflict-contract.md`
 - `docs/port/php-screening-behavior.md`
 - `docs/port/php-screening-fixture-plan.md`
 - `docs/gates/GATE-09-SCREENING.md`
