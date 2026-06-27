@@ -1,10 +1,11 @@
 # Chat Roster
 
-Branch-derived Codex lane roster from current git state after the ADR 0012 Deduplication Contract merge.
+Branch-derived Codex lane roster from current git state after the Gate 9 Dedup local implementation merge.
 
 ## Active Lanes
 
-- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, and ADR 0012 Deduplication Evidence and Cluster Contract; current product head `0249f67`.
+- Lane `main`: merged baseline containing Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010 Search Trace and Plan Contract, Gate 9 local stub-provider Search implementation, ADR 0011 Search Import Source Contract, Gate 9 Search import local first-slice implementation, Gate 9 Deduplication reconnaissance, ADR 0012 Deduplication Evidence and Cluster Contract, and Gate 9 local Dedup implementation; current product head `8fa573d`.
+- Lane `gate-9-dedup-local`: merged local implementation branch `cdx/gate-9-dedup-local`, head `8fa573d`.
 - Lane `gate-9-dedup-contract`: merged ADR/contract branch `cdx/gate-9-dedup-contract`, head `0249f67`.
 - Lane `gate-9-dedup-recon`: merged docs-only reconnaissance branch `cdx/gate-9-dedup-recon`, head `76933e3`.
 - Lane `gate-9-search-import-local`: merged local implementation branch `cdx/gate-9-search-import-local`, head `970eef2`.
@@ -26,29 +27,30 @@ Branch-derived Codex lane roster from current git state after the ADR 0012 Dedup
 
 ## Branch Containment Relationships
 
-- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, ADR 0011, local first-slice Search import parsers, Gate 9 Deduplication reconnaissance, and ADR 0012.
+- `main` contains Gate 0 through Gate 6, Gate 9 shared identity, Gate 9 Search reconnaissance, app consumer reconnaissance, ADR 0010, local stub-provider Search, ADR 0011, local first-slice Search import parsers, Gate 9 Deduplication reconnaissance, ADR 0012, and local Dedup implementation.
 - `main` contains the two-model workflow setup branch and the Gate 9 shared-identity ADR/reconnaissance branch.
+- `cdx/gate-9-dedup-local` is now a merged historical lane rather than an active implementation branch.
 - `cdx/gate-9-dedup-contract` is now a merged historical lane rather than an active contract branch.
 - `cdx/gate-9-dedup-recon` is now a merged historical lane rather than an active reconnaissance branch.
-- GitHub remote branch cleanup candidates remain: `origin/cdx/gate-9-dedup-contract`, `origin/cdx/gate-9-dedup-recon`.
+- GitHub remote branch cleanup candidates remain: `origin/cdx/gate-9-dedup-local`, `origin/cdx/gate-9-dedup-contract`, `origin/cdx/gate-9-dedup-recon`.
 
 ## Status Notes
 
-- ADR 0012 Deduplication Evidence and Cluster Contract is merged with green branch CI and green push-triggered `main` CI.
-- ADR 0012 makes local C# Dedup implementation ready to start.
+- Gate 9 Dedup local implementation is merged with green branch CI and green push-triggered `main` CI.
 - Dedup consumes raw Search/import sightings, not PHP's pre-deduplicated Search corpus.
-- Exact ADR 0007 identifier overlap may form automatic clusters.
+- Exact ADR 0007 identifier overlap forms automatic clusters namespace-sensitively.
 - Fuzzy title matching is review-required candidate evidence with local threshold `95` / `0.95`.
-- No-id, title-only, and runtime-object identity never auto-merge.
+- No-id, title-only, source-specific-id-only, and runtime-object identity never auto-merge.
 - Representative records are deterministic projections over preserved evidence.
+- Imported-export source-file digest, digest scope, raw-record digest, parser warnings, and record notices are preserved through Dedup raw candidates, source evidence, and representative projections where clustered.
 - Web hashes, representative snapshots, persisted runs, stale-run checks, and app scoring remain app projections, not Core authority.
-- Next branch should be `cdx/gate-9-dedup-local`.
+- Next branch should be `cdx/gate-9-screening-recon`.
 
 ## Explicit Non-Claims For Next Lane
 
+- no C# Screening implementation during reconnaissance
 - no PHP compatibility
 - no PHP-generated fixtures
-- no Screening
 - no persistence/API/UI/cloud
 - no live provider/network behavior
 - no Scopus API
