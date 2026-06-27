@@ -6,6 +6,7 @@ using NexusScholar.Extensibility;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Provenance;
+using NexusScholar.Search;
 using NexusScholar.Shared;
 using NexusScholar.Workflow;
 
@@ -41,6 +42,7 @@ public sealed class DependencyRulesTests
             typeof(WorkflowDefinition).Assembly,
             typeof(ResearchEvent).Assembly,
             typeof(WorkId).Assembly,
+            typeof(SearchTrace).Assembly,
             typeof(ReviewBundleManifest).Assembly,
             typeof(ExtensionManifest).Assembly,
             typeof(AiTaskPolicy).Assembly
@@ -84,7 +86,8 @@ public sealed class DependencyRulesTests
             typeof(ReviewBundleManifest).Assembly,
             typeof(AiTaskPolicy).Assembly,
             typeof(WorkflowDefinition).Assembly,
-            typeof(WorkId).Assembly
+            typeof(WorkId).Assembly,
+            typeof(SearchTrace).Assembly
         };
 
         foreach (var assembly in digestConsumerAssemblies)
@@ -166,6 +169,27 @@ public sealed class DependencyRulesTests
             0,
             disallowed.Length,
             $"NexusScholar.Bundles must not depend on Protocol, Workflow, Provenance, or Artifacts. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void Search_project_depends_only_on_kernel_and_shared_inside_nexus_domain()
+    {
+        var searchAssembly = typeof(SearchTrace).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name
+        };
+        var disallowed = searchAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(
+            0,
+            disallowed.Length,
+            $"NexusScholar.Search must depend only on Kernel and Shared inside the domain. Found: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]

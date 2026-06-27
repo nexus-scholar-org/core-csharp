@@ -1,0 +1,23 @@
+{
+  "fixtureId": "search-trace-php-legacy-plan-import",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "plan": {
+      "project": "legacy-project",
+      "providers": "crossref, openalex",
+      "queries": [
+        {
+          "id": "legacy-1",
+          "text": "alpha beta",
+          "year_min": 2020,
+          "year_max": 2024,
+          "limit": 10
+        }
+      ]
+    }
+  }
+}

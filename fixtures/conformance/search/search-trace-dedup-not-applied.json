@@ -1,0 +1,22 @@
+{
+  "fixtureId": "search-trace-dedup-not-applied",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "input": {
+      "query": "alpha",
+      "yearFrom": 2020,
+      "yearTo": 2024,
+      "language": "en",
+      "maxResults": 10,
+      "offset": 0,
+      "includeRawData": false,
+      "selectedAliases": ["openalex", "crossref"]
+    },
+    "expectedDuplicateWorkId": "doi:10.1000/shared",
+    "expectedMinSightings": 4
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "fixtureId": "search-cache-key-provider-order",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "requestA": {
+      "query": "alpha",
+      "yearFrom": 2020,
+      "yearTo": 2024,
+      "language": "en",
+      "maxResults": 10,
+      "offset": 0,
+      "includeRawData": false,
+      "selectedAliases": ["openalex", "crossref", "semantic_scholar"]
+    },
+    "requestB": {
+      "query": "alpha",
+      "yearFrom": 2020,
+      "yearTo": 2024,
+      "language": "en",
+      "maxResults": 10,
+      "offset": 0,
+      "includeRawData": false,
+      "selectedAliases": ["semantic_scholar", "crossref", "openalex"]
+    }
+  }
+}

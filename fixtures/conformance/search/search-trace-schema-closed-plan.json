@@ -1,0 +1,27 @@
+{
+  "fixtureId": "search-trace-schema-closed-plan",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "plan": {
+      "schema_id": "nexus.search.plan",
+      "schema_version": "1.0.0",
+      "project_id": "project-search",
+      "max_results": 10,
+      "language": "en",
+      "providers": ["openalex", "crossref"],
+      "include_raw_data": true,
+      "searches": [
+        {
+          "id": "search-1",
+          "query": "alpha beta",
+          "year_from": 2020,
+          "year_to": 2024
+        }
+      ]
+    }
+  }
+}

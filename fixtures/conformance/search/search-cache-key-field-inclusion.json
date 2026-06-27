@@ -1,0 +1,23 @@
+{
+  "fixtureId": "search-cache-key-field-inclusion",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "input": {
+      "query": "alpha",
+      "yearFrom": 2020,
+      "yearTo": 2024,
+      "language": "en",
+      "maxResults": 25,
+      "offset": 5,
+      "includeRawData": true,
+      "selectedAliases": ["openalex", "crossref"],
+      "activeProviderAliases": ["openalex", "crossref"]
+    },
+    "expectedIncluded": ["query", "year_from", "year_to", "language", "max_results", "offset", "active_provider_aliases", "include_raw_data"],
+    "expectedExcluded": ["query_id", "trace_id", "project_id", "runtime_duration_ms", "provider_stats", "provider_failures", "raw_payload_bytes", "app_id", "app_hash", "local_paths", "provider_credentials"]
+  }
+}

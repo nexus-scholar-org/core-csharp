@@ -1,0 +1,10 @@
+{
+  "fixtureId": "search-cache-key-field-exclusion",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "excludedFields": ["query_id", "trace_id", "project_id", "runtime_duration_ms", "provider_stats", "provider_failures", "raw_payload_bytes", "app_id", "app_hash", "local_paths", "provider_credentials"]
+  }
+}

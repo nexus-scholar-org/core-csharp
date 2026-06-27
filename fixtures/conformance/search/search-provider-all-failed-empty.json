@@ -1,0 +1,21 @@
+{
+  "fixtureId": "search-provider-all-failed-empty",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "input": {
+      "query": "alpha",
+      "yearFrom": null,
+      "yearTo": null,
+      "language": null,
+      "maxResults": 10,
+      "offset": 0,
+      "includeRawData": false,
+      "selectedAliases": ["ieee", "doaj"]
+    },
+    "expectedAttemptCount": 2
+  }
+}

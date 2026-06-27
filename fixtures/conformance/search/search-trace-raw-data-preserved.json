@@ -1,0 +1,20 @@
+{
+  "fixtureId": "search-trace-raw-data-preserved",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "case": {
+    "validationYear": 2026,
+    "input": {
+      "query": "alpha",
+      "yearFrom": 2020,
+      "yearTo": 2024,
+      "language": "en",
+      "maxResults": 10,
+      "offset": 0,
+      "includeRawData": true,
+      "selectedAliases": ["openalex", "crossref"]
+    }
+  }
+}

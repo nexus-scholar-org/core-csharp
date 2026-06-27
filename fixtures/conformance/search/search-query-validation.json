@@ -1,0 +1,58 @@
+{
+  "fixtureId": "search-query-validation",
+  "sourceKind": "local-gate-9-search-contract",
+  "sourceCommit": "local-gate-9-search-implementation",
+  "generatorCommand": "hand-authored local Gate 9 Search fixture",
+  "generatorVersion": "gate-9-search-v1",
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "case": {
+    "validationYear": 2026,
+    "invalidCases": [
+      {
+        "query": "a",
+        "yearFrom": 2020,
+        "yearTo": 2021,
+        "language": "en",
+        "maxResults": 10,
+        "offset": 0,
+        "includeRawData": false,
+        "selectedAliases": [],
+        "errorCategory": "query-length-below-minimum"
+      },
+      {
+        "query": "alpha",
+        "yearFrom": 999,
+        "yearTo": 2021,
+        "language": "en",
+        "maxResults": 10,
+        "offset": 0,
+        "includeRawData": false,
+        "selectedAliases": [],
+        "errorCategory": "year-from-below-minimum"
+      },
+      {
+        "query": "alpha",
+        "yearFrom": 2020,
+        "yearTo": 2035,
+        "language": "en",
+        "maxResults": 10,
+        "offset": 0,
+        "includeRawData": false,
+        "selectedAliases": [],
+        "errorCategory": "year-to-exceeds-validation-year"
+      },
+      {
+        "query": "alpha",
+        "yearFrom": 2025,
+        "yearTo": 2020,
+        "language": "en",
+        "maxResults": 10,
+        "offset": 0,
+        "includeRawData": false,
+        "selectedAliases": [],
+        "errorCategory": "year-range-inverted"
+      }
+    ]
+  }
+}

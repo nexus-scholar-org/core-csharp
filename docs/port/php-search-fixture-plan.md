@@ -10,7 +10,7 @@ Pinned PHP source:
 
 ## Scope
 
-This plan defines the fixture and comparator catalog needed before a C# Search implementation can claim PHP compatibility. It does not generate fixtures and does not implement C# Search.
+This plan defines the fixture and comparator catalog needed before C# Search can claim PHP compatibility. It does not generate PHP fixtures and does not itself implement Search behavior. Local stub-provider Search fixtures may exist separately under `fixtures/conformance/search/`.
 
 Search compatibility fixtures must be generated from the pinned PHP source with source commit, generator command, generator version, input digest, output digest, and comparator rules. Existing PHP tests, YAML search-plan fixtures, and VCR cassettes are source evidence, not C# goldens by themselves.
 
@@ -310,7 +310,7 @@ The PHP fixture generator must:
 
 ## Implementation Readiness
 
-Yes, for a local stub-provider Search implementation after `ADR 0010`.
+Local stub-provider Search implementation is allowed and implemented separately from PHP compatibility. PHP compatibility remains not ready.
 
 Fixture and comparator design is ready enough for local implementation with explicit non-claims. It is still not ready for PHP compatibility or live provider behavior until:
 
@@ -324,7 +324,7 @@ Fixture and comparator design is ready enough for local implementation with expl
 ## Explicit Non-Claims
 
 - no generated PHP fixtures
-- no C# Search implementation
+- no PHP-compatible C# Search claim
 - no import parser implementation
 - no provider/network implementation
 - no Scopus API integration

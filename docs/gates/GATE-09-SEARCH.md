@@ -1,10 +1,10 @@
-# Gate 9 Search Trace And Plan Contract
+# Gate 9 Search Trace And Plan
 
-Status: ADR/contract accepted for local stub-provider Search implementation. No Search source code is implemented by this document.
+Status: local stub-provider Search implementation scope. PHP compatibility, live providers, import parsers, Deduplication, Screening, persistence, API/UI/cloud, and app authority remain unclaimed.
 
 ## Goal
 
-Record the local Search trace and plan contract before C# Search implementation.
+Implement the local C# Search trace and plan behavior defined by `ADR 0010`, using deterministic stub providers only.
 
 This gate document builds on PHP Search reconnaissance and `ADR 0010`. It covers the Search portion of Gate 9 porting work and does not change the accepted Gate 9 shared identity implementation.
 
@@ -30,23 +30,32 @@ This gate document builds on PHP Search reconnaissance and `ADR 0010`. It covers
 
 Allowed paths:
 
-- `docs/adr/0010-search-trace-and-plan-contract.md`
-- `docs/port/php-search-behavior.md`
-- `docs/port/php-search-fixture-plan.md`
+- `NexusScholar.Core.slnx`
+- `src/NexusScholar.Search/**`
+- `src/NexusScholar.Kernel/**` only if a primitive is genuinely reusable
+- `src/NexusScholar.Shared/**` only if using existing shared identity primitives without changing identity semantics
+- `tests/NexusScholar.Core.Tests/**`
+- `tests/NexusScholar.Architecture.Tests/**`
+- `tests/NexusScholar.Conformance.Tests/**`
+- `fixtures/conformance/search/**`
 - `docs/gates/GATE-09-SEARCH.md`
+- `docs/gates/GATE-09-SEARCH-EVIDENCE.md`
 - `docs/port/OPEN-CONFLICTS.md`
 - `docs/port/GOLDEN-FIXTURE-PLAN.md`
 
 Forbidden paths:
 
-- `src/**`
-- `tests/**`
-- `fixtures/**`
-- `specs/**`
-- PHP reference repo changes
-- provider/network implementation
-- generated PHP fixtures
-- C# Search implementation
+- live provider/network adapters
+- HTTP clients
+- API keys or credentials
+- Scopus API
+- Web of Science API
+- Google Scholar scraping
+- imported-export parsers
+- PHP-generated fixtures
+- Deduplication
+- Screening
+- persistence/API/UI/cloud
 - `nexus-cli`
 - `nexus-web`
 
@@ -67,50 +76,34 @@ Pinned PHP Search behavior includes:
 
 The PHP Search-time deduplication boundary is not safe to port directly into C# Search because Gate 9 shared identity explicitly did not resolve Search, Deduplication, Screening, or corpus snapshot behavior.
 
-## ADR 0010 Decisions Accepted For Future Task Contract
+## Implemented Local Behavior
 
-`ADR 0010` defines the local Search Trace and Plan Contract. Future C# Search implementation should:
+The local C# Search implementation:
 
-1. start with local/stub provider traces, not live provider/network behavior
-2. preserve PHP provider alias normalization and unknown-provider rejection
-3. preserve provider-order-insensitive cache identity
-4. use deterministic year-range validation for fixtures instead of a runtime-current-year dependency
-5. use schema-closed local Search plans, with PHP permissive plans admitted only through an explicit legacy import/comparator profile
-6. preserve raw provider sightings and duplicate provider sightings before Deduplication
-7. bind normalized identifiers to ADR 0007 shared identity namespaces without using title-only identity
-8. keep no-id works as unresolved candidates, not canonical membership identity
-9. expose provider stats and partial failures as audit evidence
-10. include `include_raw_data` in C# cache identity as an intentional incompatibility with PHP `includeRawData` cache exclusion
-11. define future Search acquisition source kinds as `stub-provider`, `live-provider`, and `imported-export`
-12. keep the first C# Search implementation `stub-provider` only
-13. keep provider/network adapters, import parsers, persistence, jobs, API, UI, and cloud behavior outside the first local Search implementation
-
-## Required Future Implementation Shape
-
-The next Search implementation contract should define a local Search trace with:
-
-- request identity
-- normalized request fields
-- selected provider aliases
-- active provider aliases
-- cache identity material
-- ordered provider attempts
-- ordered raw provider sightings
-- normalized work identity fields
-- optional raw payload digest or raw payload field
-- provider stats
-- partial failure details
-- explicit non-deduplication boundary
-
-It must not return a deduplicated corpus as the Search output unless a separate accepted Deduplication decision creates that stage.
+- emits a raw `nexus.search.trace` version `1.0.0`, not a deduplicated corpus
+- validates query length, year ranges, max results, offset, and provider aliases
+- normalizes provider aliases by trim/lowercase, drops empty aliases, and deduplicates aliases
+- treats empty selected provider aliases as all active local stub providers
+- executes selected providers in registration order
+- rejects unknown provider aliases before provider execution and cache identity use
+- computes provider-order-insensitive cache identity over query, year range, language, max results, offset, sorted active provider aliases, and `include_raw_data`
+- excludes query id, trace id, project id, runtime data, provider stats/failures, raw bytes, app ids/hashes, local paths, and credentials from cache identity
+- records provider attempts, provider stats, partial provider failure, and all-failed valid traces
+- preserves duplicate provider sightings
+- preserves no-id records as unresolved candidates, not canonical corpus membership
+- strips raw payloads unless `include_raw_data` is requested
+- parses authoritative local Search plans as schema-closed artifacts
+- admits PHP-permissive plans only through an explicit legacy import/comparator parser
+- uses ADR 0007 shared identity primitives for normalized identifiers without title-only identity
+- does not call Deduplication
 
 ## Conflict Status
 
-`CF-013`: resolved for the local Search contract by `ADR 0010`. C# cache identity remains provider-order-insensitive, includes term, year range, language, max results, offset, sorted active provider aliases, and `include_raw_data`, and excludes generated query id, trace id, project id, runtime data, provider stats/failures, raw bytes, app ids/hashes, local paths, and provider credentials. PHP compatibility remains pending because PHP excludes `includeRawData`.
+`CF-013`: implemented for local Search cache identity. C# cache identity remains provider-order-insensitive, includes term, year range, language, max results, offset, sorted active provider aliases, and `include_raw_data`, and excludes generated query id, trace id, project id, runtime data, provider stats/failures, raw bytes, app ids/hashes, local paths, and provider credentials. PHP compatibility remains pending because PHP excludes `includeRawData`.
 
-`CF-016`: resolved for the local Search contract by `ADR 0010`. C# Search output is a raw Search trace, preserves duplicate provider sightings, and does not call Deduplication. Deduplication remains a later gate and will consume Search traces as input.
+`CF-016`: implemented for local Search raw trace behavior. C# Search output is a raw Search trace, preserves duplicate provider sightings, and does not call Deduplication. Deduplication remains a later gate and will consume Search traces as input.
 
-`CF-017`: resolved for the local Search contract by `ADR 0010`. Authoritative local C# Search plan artifacts are schema-closed. PHP-permissive plan parsing is allowed only as an explicit legacy import/comparator profile.
+`CF-017`: implemented for local Search plan schema closure. Authoritative local C# Search plan artifacts are schema-closed. PHP-permissive plan parsing is allowed only as an explicit legacy import/comparator profile.
 
 `CF-018`: narrowed for the Search consumer boundary by `ADR 0010`. CLI/Web may consume Search traces and display projections, but app display hashes, run files, database rows, job lifecycle rows, audit rows, latest pointers, and app manifests are not Core authority.
 
@@ -118,17 +111,16 @@ It must not return a deduplicated corpus as the Search output unless a separate 
 
 ## Fixture Plan
 
-Required planned fixture families are recorded in `docs/port/php-search-fixture-plan.md` and summarized here:
+Implemented local fixture families are recorded in `docs/port/php-search-fixture-plan.md`, `docs/port/GOLDEN-FIXTURE-PLAN.md`, and `fixtures/conformance/search/`.
 
 - query and cache identity fixtures
 - provider selection and execution fixtures
 - search plan parsing fixtures
-- provider normalization fixtures
 - raw Search trace and Deduplication-boundary fixtures
 - imported-export fixture families, deferred until a Search import contract
 - locked-project and persistence-shape fixtures only if admitted by a later scope
 
-Representative fixture IDs:
+Implemented local fixture IDs:
 
 - `search-query-validation.json`
 - `search-cache-key-provider-order.json`
@@ -141,10 +133,19 @@ Representative fixture IDs:
 - `search-provider-selection-unknown-alias.json`
 - `search-provider-partial-failure.json`
 - `search-provider-all-failed-empty.json`
-- `search-plan-parse-nexus-cli-v4.json`
-- `search-plan-parse-legacy-queries.json`
 - `search-trace-schema-closed-plan.json`
 - `search-trace-php-legacy-plan-import.json`
+- `search-trace-raw-provider-results.json`
+- `search-trace-duplicate-provider-sightings.json`
+- `search-trace-no-id-candidates.json`
+- `search-trace-raw-data-preserved.json`
+- `search-trace-raw-data-not-requested.json`
+- `search-trace-dedup-not-applied.json`
+
+Deferred fixture IDs:
+
+- `search-plan-parse-nexus-cli-v4.json`
+- `search-plan-parse-legacy-queries.json`
 - `search-plan-item-overrides.json`
 - `search-normalize-openalex-stub.json`
 - `search-normalize-semantic-scholar-stub.json`
@@ -153,9 +154,6 @@ Representative fixture IDs:
 - `search-normalize-pubmed-stub.json`
 - `search-normalize-ieee-stub.json`
 - `search-normalize-doaj-stub.json`
-- `search-trace-raw-provider-results.json`
-- `search-trace-duplicate-provider-sightings.json`
-- `search-trace-dedup-not-applied.json`
 - `search-import-ris-trace.json`
 - `search-import-bibtex-trace.json`
 - `search-import-scopus-csv-trace.json`
@@ -213,9 +211,9 @@ Generated ids, runtime durations, and live HTTP timing must not be semantic comp
 
 ## Implementation Readiness
 
-Yes, for a local stub-provider C# Search implementation only.
+Implemented locally for deterministic stub-provider C# Search only.
 
-Implementation is still blocked for:
+Still blocked for:
 
 - live provider/network behavior
 - PHP compatibility claims
@@ -228,7 +226,6 @@ Implementation is still blocked for:
 
 ## Explicit Claims Not Made
 
-- no C# Search behavior implemented
 - no import parser implementation
 - no provider/network behavior
 - no live provider/network behavior
