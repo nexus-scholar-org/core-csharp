@@ -176,7 +176,8 @@ Coverage, planned by `ADR 0011` and deferred until import parser implementation:
 - `source_database_or_tool`
 - `export_format`
 - original query text, when available
-- exported/imported timestamps and actors, when available
+- exported timestamp and source actor, when available
+- imported timestamp and local import actor
 - `source_file_digest` over preserved or digest-bound raw exported bytes
 - parser id, parser version, parser warnings, and record count
 - source record ids and raw record digests when present
@@ -224,6 +225,7 @@ Required negative cases before implementation claim:
 - PHP raw-data cache ambiguity from excluding `includeRawData` classified as an intentional incompatibility
 - unsupported import format, if imported-export parsing is admitted later
 - missing source file digest, if imported-export parsing is admitted later
+- missing local import actor, if imported-export parsing is admitted later
 - parser warning preserved, if imported-export parsing is admitted later
 - skipped import record preserved as warning/error evidence where possible
 - source-specific id not promoted to WorkId namespace without a later ADR

@@ -56,6 +56,7 @@ Forbidden paths:
 - source identity fields for user-supplied exports
 - supported future import families: RIS, BibTeX, Scopus export, Web of Science export, Zotero/CSL JSON, EndNote export, and Publish or Perish CSV
 - raw exported file byte preservation or digest binding through `source_file_digest`
+- local import actor identification for accepted imported Search evidence
 - local paths excluded from Search identity
 - parser output as a projection over raw evidence
 - imported records as Search trace sightings or unresolved candidates
@@ -104,6 +105,7 @@ Negative cases:
 - malformed record
 - unknown identifier type
 - duplicate source record id
+- missing local import actor
 - parser warning preserved
 - skipped record preserved as evidence where possible
 - source-specific id not promoted to `WorkIdNamespace`

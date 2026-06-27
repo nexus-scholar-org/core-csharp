@@ -31,7 +31,7 @@ The import source identity must carry:
 - `parser_version`
 - `source_file_digest`
 - `imported_at`
-- `imported_by`, when available
+- `imported_by`
 - `original_query_text`, when available
 - `exported_at`, when available
 - `record_count`
@@ -39,7 +39,9 @@ The import source identity must carry:
 
 The record may also carry source-provided export metadata such as source collection name, export option labels, or source-reported result count when available. Those fields are evidence metadata, not scientific work identity.
 
-`source_file_digest`, `parser_id`, and `parser_version` are required for any accepted parser output. Parser output without a bound source file digest is not canonical Search import evidence.
+`source_file_digest`, `parser_id`, `parser_version`, and `imported_by` are required for any accepted parser output. Parser output without a bound source file digest and local import actor is not canonical Search import evidence.
+
+`exported_by` is source-side metadata and is recorded when available. It is not a substitute for the local actor or import agent that accepts the export into Nexus.
 
 ### 2. Supported future import families
 
@@ -59,7 +61,7 @@ Admitting these families at contract level does not implement parser support for
 
 Raw exported file bytes must be preserved or digest-bound.
 
-`source_file_digest` must use the accepted raw-byte digest rule. When the export is represented as a Nexus artifact, the digest scope should be `raw-artifact-bytes` from `ADR 0002` and `ADR 0009`.
+`source_file_digest` must use the accepted raw-byte digest rule. When the export is represented as a Nexus artifact, the digest scope must be `raw-artifact-bytes` from `ADR 0002` and `ADR 0009`.
 
 The digest input is the exact exported file bytes. Line endings, encodings, field ordering, file names, local paths, and parser-normalized output are not substituted for the source bytes.
 
@@ -235,7 +237,7 @@ No persisted C# data is migrated by this ADR.
 
 Any future imported-export records created before parser implementation must be treated as non-authoritative unless they are replayed or validated under this ADR.
 
-Any app or external import output that lacks `source_file_digest`, parser id/version, parser warnings, and source context must be staged as non-canonical import evidence until transformed under this contract.
+Any app or external import output that lacks `source_file_digest`, local import actor, parser id/version, parser warnings, and source context must be staged as non-canonical import evidence until transformed under this contract.
 
 ## Fixture Effect
 
