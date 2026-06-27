@@ -1,0 +1,63 @@
+{
+  "fixtureId": "dedup-representative-merge-preserves-evidence",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+  "case": {
+    "scenario": "representative-merge-preserves-evidence",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-merge-evidence",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Evidence preservation paper",
+            "workIds": ["doi:10.1000/merge"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Evidence-preservation paper",
+            "workIds": ["doi:10.1000/merge"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "ieee",
+            "providerOrder": 1,
+            "providerLocalRank": 3,
+            "title": "Evidence preservation supplemental",
+            "workIds": ["openalex:other-merge"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 1,
+      "members": 3,
+      "containsEvidenceTypes": [
+        "SourceSighting",
+        "ExactIdentifier"
+      ],
+      "reviewRequired": 0
+    }
+  }
+}

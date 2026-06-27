@@ -1,0 +1,61 @@
+{
+  "fixtureId": "dedup-representative-election",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+  "case": {
+    "scenario": "representative-election",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-representative",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Representative paper title",
+            "workIds": ["doi:10.1000/rep", "s2:s2-001"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Representative paper title",
+            "workIds": ["crossref:CR-001", "arxiv:arXiv:9999.9999"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "semantic_scholar",
+            "providerOrder": 1,
+            "providerLocalRank": 3,
+            "title": "Representative paper title",
+            "workIds": ["s2:S2-001", "arxiv:arXiv:9999.9999"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 1,
+      "members": 3,
+      "reviewRequired": 0,
+      "unresolved": 0,
+      "expectedRepresentativeByTieBreaks": "search:search-trace-representative:1:openalex:1:1"
+    }
+  }
+}

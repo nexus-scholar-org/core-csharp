@@ -1,0 +1,51 @@
+{
+  "fixtureId": "dedup-no-id-title-only-no-auto-merge",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "case": {
+    "scenario": "no-id-title-only",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-noid-title-only",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "No-id title paper",
+            "workIds": [],
+            "isUnresolved": true
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "No-id title paper",
+            "workIds": [],
+            "isUnresolved": true
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 0,
+      "reviewRequired": 1,
+      "unresolved": 2
+    }
+  }
+}

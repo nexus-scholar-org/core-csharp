@@ -1,0 +1,52 @@
+{
+  "fixtureId": "dedup-fuzzy-title-review-required",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "case": {
+    "scenario": "fuzzy-title-review-required",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-fuzzy-review",
+        "sightings": [
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Deep learning in molecular data",
+            "workIds": ["doi:10.1000/fuzzy-a"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Deep learning in molecular data!",
+            "workIds": ["doi:10.1000/fuzzy-b"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 0,
+      "reviewRequired": 1,
+      "unresolved": 0,
+      "threshold": 0.95
+    }
+  }
+}

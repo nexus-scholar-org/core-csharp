@@ -1,0 +1,69 @@
+{
+  "fixtureId": "dedup-web-app-projection-not-authority",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+  "case": {
+    "scenario": "web-app-projection-not-authority",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-web-boundary",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Projection boundary",
+            "workIds": ["doi:10.1000/web-1"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Projection boundary",
+            "workIds": ["doi:10.1000/web-1"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 1,
+      "reviewRequired": 0,
+      "unresolved": 0,
+      "coreAuthorityFields": [
+        "resultId",
+        "schemaId",
+        "schemaVersion",
+        "sourceSearchTraceIds",
+        "clusters",
+        "unresolvedCandidates",
+        "reviewRequiredCandidates",
+        "evidence",
+        "warnings",
+        "errors",
+        "nonClaims"
+      ],
+      "nonAuthorityProjectionFields": [
+        "membershipHash",
+        "persistedRuns",
+        "staleRunDetection",
+        "representativeSnapshot"
+      ]
+    }
+  }
+}

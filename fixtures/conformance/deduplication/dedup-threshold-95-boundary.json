@@ -1,0 +1,52 @@
+{
+  "fixtureId": "dedup-threshold-95-boundary",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "case": {
+    "scenario": "threshold-95-boundary",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-threshold-boundary",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Machine learning in medicine",
+            "workIds": ["doi:10.1000/boundary-a"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "semantic_scholar",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Machine-learning in medicine",
+            "workIds": ["doi:10.1000/boundary-b"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 0,
+      "reviewRequired": 1,
+      "unresolved": 0,
+      "threshold": 0.95
+    }
+  }
+}

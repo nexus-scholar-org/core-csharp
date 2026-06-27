@@ -1,0 +1,62 @@
+{
+  "fixtureId": "dedup-exact-cross-provider-id-cluster",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0010-search-trace-and-plan-contract.md",
+    "docs/adr/0011-search-import-source-contract.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "case": {
+    "scenario": "exact-cross-provider-id-cluster",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-cross-provider",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Cross provider A",
+            "workIds": ["doi:10.1000/xyz"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Cross provider A",
+            "workIds": ["crossref:10.1000/xyz"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "semantic_scholar",
+            "providerOrder": 1,
+            "providerLocalRank": 3,
+            "title": "Cross provider B",
+            "workIds": ["s2:XYZ"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "clusters": 1,
+      "clusterSize": 2,
+      "reviewRequired": 0,
+      "unresolved": 0
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "fixtureId": "dedup-raw-sightings-preserved",
+  "sourceKind": "local-gate-9-dedup-implementation",
+  "sourceCommit": "local-gate-9-dedup-local",
+  "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
+  "generatorVersion": "gate-9-dedup-v1",
+  "sourceRefs": [
+    "docs/adr/0010-search-trace-and-plan-contract.md",
+    "docs/adr/0011-search-import-source-contract.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority"
+  ],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "outputDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+  "case": {
+    "scenario": "raw-sightings-preserved",
+    "searchTraces": [
+      {
+        "traceId": "search-trace-raw",
+        "sightings": [
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Raw sighting main",
+            "workIds": ["doi:10.1000/raw-1"],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Raw sighting main",
+            "workIds": ["doi:10.1000/raw-1"],
+            "isUnresolved": false
+          }
+        ]
+      }
+    ],
+    "importTraces": [
+      {
+        "traceId": "import-trace-raw",
+        "records": [
+          {
+            "sourceDatabaseOrTool": "ris",
+            "sourceRecordId": "r1",
+            "title": "Imported raw evidence",
+            "workIds": ["pmid:999"],
+            "isUnresolved": false
+          },
+          {
+            "sourceDatabaseOrTool": "ris",
+            "sourceRecordId": "r2",
+            "title": "Unresolved import",
+            "workIds": [],
+            "isUnresolved": true
+          }
+        ]
+      }
+    ],
+    "expected": {
+      "rawCandidates": 4,
+      "clusters": 2,
+      "unresolved": 1,
+      "reviewRequired": 1,
+      "sourceSearchTraces": 1,
+      "sourceImportTraces": 1
+    }
+  }
+}
