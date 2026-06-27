@@ -1,6 +1,6 @@
 # Merge Queue
 
-Source: live status from branch probes after the Gate 9 Deduplication reconnaissance merge.
+Source: live status from branch probes after the ADR 0012 Deduplication Contract merge.
 
 ## Completed Merges
 
@@ -20,25 +20,18 @@ Source: live status from branch probes after the Gate 9 Deduplication reconnaiss
 - `cdx/gate-9-search-import-contract` (merged to `main`)
 - `cdx/gate-9-search-import-local` (merged to `main`)
 - `cdx/gate-9-dedup-recon` (merged to `main`)
+- `cdx/gate-9-dedup-contract` (merged to `main`)
 - `cdx/two-model-codex-workflow` (historical merged workflow setup branch)
-- `cdx/shared-identity-adr-0007` (reconnaissance planning branch)
+- `cdx/shared-identity-adr-0007` (historical planning branch)
 
 ## Current Queue
 
-- `main` includes Gate 9 Deduplication reconnaissance at `76933e3`.
-- ADR 0010 branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28289131170`.
-- ADR 0010 push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28289224733`.
-- Gate 9 Search local branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290113371`.
-- Gate 9 Search push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290167673`.
-- ADR 0011 branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290630584`.
-- ADR 0011 push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28290718641`.
-- Gate 9 Search import-local final branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28291884081`.
-- Gate 9 Search import-local push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28291938166`.
-- Gate 9 Deduplication reconnaissance branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28293730505`.
-- Gate 9 Deduplication reconnaissance push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28293796105`.
-- GitHub remote branch cleanup candidate: `origin/cdx/gate-9-dedup-recon`.
-- Next primary branch: `cdx/gate-9-dedup-contract`.
-- ADR 0012 should resolve `CF-011`, `CF-012`, and `CF-020`, and narrow `CF-016` only for the Search-to-Dedup handoff.
+- `main` includes ADR 0012 Deduplication Evidence and Cluster Contract at `0249f67`.
+- ADR 0012 branch CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28294430050`.
+- ADR 0012 push-triggered `main` CI is green: `https://github.com/nexus-scholar/core-csharp/actions/runs/28294876256`.
+- GitHub remote branch cleanup candidates: `origin/cdx/gate-9-dedup-contract`, `origin/cdx/gate-9-dedup-recon`.
+- Next primary branch: `cdx/gate-9-dedup-local`.
+- Local Dedup implementation should use ADR 0012 and preserve the explicit non-claims.
 
 ## Not Queued Yet
 
@@ -49,13 +42,13 @@ Source: live status from branch probes after the Gate 9 Deduplication reconnaiss
 - Google Scholar scraping
 - PHP compatibility claims
 - generated PHP fixtures
-- Deduplication implementation, until ADR 0012 is accepted
 - Screening behavior
-- Search persistence/API/UI/cloud behavior
+- persistence/API/UI/cloud behavior
 - CLI/Web app alignment
 
 ## Cleanup Candidates
 
+- `origin/cdx/gate-9-dedup-contract`
 - `origin/cdx/gate-9-dedup-recon`
 
 ## Not Safe To Delete
@@ -64,5 +57,5 @@ Source: live status from branch probes after the Gate 9 Deduplication reconnaiss
 
 ## Verification
 
-- `git branch -r` returns `origin/HEAD -> origin/main`, `origin/main`, and merged cleanup candidate `origin/cdx/gate-9-dedup-recon`.
-- `git branch --merged main` includes `cdx/gate-9-dedup-recon`.
+- `git branch --merged main` includes `cdx/gate-9-dedup-contract` and `cdx/gate-9-dedup-recon`.
+- `git branch -r` returns `origin/main`, `origin/cdx/gate-9-dedup-contract`, and `origin/cdx/gate-9-dedup-recon` as the remaining remote branches after this refresh.
