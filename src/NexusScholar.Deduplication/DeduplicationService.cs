@@ -23,12 +23,16 @@ public sealed class DeduplicationService
         {
             ["openalex"] = 5,
             ["crossref"] = 4,
+            ["scopus"] = 4,
+            ["scopus-csv"] = 4,
             ["semantic_scholar"] = 3,
             ["arxiv"] = 2,
             ["pubmed"] = 2,
             ["pmcid"] = 2,
             ["ieee"] = 1,
-            ["doaj"] = 1
+            ["doaj"] = 1,
+            ["ris"] = 1,
+            ["bibtex"] = 1
         });
 
     public static readonly IReadOnlyList<string> DefaultNonClaims =
@@ -39,6 +43,8 @@ public sealed class DeduplicationService
                 "no-generated-php-fixture",
                 "no-screening",
                 "no-search-screening-claim",
+                "no-live-provider-network",
+                "no-persistence-api-ui-cloud",
                 "no-app-projection-authority"
             });
 
@@ -97,7 +103,7 @@ public sealed class DeduplicationService
                 }
 
                 index++;
-                var candidate = BuildFromImportRecord(trace.TraceId, index, record, trace.Metadata);
+                var candidate = BuildFromImportRecord(trace.TraceId, index, record, trace.Metadata, trace.ParserWarnings);
                 candidates.Add(candidate);
                 evidence.Add(CreateSourceEvidence(candidate));
                 AddSourceSpecificEvidence(candidate, evidence);
@@ -313,22 +319,19 @@ public sealed class DeduplicationService
             work.WorkIds.Ids.Select(id => id.ToString()).ToArray(),
             Array.Empty<string>(),
             new DedupSightingRef(
-                "search",
-                traceId,
-                $"search:{traceId}:{sightingIndex}:{sighting.ProviderAlias}:{sighting.ProviderOrder}:{sighting.ProviderLocalRank}",
-                sighting.ProviderAlias,
-                null,
-                null,
-                null,
-                null,
-                work.SourceContext));
+                SourceKind: "search",
+                SourceTraceId: traceId,
+                SourceSightingId: $"search:{traceId}:{sightingIndex}:{sighting.ProviderAlias}:{sighting.ProviderOrder}:{sighting.ProviderLocalRank}",
+                ProviderAlias: sighting.ProviderAlias,
+                SourceContext: work.SourceContext));
     }
 
     private static DedupCandidateRecord BuildFromImportRecord(
         string traceId,
         int recordIndex,
         SearchImportRecord record,
-        SearchImportMetadata metadata)
+        SearchImportMetadata metadata,
+        IReadOnlyList<SearchImportParserNotice> traceParserWarnings)
     {
         var work = record.Work;
 
@@ -343,15 +346,17 @@ public sealed class DeduplicationService
                 .Distinct(StringComparer.Ordinal)
                 .ToArray(),
             new DedupSightingRef(
-                "import",
-                traceId,
-                $"import:{traceId}:{recordIndex}:{record.SourceRecordId}",
-                null,
-                record.SourceDatabaseOrTool,
-                record.SourceRecordId,
-                metadata.SourceFileDigest,
-                record.RawRecordDigest,
-                work.SourceContext));
+                SourceKind: "import",
+                SourceTraceId: traceId,
+                SourceSightingId: $"import:{traceId}:{recordIndex}:{record.SourceRecordId}",
+                SourceDatabaseOrTool: record.SourceDatabaseOrTool,
+                SourceRecordId: record.SourceRecordId,
+                SourceFileDigest: metadata.SourceFileDigest,
+                SourceFileDigestScope: metadata.SourceFileDigestScope,
+                RawRecordDigest: record.RawRecordDigest,
+                SourceContext: work.SourceContext,
+                ParserWarnings: ConvertNotices(metadata.ParserWarnings.Concat(traceParserWarnings)),
+                RecordNotices: ConvertNotices(record.Notices)));
     }
 
     private static bool HasExactWorkIdOverlap(DedupCandidateRecord left, DedupCandidateRecord right)
@@ -391,6 +396,12 @@ public sealed class DeduplicationService
             .OrderBy(id => id, StringComparer.Ordinal)
             .ToArray();
 
+        var sourceFileDigests = DistinctNonBlank(members.Select(member => member.Source.SourceFileDigest));
+        var sourceFileDigestScopes = DistinctNonBlank(members.Select(member => member.Source.SourceFileDigestScope));
+        var rawRecordDigests = DistinctNonBlank(members.Select(member => member.Source.RawRecordDigest));
+        var parserWarnings = DistinctNotices(members.SelectMany(member => member.Source.ParserWarnings));
+        var recordNotices = DistinctNotices(members.SelectMany(member => member.Source.RecordNotices));
+
         var representativeTitle = !string.IsNullOrWhiteSpace(elected.Candidate.Title)
             ? elected.Candidate.Title
             : members.FirstOrDefault(member => !string.IsNullOrWhiteSpace(member.Title))?.Title ?? string.Empty;
@@ -398,6 +409,25 @@ public sealed class DeduplicationService
         var representativePrimaryWorkId = !string.IsNullOrWhiteSpace(elected.Candidate.PrimaryWorkId)
             ? elected.Candidate.PrimaryWorkId
             : unionWorkIds.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        var reasonCodes = new List<string>
+        {
+            "completeness-score",
+            "accepted-stable-id",
+            "provider-priority",
+            "doi-preference",
+            "primary-identifier",
+            "candidate-id",
+            "workid-union"
+        };
+
+        if (sourceFileDigests.Length > 0 ||
+            rawRecordDigests.Length > 0 ||
+            parserWarnings.Count > 0 ||
+            recordNotices.Count > 0)
+        {
+            reasonCodes.Add("import-evidence-projection");
+        }
 
         return new DedupRepresentativeResult(
             elected.Candidate.CandidateId,
@@ -409,26 +439,27 @@ public sealed class DeduplicationService
                 .OrderBy(item => item, StringComparer.Ordinal)
                 .ToArray(),
             elected.Completeness,
-            new ReadOnlyCollection<string>(new[]
-            {
-                "completeness-score",
-                "accepted-stable-id",
-                "provider-priority",
-                "doi-preference",
-                "primary-identifier",
-                "candidate-id",
-                "workid-union"
-            }));
+            new ReadOnlyCollection<string>(reasonCodes),
+            new ReadOnlyCollection<string>(sourceFileDigests),
+            new ReadOnlyCollection<string>(sourceFileDigestScopes),
+            new ReadOnlyCollection<string>(rawRecordDigests),
+            parserWarnings,
+            recordNotices);
     }
 
     private static int GetProviderPriority(DedupSightingRef source)
     {
-        if (string.IsNullOrWhiteSpace(source.ProviderAlias))
+        var sourceName = string.IsNullOrWhiteSpace(source.ProviderAlias)
+            ? source.SourceDatabaseOrTool
+            : source.ProviderAlias;
+
+        if (string.IsNullOrWhiteSpace(sourceName))
         {
             return 0;
         }
 
-        return DefaultProviderPriority.TryGetValue(source.ProviderAlias, out var priority) ? priority : 0;
+        var normalizedSourceName = sourceName.Trim().ToLowerInvariant();
+        return DefaultProviderPriority.TryGetValue(normalizedSourceName, out var priority) ? priority : 0;
     }
 
     private static double ComputeCompletenessScore(DedupCandidateRecord candidate)
@@ -554,12 +585,45 @@ public sealed class DeduplicationService
 
     private static DedupEvidence CreateSourceEvidence(DedupCandidateRecord candidate)
     {
+        var reasonParts = new List<string>
+        {
+            $"source-trace:{candidate.Source.SourceTraceId}",
+            $"source:{candidate.Source.SourceSightingId}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(candidate.Source.SourceFileDigest))
+        {
+            reasonParts.Add($"source-file-digest:{candidate.Source.SourceFileDigest}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(candidate.Source.SourceFileDigestScope))
+        {
+            reasonParts.Add($"source-file-digest-scope:{candidate.Source.SourceFileDigestScope}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(candidate.Source.RawRecordDigest))
+        {
+            reasonParts.Add($"raw-record-digest:{candidate.Source.RawRecordDigest}");
+        }
+
+        if (candidate.Source.ParserWarnings.Count > 0)
+        {
+            reasonParts.Add($"parser-warnings:{candidate.Source.ParserWarnings.Count}");
+        }
+
+        if (candidate.Source.RecordNotices.Count > 0)
+        {
+            reasonParts.Add($"record-notices:{candidate.Source.RecordNotices.Count}");
+        }
+
+        reasonParts.Add($"policy={PolicyId}/{PolicyVersion}");
+
         return new DedupEvidence(
             BuildEvidenceId("source", candidate.CandidateId, candidate.CandidateId),
             DedupEvidenceKind.SourceSighting,
             candidate.CandidateId,
             candidate.CandidateId,
-            $"source-trace:{candidate.Source.SourceTraceId}|source:{candidate.Source.SourceSightingId}|policy={PolicyId}/{PolicyVersion}",
+            string.Join('|', reasonParts),
             ReviewRequired: false,
             0.0,
             PolicyId,
@@ -623,6 +687,47 @@ public sealed class DeduplicationService
 
         return evidence.ObjectCandidateId is null
             || members.Any(member => string.Equals(member.CandidateId, evidence.ObjectCandidateId, StringComparison.Ordinal));
+    }
+
+    private static string[] DistinctNonBlank(IEnumerable<string?> values)
+    {
+        return values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<DedupParserNotice> ConvertNotices(IEnumerable<SearchImportParserNotice> notices)
+    {
+        return DistinctNotices(notices.Select(notice => new DedupParserNotice(
+            notice.Category,
+            notice.Message,
+            notice.RecordIndex,
+            notice.SourceRecordId)));
+    }
+
+    private static IReadOnlyList<DedupParserNotice> DistinctNotices(IEnumerable<DedupParserNotice> notices)
+    {
+        return new ReadOnlyCollection<DedupParserNotice>(notices
+            .GroupBy(NoticeKey, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .OrderBy(notice => notice.Category, StringComparer.Ordinal)
+            .ThenBy(notice => notice.Message, StringComparer.Ordinal)
+            .ThenBy(notice => notice.RecordIndex ?? -1)
+            .ThenBy(notice => notice.SourceRecordId, StringComparer.Ordinal)
+            .ToArray());
+    }
+
+    private static string NoticeKey(DedupParserNotice notice)
+    {
+        return string.Join(
+            '\u001f',
+            notice.Category,
+            notice.Message,
+            notice.RecordIndex?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+            notice.SourceRecordId ?? string.Empty);
     }
 
     private sealed class UnionFind

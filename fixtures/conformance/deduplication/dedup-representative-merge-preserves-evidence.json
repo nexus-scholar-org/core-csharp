@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:bfd27bf272f30903900769baa91416dc961d3b1c76f45007ad3dd38a3a553c76",
-  "outputDigest": "sha256:517107a31f2d31a26f9ecde87c4fabd0b46be13b7d682e8bfe9c3fae84538515",
+  "inputDigest": "sha256:83d6a8424564980b35e5e7d2d0db4f27b85ab004b1803a6ca04210b4b535f037",
+  "outputDigest": "sha256:527640b741e883cc85c600c7ff2d1ca9354e971d69eec9b47c50562fcad3c79d",
   "case": {
     "scenario": "representative-merge-preserves-evidence",
     "searchTraces": [
@@ -28,7 +30,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Evidence preservation paper",
-            "workIds": ["doi:10.1000/merge"],
+            "workIds": [
+              "doi:10.1000/merge"
+            ],
             "isUnresolved": false
           },
           {
@@ -36,7 +40,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Evidence-preservation paper",
-            "workIds": ["doi:10.1000/merge"],
+            "workIds": [
+              "doi:10.1000/merge"
+            ],
             "isUnresolved": false
           },
           {
@@ -44,7 +50,9 @@
             "providerOrder": 1,
             "providerLocalRank": 3,
             "title": "Evidence preservation supplemental",
-            "workIds": ["doi:10.1000/merge"],
+            "workIds": [
+              "doi:10.1000/merge"
+            ],
             "isUnresolved": false
           }
         ]

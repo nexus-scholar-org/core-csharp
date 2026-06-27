@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:d418c332b2032ac51c9c0c894cd571f942b98557e0e2aa40261e79764d9b78cb",
-  "outputDigest": "sha256:91d3f60845abca001791272d67cf078b1fb9ded6300c958a6cd55f9d2817083e",
+  "inputDigest": "sha256:c8c19e3f6073abb82b935b287f2736261104a184f7d711df7a6e0ad0f47cf55f",
+  "outputDigest": "sha256:168516bfda8b9aaeabcbe72368176ccd08c077c5b5a04883690132760978974c",
   "case": {
     "scenario": "source-specific-id-not-workid-review-only",
     "importTraces": [

@@ -4,22 +4,65 @@
   "sourceCommit": "local-gate-9-dedup-local",
   "generatorCommand": "hand-authored local Gate 9 Dedup fixture",
   "generatorVersion": "gate-9-dedup-v1",
-  "sourceRefs": ["docs/adr/0007-shared-scientific-identity.md","docs/adr/0012-deduplication-evidence-and-cluster-contract.md"],
-  "comparisonRules": ["no-php-compatibility-claim","no-generated-php-fixture","no-search-screening-claim","no-screening","no-app-projection-authority"],
-  "inputDigest": "sha256:a743382701ad8ab584ebad2153841235cf4c65af34b6309e79b5b84f02a66b8e",
-  "outputDigest": "sha256:efd69666101f4b83c61bebfd07add07769828f2f6855d87230d4eb9d76d54523",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md",
+    "docs/adr/0012-deduplication-evidence-and-cluster-contract.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "no-search-screening-claim",
+    "no-screening",
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
+  ],
+  "inputDigest": "sha256:649bc0dad30ea5cba92f79d7d09c93123871890d45d67f6dd8a707678df43466",
+  "outputDigest": "sha256:219a121ad5f7ac9b50d567cbf2a9a051088c06a751d116421bd057fb17dbc65a",
   "case": {
     "scenario": "transitive-cluster",
     "searchTraces": [
       {
         "traceId": "search-trace-transitive",
         "sightings": [
-          {"providerAlias":"openalex","providerOrder":1,"providerLocalRank":1,"title":"Transitive A","workIds":["doi:10.1000/t1"],"isUnresolved":false},
-          {"providerAlias":"crossref","providerOrder":1,"providerLocalRank":2,"title":"Transitive B","workIds":["doi:10.1000/t1"],"isUnresolved":false},
-          {"providerAlias":"ieee","providerOrder":1,"providerLocalRank":3,"title":"Transitive C","workIds":["doi:10.1000/t1"],"isUnresolved":false}
+          {
+            "providerAlias": "openalex",
+            "providerOrder": 1,
+            "providerLocalRank": 1,
+            "title": "Transitive A",
+            "workIds": [
+              "doi:10.1000/t1"
+            ],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "crossref",
+            "providerOrder": 1,
+            "providerLocalRank": 2,
+            "title": "Transitive B",
+            "workIds": [
+              "doi:10.1000/t1"
+            ],
+            "isUnresolved": false
+          },
+          {
+            "providerAlias": "ieee",
+            "providerOrder": 1,
+            "providerLocalRank": 3,
+            "title": "Transitive C",
+            "workIds": [
+              "doi:10.1000/t1"
+            ],
+            "isUnresolved": false
+          }
         ]
       }
     ],
-    "expected": { "clusters": 1, "members": 3, "reviewRequired": 0, "unresolved": 0 }
+    "expected": {
+      "clusters": 1,
+      "members": 3,
+      "reviewRequired": 0,
+      "unresolved": 0
+    }
   }
 }

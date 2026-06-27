@@ -362,6 +362,8 @@ public sealed class DeduplicationServiceTests
         CollectionAssert.Contains(result.NonClaims.ToArray(), "no-app-projection-authority");
         CollectionAssert.Contains(result.NonClaims.ToArray(), "no-screening");
         CollectionAssert.Contains(result.NonClaims.ToArray(), "no-search-screening-claim");
+        CollectionAssert.Contains(result.NonClaims.ToArray(), "no-live-provider-network");
+        CollectionAssert.Contains(result.NonClaims.ToArray(), "no-persistence-api-ui-cloud");
     }
 
     [TestMethod]
@@ -398,6 +400,107 @@ public sealed class DeduplicationServiceTests
                 && entry.Reason.Contains("source-trace:import-trace-binding-2", StringComparison.Ordinal))
             .ToArray();
         Assert.AreEqual(1, importEvidence.Length);
+    }
+
+    [TestMethod]
+    public void Imported_export_provenance_survives_raw_candidates_clusters_representative_and_evidence()
+    {
+        var sourceFileDigest = "sha256:2222222222222222222222222222222222222222222222222222222222222222";
+        var firstRawDigest = "sha256:3333333333333333333333333333333333333333333333333333333333333333";
+        var secondRawDigest = "sha256:4444444444444444444444444444444444444444444444444444444444444444";
+        var parserWarning = new SearchImportParserNotice(
+            "source-file-trimmed",
+            "source file was trimmed to parseable import content");
+        var recordNotice = new SearchImportParserNotice(
+            "record-title-case",
+            "record title was normalized",
+            1,
+            "r1");
+        var import = BuildImportTrace(
+            "import-trace-provenance",
+            sourceFileDigest,
+            DigestScope.RawArtifactBytes.ToString(),
+            new[] { parserWarning },
+            BuildImportRecord(
+                "scopus-csv",
+                "Imported provenance paper",
+                "r1",
+                WorkId.From("doi", "10.1000/prov"),
+                rawRecordDigest: firstRawDigest,
+                notices: new[] { recordNotice }),
+            BuildImportRecord(
+                "scopus-csv",
+                "Imported provenance paper",
+                "r2",
+                WorkId.From("doi", "10.1000/prov"),
+                rawRecordDigest: secondRawDigest));
+
+        var result = new DeduplicationService().Execute("dedup-result", [], [import]);
+
+        var firstCandidate = result.RawCandidates.Single(candidate => candidate.Source.SourceRecordId == "r1");
+        Assert.AreEqual(sourceFileDigest, firstCandidate.Source.SourceFileDigest);
+        Assert.AreEqual(DigestScope.RawArtifactBytes.ToString(), firstCandidate.Source.SourceFileDigestScope);
+        Assert.AreEqual(firstRawDigest, firstCandidate.Source.RawRecordDigest);
+        Assert.AreEqual(1, firstCandidate.Source.ParserWarnings.Count);
+        Assert.AreEqual("source-file-trimmed", firstCandidate.Source.ParserWarnings[0].Category);
+        Assert.AreEqual(1, firstCandidate.Source.RecordNotices.Count);
+        Assert.AreEqual("record-title-case", firstCandidate.Source.RecordNotices[0].Category);
+
+        var cluster = result.Clusters.Single();
+        CollectionAssert.Contains(cluster.Representative.SourceFileDigests.ToArray(), sourceFileDigest);
+        CollectionAssert.Contains(cluster.Representative.SourceFileDigestScopes.ToArray(), DigestScope.RawArtifactBytes.ToString());
+        CollectionAssert.Contains(cluster.Representative.RawRecordDigests.ToArray(), firstRawDigest);
+        CollectionAssert.Contains(cluster.Representative.RawRecordDigests.ToArray(), secondRawDigest);
+        Assert.AreEqual(1, cluster.Representative.ParserWarnings.Count);
+        Assert.AreEqual(1, cluster.Representative.RecordNotices.Count);
+        CollectionAssert.Contains(cluster.Representative.ReasonCodes.ToArray(), "import-evidence-projection");
+
+        var sourceEvidence = result.Evidence.Single(evidence =>
+            evidence.Kind == DedupEvidenceKind.SourceSighting &&
+            evidence.SubjectCandidateId == firstCandidate.CandidateId);
+        StringAssert.Contains(sourceEvidence.Reason!, $"source-file-digest:{sourceFileDigest}");
+        StringAssert.Contains(sourceEvidence.Reason!, $"source-file-digest-scope:{DigestScope.RawArtifactBytes}");
+        StringAssert.Contains(sourceEvidence.Reason!, $"raw-record-digest:{firstRawDigest}");
+        StringAssert.Contains(sourceEvidence.Reason!, "parser-warnings:1");
+        StringAssert.Contains(sourceEvidence.Reason!, "record-notices:1");
+    }
+
+    [TestMethod]
+    public void Representative_election_uses_import_source_priority_when_candidates_tie()
+    {
+        var import = BuildImportTrace(
+            "import-trace-source-priority",
+            BuildImportRecord(
+                "ris",
+                "Source priority",
+                "ris-1",
+                WorkId.From("doi", "10.1000/source-priority")),
+            BuildImportRecord(
+                "scopus-csv",
+                "Source priority",
+                "scopus-1",
+                WorkId.From("doi", "10.1000/source-priority")));
+
+        var result = new DeduplicationService().Execute("dedup-result", [], [import]);
+
+        Assert.AreEqual(
+            "import:import-trace-source-priority:2:scopus-1",
+            result.Clusters.Single().Representative.CandidateId);
+    }
+
+    [TestMethod]
+    public void Representative_election_final_tie_breaker_is_candidate_id()
+    {
+        var trace = BuildSearchTrace(
+            "search-trace-candidate-id-tie",
+            BuildSearchSighting("openalex", 1, 2, "Candidate tie", WorkIdSet.From(WorkId.From("doi", "10.1000/tie"))),
+            BuildSearchSighting("openalex", 1, 1, "Candidate tie", WorkIdSet.From(WorkId.From("doi", "10.1000/tie"))));
+
+        var result = new DeduplicationService().Execute("dedup-result", [trace], []);
+
+        Assert.AreEqual(
+            "search:search-trace-candidate-id-tie:1:openalex:1:2",
+            result.Clusters.Single().Representative.CandidateId);
     }
 
     private static SearchTrace BuildSearchTrace(string traceId, params SearchSighting[] sightings)
@@ -494,7 +597,9 @@ public sealed class DeduplicationServiceTests
         string sourceRecordId,
         WorkId? identifier,
         IReadOnlyList<string>? sourceIdentifiers = null,
-        bool unresolved = false)
+        bool unresolved = false,
+        string? rawRecordDigest = null,
+        IReadOnlyList<SearchImportParserNotice>? notices = null)
     {
         if (unresolved)
         {
@@ -509,11 +614,11 @@ public sealed class DeduplicationServiceTests
                 null,
                 null,
                 Array.Empty<string>(),
-                null,
+                rawRecordDigest,
                 null,
                 false,
                 null,
-                Array.Empty<SearchImportParserNotice>());
+                notices ?? Array.Empty<SearchImportParserNotice>());
         }
 
         var work = identifier is null
@@ -531,14 +636,29 @@ public sealed class DeduplicationServiceTests
             null,
             null,
             Array.Empty<string>(),
-            null,
+            rawRecordDigest,
             null,
             false,
             null,
-            Array.Empty<SearchImportParserNotice>());
+            notices ?? Array.Empty<SearchImportParserNotice>());
     }
 
     private static SearchImportTrace BuildImportTrace(string traceId, params SearchImportRecord[] records)
+    {
+        return BuildImportTrace(
+            traceId,
+            "sha256:111111111111111111111111111111111111111111111111111111111111111111",
+            "raw-artifact-bytes",
+            Array.Empty<SearchImportParserNotice>(),
+            records);
+    }
+
+    private static SearchImportTrace BuildImportTrace(
+        string traceId,
+        string sourceFileDigest,
+        string sourceFileDigestScope,
+        IReadOnlyList<SearchImportParserNotice> parserWarnings,
+        params SearchImportRecord[] records)
     {
         var metadata = new SearchImportMetadata(
             SearchImportMetadata.AcquisitionKindImportedExport,
@@ -546,14 +666,14 @@ public sealed class DeduplicationServiceTests
             "ris",
             "parser-id",
             "1.0.0",
-            "sha256:111111111111111111111111111111111111111111111111111111111111111111",
-            "raw-artifact-bytes",
+            sourceFileDigest,
+            sourceFileDigestScope,
             "importer",
             "2026-06-27T00:00:00Z",
             null,
             null,
             records.Length,
-            Array.Empty<SearchImportParserNotice>());
+            parserWarnings);
 
         return new SearchImportTrace(
             traceId,
@@ -562,7 +682,7 @@ public sealed class DeduplicationServiceTests
             metadata,
             new ReadOnlyCollection<SearchImportRecord>(records),
             Array.Empty<SearchSighting>(),
-            Array.Empty<SearchImportParserNotice>(),
+            parserWarnings,
             SearchImportTrace.DefaultNonClaims);
     }
 

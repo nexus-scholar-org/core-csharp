@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Deduplication;
@@ -69,6 +70,14 @@ public sealed class DeduplicationFixtureTests
 
             _ = ContentDigest.Parse(root.GetProperty("inputDigest").GetString()!);
             _ = ContentDigest.Parse(root.GetProperty("outputDigest").GetString()!);
+            Assert.AreEqual(
+                ComputeFixtureDigest(root.GetProperty("case")),
+                root.GetProperty("inputDigest").GetString(),
+                $"{fixtureId}: inputDigest must match canonical case content");
+            Assert.AreEqual(
+                ComputeFixtureDigest(root.GetProperty("case").GetProperty("expected")),
+                root.GetProperty("outputDigest").GetString(),
+                $"{fixtureId}: outputDigest must match canonical expected replay summary");
             Assert.IsTrue(root.TryGetProperty("case", out _), fixtureId);
         }
     }
@@ -237,6 +246,21 @@ public sealed class DeduplicationFixtureTests
                 var trace = importTraces.SingleOrDefault(item => string.Equals(item.TraceId, expectedTraceId, StringComparison.Ordinal));
                 Assert.IsNotNull(trace, $"{fixtureId}: missing expected import trace '{expectedTraceId}'");
                 Assert.AreEqual(expectedDigest, trace.Metadata.SourceFileDigest, fixtureId);
+                Assert.AreEqual(DigestScope.RawArtifactBytes.ToString(), trace.Metadata.SourceFileDigestScope, fixtureId);
+                Assert.IsTrue(
+                    result.RawCandidates.Any(candidate =>
+                        candidate.Source.SourceKind == "import" &&
+                        string.Equals(candidate.Source.SourceTraceId, expectedTraceId, StringComparison.Ordinal) &&
+                        string.Equals(candidate.Source.SourceFileDigest, expectedDigest, StringComparison.Ordinal) &&
+                        string.Equals(candidate.Source.SourceFileDigestScope, DigestScope.RawArtifactBytes.ToString(), StringComparison.Ordinal)),
+                    $"{fixtureId}: result raw candidates must preserve source-file digest and scope");
+                Assert.IsTrue(
+                    result.Evidence.Any(evidence =>
+                        evidence.Kind == DedupEvidenceKind.SourceSighting &&
+                        evidence.Reason is not null &&
+                        evidence.Reason.Contains($"source-file-digest:{expectedDigest}", StringComparison.Ordinal) &&
+                        evidence.Reason.Contains($"source-file-digest-scope:{DigestScope.RawArtifactBytes}", StringComparison.Ordinal)),
+                    $"{fixtureId}: source evidence must preserve source-file digest and scope");
             }
 
             if (expected.TryGetProperty("expectedRawRecordDigests", out var expectedRawRecordDigestsElement))
@@ -251,6 +275,20 @@ public sealed class DeduplicationFixtureTests
                         .ImportedRecords
                         .Single(record => string.Equals(record.SourceRecordId, expectedSourceRecordId, StringComparison.Ordinal));
                     Assert.AreEqual(expectedDigest, sourceRecord.RawRecordDigest, $"{fixtureId}: raw record digest mismatch");
+
+                    var rawCandidate = result.RawCandidates.SingleOrDefault(candidate =>
+                        candidate.Source.SourceKind == "import" &&
+                        string.Equals(candidate.Source.SourceTraceId, expectedTraceId, StringComparison.Ordinal) &&
+                        string.Equals(candidate.Source.SourceRecordId, expectedSourceRecordId, StringComparison.Ordinal));
+                    Assert.IsNotNull(rawCandidate, $"{fixtureId}: missing raw candidate for imported record '{expectedSourceRecordId}'");
+                    Assert.AreEqual(expectedDigest, rawCandidate.Source.RawRecordDigest, $"{fixtureId}: result raw candidate raw-record digest mismatch");
+                    Assert.IsTrue(
+                        result.Evidence.Any(evidence =>
+                            evidence.Kind == DedupEvidenceKind.SourceSighting &&
+                            string.Equals(evidence.SubjectCandidateId, rawCandidate.CandidateId, StringComparison.Ordinal) &&
+                            evidence.Reason is not null &&
+                            evidence.Reason.Contains($"raw-record-digest:{expectedDigest}", StringComparison.Ordinal)),
+                        $"{fixtureId}: source evidence must preserve raw-record digest");
                 }
             }
 
@@ -290,6 +328,22 @@ public sealed class DeduplicationFixtureTests
                     }
 
                     Assert.IsTrue(matched, $"{fixtureId}: parser warning mismatch for category '{expectedCategory}'.");
+
+                    var resultMatched = result.RawCandidates.Any(candidate =>
+                        candidate.Source.SourceKind == "import" &&
+                        string.Equals(candidate.Source.SourceTraceId, expectedTraceId, StringComparison.Ordinal) &&
+                        (expectedSourceRecordId is null ||
+                            string.Equals(candidate.Source.SourceRecordId, expectedSourceRecordId, StringComparison.Ordinal)) &&
+                        (candidate.Source.ParserWarnings.Any(warning =>
+                            string.Equals(warning.Category, expectedCategory, StringComparison.Ordinal) &&
+                            (expectedMessage is null || string.Equals(warning.Message, expectedMessage, StringComparison.Ordinal))) ||
+                         candidate.Source.RecordNotices.Any(notice =>
+                            string.Equals(notice.Category, expectedCategory, StringComparison.Ordinal) &&
+                            (expectedMessage is null || string.Equals(notice.Message, expectedMessage, StringComparison.Ordinal)))));
+
+                    Assert.IsTrue(
+                        resultMatched,
+                        $"{fixtureId}: result raw candidates must preserve parser warning '{expectedCategory}'.");
                 }
             }
         }
@@ -542,5 +596,82 @@ public sealed class DeduplicationFixtureTests
     {
         var path = Path.Combine(FixtureDirectory, fileName);
         return JsonDocument.Parse(File.ReadAllText(path));
+    }
+
+    private static string ComputeFixtureDigest(JsonElement element)
+    {
+        return ContentDigest.Sha256Utf8(Canonicalize(element)).ToString();
+    }
+
+    private static string Canonicalize(JsonElement element)
+    {
+        var builder = new StringBuilder();
+        WriteCanonicalJson(element, builder);
+        return builder.ToString();
+    }
+
+    private static void WriteCanonicalJson(JsonElement element, StringBuilder builder)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                builder.Append('{');
+                var firstProperty = true;
+                foreach (var property in element.EnumerateObject().OrderBy(property => property.Name, StringComparer.Ordinal))
+                {
+                    if (!firstProperty)
+                    {
+                        builder.Append(',');
+                    }
+
+                    firstProperty = false;
+                    builder.Append(JsonSerializer.Serialize(property.Name));
+                    builder.Append(':');
+                    WriteCanonicalJson(property.Value, builder);
+                }
+
+                builder.Append('}');
+                break;
+
+            case JsonValueKind.Array:
+                builder.Append('[');
+                var firstItem = true;
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (!firstItem)
+                    {
+                        builder.Append(',');
+                    }
+
+                    firstItem = false;
+                    WriteCanonicalJson(item, builder);
+                }
+
+                builder.Append(']');
+                break;
+
+            case JsonValueKind.String:
+                builder.Append(JsonSerializer.Serialize(element.GetString()));
+                break;
+
+            case JsonValueKind.Number:
+                builder.Append(element.GetRawText());
+                break;
+
+            case JsonValueKind.True:
+                builder.Append("true");
+                break;
+
+            case JsonValueKind.False:
+                builder.Append("false");
+                break;
+
+            case JsonValueKind.Null:
+                builder.Append("null");
+                break;
+
+            default:
+                throw new InvalidOperationException($"Unsupported JSON value kind '{element.ValueKind}'.");
+        }
     }
 }

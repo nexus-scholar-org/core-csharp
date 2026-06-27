@@ -12,10 +12,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:d15d98b96dd7f7c67a4a3a48ac080c1cb70248102bbfa174131f335782d99aa4",
-  "outputDigest": "sha256:0394462e5071e22d73af66b7d94bf001ece8ed20cbb314fe917f52ab19d5ad9d",
+  "inputDigest": "sha256:dc42d78fa9b6af3169072026255c57d02ba2f3c9c0999e209b6a25d00765e541",
+  "outputDigest": "sha256:10ec5af2d06c226b76f8228af168c7fb8fc5020ccceff8a2ea72b5684fb709d4",
   "case": {
     "scenario": "web-app-projection-not-authority",
     "searchTraces": [
@@ -27,7 +29,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Projection boundary",
-            "workIds": ["doi:10.1000/web-1"],
+            "workIds": [
+              "doi:10.1000/web-1"
+            ],
             "isUnresolved": false
           },
           {
@@ -35,7 +39,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Projection boundary",
-            "workIds": ["doi:10.1000/web-1"],
+            "workIds": [
+              "doi:10.1000/web-1"
+            ],
             "isUnresolved": false
           }
         ]

@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:c42a7d9bc291a30c6344a7b2981036725ecef2aa3077ce87b93864f4dc17c0d3",
-  "outputDigest": "sha256:c58f6c0761c1dedfc71c015d62ecd0b7d46d5a8fcffbb78b967550d56518cb3d",
+  "inputDigest": "sha256:b74dd9b5c58bfbe6608a31fd382bfccdbf16d6c20eb2ede02423262d0555409c",
+  "outputDigest": "sha256:8daa454450e6f4396e7f4af38825299def5e8627dcc4f8f1bdf604dd7239bd7a",
   "case": {
     "scenario": "threshold-95-boundary",
     "searchTraces": [
@@ -28,7 +30,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Machine learning in medicine",
-            "workIds": ["doi:10.1000/boundary-a"],
+            "workIds": [
+              "doi:10.1000/boundary-a"
+            ],
             "isUnresolved": false
           },
           {
@@ -36,7 +40,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Machine-learning in medicine",
-            "workIds": ["doi:10.1000/boundary-b"],
+            "workIds": [
+              "doi:10.1000/boundary-b"
+            ],
             "isUnresolved": false
           }
         ]

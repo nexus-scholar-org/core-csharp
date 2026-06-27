@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:f298fb0321310d6a6d5cece69f9039163a32b44dd721935b8bfec404279a81f0",
-  "outputDigest": "sha256:e1a417e5f5ba16217dbd7e7b3ef44b5cd6bb31d223bdce388da999f5102c47ce",
+  "inputDigest": "sha256:3152218c70bc0bd337578faf2f766ad03cfdeb0b030c4299a1b3f340ae18b4fa",
+  "outputDigest": "sha256:e5434752924a24e925c44f45d967f81042b5a338b28a13e9bde36b3bff03259c",
   "case": {
     "scenario": "representative-election",
     "searchTraces": [
@@ -28,7 +30,10 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Representative paper title",
-            "workIds": ["doi:10.1000/rep", "s2:s2-001"],
+            "workIds": [
+              "doi:10.1000/rep",
+              "s2:s2-001"
+            ],
             "isUnresolved": false
           },
           {
@@ -36,7 +41,10 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Representative paper title",
-            "workIds": ["doi:10.1000/rep-2", "arxiv:9999.9999"],
+            "workIds": [
+              "doi:10.1000/rep-2",
+              "arxiv:9999.9999"
+            ],
             "isUnresolved": false
           },
           {
@@ -44,7 +52,10 @@
             "providerOrder": 1,
             "providerLocalRank": 3,
             "title": "Representative paper title",
-            "workIds": ["s2:S2-001", "arxiv:9999.9999"],
+            "workIds": [
+              "s2:S2-001",
+              "arxiv:9999.9999"
+            ],
             "isUnresolved": false
           }
         ]

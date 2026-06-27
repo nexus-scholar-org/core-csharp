@@ -15,10 +15,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:473ba7a302cd0260bfada99db2b37111fe1240a9a2d48d8e8ce861f19225e016",
-  "outputDigest": "sha256:12c17c0e5c2f39aa4ddc79ee150aaade8d46afd9d5db3775741565c9132afc1f",
+  "inputDigest": "sha256:0830bc9dbbab4f61195d6bf18aa89b658637e67b17f98e3a0c9f34ea55817668",
+  "outputDigest": "sha256:05152b19d120369c7a659071577c162b40dc5f5eb3c4f1b8b5e883ddc7c816bf",
   "case": {
     "scenario": "exact-doi-cluster",
     "searchTraces": [
@@ -30,7 +32,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Exact title",
-            "workIds": ["doi:10.1000/test"],
+            "workIds": [
+              "doi:10.1000/test"
+            ],
             "isUnresolved": false
           },
           {
@@ -38,7 +42,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Exact title",
-            "workIds": ["doi:10.1000/test"],
+            "workIds": [
+              "doi:10.1000/test"
+            ],
             "isUnresolved": false
           }
         ]

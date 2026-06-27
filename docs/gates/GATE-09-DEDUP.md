@@ -1,6 +1,6 @@
 # Gate 9 Deduplication
 
-Status: local implementation behavior updates applied on `cdx/gate-9-dedup-local`; gate remains pending complete review until conformance replay blockers are resolved.
+Status: local implementation behavior and review-blocker fixes applied on `cdx/gate-9-dedup-local`; gate remains pending final hosted CI, review, and merge.
 
 ## Goal
 
@@ -57,6 +57,7 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
 - Stable representative election with deterministic tie-breakers.
 - Cluster members preserve source trace/sighting links and evidence edges.
 - Cluster representatives are projections; raw member evidence is retained.
+- Imported-export evidence preserves source-file digest, digest scope, raw-record digest, parser warnings, and record notices through raw candidates and source evidence; clustered import records project that evidence onto representatives.
 - Web projection fields (membership hash, persisted dedup runs, representative snapshots, stale checks) are not domain authority.
 
 ## Test Coverage
@@ -72,10 +73,15 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
   - raw evidence and unresolved candidate preservation
   - source/import trace binding and non-claims
   - source trace/sighting binding evidence
+  - source-specific identifier evidence remains review-required
+  - imported-export digest scope, raw-record digest, parser warning, and record notice propagation
+  - representative import-source priority and final candidate-id tie-breaker behavior
 - `tests/NexusScholar.Conformance.Tests/DeduplicationFixtureTests.cs`
   - required fixture presence
   - metadata check for local-gate-9-dedup fixture set
   - replay-and-match of expected cluster/evidence/review/unresolved behavior against fixture expectations
+  - canonical fixture `inputDigest` and `outputDigest` recomputation
+  - result-level source-file digest, raw-record digest, parser warning, and record-notice preservation checks where fixtures provide them
 
 ## Fixture IDs (local)
 
@@ -105,5 +111,6 @@ Implement local C# deduplication for deterministic, trace-bound evidence cluster
 - no PHP-generated fixtures
 - no Screening behavior
 - no persistence/API/UI/cloud behavior
+- no live provider/network behavior
 - no import-parser or live provider implementation in this gate
 - no app projection treated as Core authority

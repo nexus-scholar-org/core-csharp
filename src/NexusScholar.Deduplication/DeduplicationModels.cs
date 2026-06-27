@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace NexusScholar.Deduplication;
 
@@ -10,8 +11,29 @@ public sealed record DedupSightingRef(
     string? SourceDatabaseOrTool = null,
     string? SourceRecordId = null,
     string? SourceFileDigest = null,
+    string? SourceFileDigestScope = null,
     string? RawRecordDigest = null,
-    string? SourceContext = null);
+    string? SourceContext = null,
+    IReadOnlyList<DedupParserNotice>? ParserWarnings = null,
+    IReadOnlyList<DedupParserNotice>? RecordNotices = null)
+{
+    public IReadOnlyList<DedupParserNotice> ParserWarnings { get; init; } =
+        Freeze(ParserWarnings);
+
+    public IReadOnlyList<DedupParserNotice> RecordNotices { get; init; } =
+        Freeze(RecordNotices);
+
+    private static IReadOnlyList<DedupParserNotice> Freeze(IReadOnlyList<DedupParserNotice>? notices)
+    {
+        return new ReadOnlyCollection<DedupParserNotice>((notices ?? Array.Empty<DedupParserNotice>()).ToArray());
+    }
+}
+
+public sealed record DedupParserNotice(
+    string Category,
+    string Message,
+    int? RecordIndex = null,
+    string? SourceRecordId = null);
 
 public sealed record DedupCandidateRecord(
     string CandidateId,
@@ -40,7 +62,38 @@ public sealed record DedupRepresentativeResult(
     IReadOnlyList<string> WorkIds,
     IReadOnlyList<string> SourceSightingIds,
     double CompletenessScore,
-    IReadOnlyList<string> ReasonCodes);
+    IReadOnlyList<string> ReasonCodes,
+    IReadOnlyList<string>? SourceFileDigests = null,
+    IReadOnlyList<string>? SourceFileDigestScopes = null,
+    IReadOnlyList<string>? RawRecordDigests = null,
+    IReadOnlyList<DedupParserNotice>? ParserWarnings = null,
+    IReadOnlyList<DedupParserNotice>? RecordNotices = null)
+{
+    public IReadOnlyList<string> SourceFileDigests { get; init; } =
+        Freeze(SourceFileDigests);
+
+    public IReadOnlyList<string> SourceFileDigestScopes { get; init; } =
+        Freeze(SourceFileDigestScopes);
+
+    public IReadOnlyList<string> RawRecordDigests { get; init; } =
+        Freeze(RawRecordDigests);
+
+    public IReadOnlyList<DedupParserNotice> ParserWarnings { get; init; } =
+        Freeze(ParserWarnings);
+
+    public IReadOnlyList<DedupParserNotice> RecordNotices { get; init; } =
+        Freeze(RecordNotices);
+
+    private static IReadOnlyList<string> Freeze(IReadOnlyList<string>? values)
+    {
+        return new ReadOnlyCollection<string>((values ?? Array.Empty<string>()).ToArray());
+    }
+
+    private static IReadOnlyList<DedupParserNotice> Freeze(IReadOnlyList<DedupParserNotice>? notices)
+    {
+        return new ReadOnlyCollection<DedupParserNotice>((notices ?? Array.Empty<DedupParserNotice>()).ToArray());
+    }
+}
 
 public sealed record DedupReviewCandidate(
     string CandidateAId,

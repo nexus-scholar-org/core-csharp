@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:5fbeb7f8e13d9d7a6c9f0ab12f4d8ce8c4f6e1f3c5f6a3b8d7c9e1f2a3b4c5d6",
-  "outputDigest": "sha256:7ad8f2c4e9a1b3d7f5e0a6c9d1b4f2a5e8c7d6b9a3c2f1e0d9b8a7c6e5f4d3b2",
+  "inputDigest": "sha256:737e8b5efd75e4344c54ed38c3938ecafb3a5b1792f641edb8adfc3f22bdc203",
+  "outputDigest": "sha256:347768bd57bf1739b22e8f8b9cd920a0e387e6f30619f653f4ba35e81005ea48",
   "case": {
     "scenario": "fuzzy-title-below-threshold-no-review",
     "searchTraces": [
@@ -28,7 +30,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Graph model embeddings in algebraic topology",
-            "workIds": ["doi:10.1000/fuzzy-low-1"],
+            "workIds": [
+              "doi:10.1000/fuzzy-low-1"
+            ],
             "isUnresolved": false
           },
           {
@@ -36,7 +40,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "A survey of quantum-resistant protocols",
-            "workIds": ["doi:10.1000/fuzzy-low-2"],
+            "workIds": [
+              "doi:10.1000/fuzzy-low-2"
+            ],
             "isUnresolved": false
           }
         ]

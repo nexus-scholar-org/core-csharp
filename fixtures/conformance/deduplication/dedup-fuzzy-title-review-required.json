@@ -13,10 +13,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:ce6a7b127c8bf548e58db63e5ca3800e3347d9605544be7bd84e6dc0132691a7",
-  "outputDigest": "sha256:7d8f5df0d8ff107e6d5ac4d8d552f21659aaa789a47d326c85c8a6285bc90051",
+  "inputDigest": "sha256:3e9e68cca50634259b6259befe8720559d87dc4394cca082fa49896060196929",
+  "outputDigest": "sha256:8daa454450e6f4396e7f4af38825299def5e8627dcc4f8f1bdf604dd7239bd7a",
   "case": {
     "scenario": "fuzzy-title-review-required",
     "searchTraces": [
@@ -28,7 +30,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Deep learning in molecular data",
-            "workIds": ["doi:10.1000/fuzzy-a"],
+            "workIds": [
+              "doi:10.1000/fuzzy-a"
+            ],
             "isUnresolved": false
           },
           {
@@ -36,7 +40,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Deep learning in molecular data!",
-            "workIds": ["doi:10.1000/fuzzy-b"],
+            "workIds": [
+              "doi:10.1000/fuzzy-b"
+            ],
             "isUnresolved": false
           }
         ]

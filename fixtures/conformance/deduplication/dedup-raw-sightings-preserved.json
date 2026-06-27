@@ -14,10 +14,12 @@
     "no-generated-php-fixture",
     "no-search-screening-claim",
     "no-screening",
-    "no-app-projection-authority"
+    "no-app-projection-authority",
+    "no-live-provider-network",
+    "no-persistence-api-ui-cloud"
   ],
-  "inputDigest": "sha256:d6a1c67d7f30d300db349c1411cba36f89dd1977c1e0b18b79645e29257a33fa",
-  "outputDigest": "sha256:1eff6f0b1dc420cb8010693b2023fe8024dd48e212a1347d8fe1dcc3a1b80dd1",
+  "inputDigest": "sha256:42588f078f38707c038044acbfc16d4048d343c9795af5d2acf7bba017db6c9a",
+  "outputDigest": "sha256:571b752aebd95eb04a13c019f648ce8119ef8e793a99303583ac4a368237659e",
   "case": {
     "scenario": "raw-sightings-preserved",
     "searchTraces": [
@@ -29,7 +31,9 @@
             "providerOrder": 1,
             "providerLocalRank": 1,
             "title": "Raw sighting main",
-            "workIds": ["doi:10.1000/raw-1"],
+            "workIds": [
+              "doi:10.1000/raw-1"
+            ],
             "isUnresolved": false
           },
           {
@@ -37,7 +41,9 @@
             "providerOrder": 1,
             "providerLocalRank": 2,
             "title": "Raw sighting main",
-            "workIds": ["doi:10.1000/raw-1"],
+            "workIds": [
+              "doi:10.1000/raw-1"
+            ],
             "isUnresolved": false
           }
         ]
@@ -59,7 +65,9 @@
             "sourceDatabaseOrTool": "ris",
             "sourceRecordId": "r1",
             "title": "Imported raw evidence",
-            "workIds": ["pubmed:999"],
+            "workIds": [
+              "pubmed:999"
+            ],
             "isUnresolved": false,
             "rawRecordDigest": "sha256:c5114891ceafc670c59d1493000b13b0887629045244a7e2aed20852e0f06183",
             "parserWarnings": [
