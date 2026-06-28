@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Extensibility Module - Nexus Scholar Core</title>
+  <link rel="stylesheet" href="../../../assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <div class="nav-links" id="nav-links">
+        <a href="../../../developers/" aria-current="page">Developers</a>
+        <a href="../../../tutorials/">Tutorials</a>
+        <a href="../../../blog/">Blog</a>
+        <a href="../../../about/">About</a>
+        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+      </div>
+    </nav>
+  </header>
+  <main class="page">
+    <p class="eyebrow">Module documentation</p>
+    <h1>Extensibility</h1>
+    <p class="lede">Explicit extension identity and capability records for plugin-style workflows, designed to keep execution, runtime, and credentials outside Core domain authority.</p>
+
+    <section class="content-section">
+      <h2>Scope and ownership</h2>
+      <p>Extensibility is a narrow contract module. It defines how third-party extensions are described and how authority is narrowed to an explicit capability set. It does not execute extensions, mediate hosts, transport secrets, or provide isolation boundaries by itself.</p>
+      <ul class="check-list">
+        <li>Extension identity contract: <code>Id</code>, <code>Version</code>, <code>EntryPoint</code>, and requested capabilities are treated as explicit, non-runtime metadata.</li>
+        <li>Capability contract: explicit enum for extension rights over protocol/workspace artifacts in a fixed, strongly typed set.</li>
+        <li>Grant contract: selected capabilities are represented as snapshots with <code>ExtensionId</code> plus capability set.</li>
+        <li>Runtime policy is delegated: host, sandboxing, credentials, and transport controls are outside this module.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Gate and ADR status</h2>
+      <p>There is no dedicated accepted gate document for Extensibility yet. It remains in planning/provenance-mapped state from <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-00.md">GATE-00</a>, with scope planning in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/port/PORT-MATRIX.csv">PORT-MATRIX</a> and fixture intent in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/port/GOLDEN-FIXTURE-PLAN.md">GOLDEN-FIXTURE-PLAN</a>.</p>
+      <ul class="check-list">
+        <li>Conflict baseline: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/port/OPEN-CONFLICTS.md">CF-005</a> blocks blueprint-to-contract authority unless schema and contract references are reconciled.</li>
+        <li>Discovery blocker: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/discovery/BLUEPRINT-AUDIT.md">BLUEPRINT-AUDIT</a> flags plugin contract drift; <code>PluginContracts</code> does not match required blueprint execution/data-handling shape yet.</li>
+        <li>Implementation blockers: no plugin runtime, no plugin credential semantics, and no staged execution policy is implemented in this contract module.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Core contracts</h2>
+      <ul class="check-list">
+        <li><code>ExtensionManifest</code> (<a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/ExtensionManifest.cs">src/NexusScholar.Extensibility/ExtensionManifest.cs</a>)</li>
+        <li>Factory guard behavior:
+          <ul>
+            <li><code>Id</code>, <code>Version</code>, <code>EntryPoint</code> are required and validated as non-blank via <code>Guard.NotBlank</code>.</li>
+            <li>Capabilities are converted to a <code>HashSet</code> for deterministic duplicate collapse.</li>
+          </ul>
+        </li>
+        <li><code>ExtensionCapability</code> enum (<a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/PluginContracts.cs">PluginContracts.cs</a>):
+          <ul>
+            <li><code>ReadProtocol</code></li>
+            <li><code>ReadArtifacts</code></li>
+            <li><code>WriteStagedArtifacts</code></li>
+            <li><code>RenderExport</code></li>
+          </ul>
+        </li>
+        <li><code>CapabilitySelection</code> (<a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/CapabilitySelection.cs">CapabilitySelection.cs</a>) as staged grant projection.</li>
+        <li>Module AGENTS rule: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/AGENTS.md">do not treat dependency isolation as security</a> and validate staged outputs before they become canonical.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Integration behavior in current code</h2>
+      <ul class="check-list">
+        <li>Workflow capability references are declared in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Workflow/Workflow.cs">WorkflowTemplateCapabilityRequirement</a> as references and optional plugin capability labels, but extension manifests are not used as a runtime grant resolver in Core.</li>
+        <li>Validation impact currently present in Gate-4 workflow behavior: unknown capability refs are rejected at template compile time by <code>ValidateCapabilityRefs</code>.</li>
+        <li>CLI includes project reference to Extensibility for alignment, not runtime extension host behavior.</li>
+        <li>No execution policy, data-handling policy, secrets policy, or plugin invocation pipeline is modeled in this module.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Source modules and tests</h2>
+      <ul class="check-list">
+        <li>Source files:
+          <ul>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/AGENTS.md">src/NexusScholar.Extensibility/AGENTS.md</a></li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/NexusScholar.Extensibility.csproj">NexusScholar.Extensibility.csproj</a></li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/PluginContracts.cs">PluginContracts.cs</a></li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/ExtensionManifest.cs">ExtensionManifest.cs</a></li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extensibility/CapabilitySelection.cs">CapabilitySelection.cs</a></li>
+          </ul>
+        </li>
+        <li>Tests:
+          <ul>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs">DependencyRulesTests.cs</a> (inward-dependency and runtime-contract boundaries).</li>
+            <li>There are currently no direct conformance fixtures or unit tests for manifest schema, capability normalization policy, or privilege reduction in the module project itself.</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Related modules</h2>
+      <ul class="check-list">
+        <li><a href="../workflow/">Workflow</a>: declares capability requirements and plugin capability labels in template nodes.</li>
+        <li><a href="../protocol/">Protocol</a>: extension manifests may eventually reference protocol read capabilities.</li>
+        <li><a href="../artifacts/">Artifacts</a>: <code>ReadArtifacts</code>/<code>WriteStagedArtifacts</code> capabilities currently descriptive only, not enforced.</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.AI/">AI</a>: <code>AiTaskPolicy</code> introduces another capability-authorization domain with separate ADRs and future gate work; both domains currently do not interlock at runtime.</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Cli/NexusScholar.Cli.csproj">CLI</a>: currently references the project for build alignment only.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Known issues and risks (current)</h2>
+      <ul class="check-list">
+        <li><strong>Scope is contract-only:</strong> no plugin runtime, no host boundary, and no credential transport are implemented.</li>
+        <li><strong>Blueprint drift remains unresolved:</strong> manifest schema and runtime policy fields described in discovery are not yet represented in current local contracts.</li>
+        <li><strong>Minimal capability vocabulary:</strong> enum entries are fixed and cannot encode richer per-plugin scopes, egress constraints, trust classes, or data-handling policy required for production integration.</li>
+        <li><strong>No evidence fixtures:</strong> PORT-MATRIX/GOLDEN-FIXTURE-PLAN list planned files (`plugin-manifest-minimal.json`, `plugin-permission-grant.json`) but they are not yet present in `fixtures/conformance`.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Next module</h2>
+      <p>After Extensibility, continue to <a href="../index.html#module-template">AI</a> (template area) and keep the same pattern: authoritative gate or conflict record, contract files, dependency impact, test coverage, and conflict tracking.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><p>Extensibility module documentation now scaffolded with planning and implementation-surface details.</p></footer>
+  <script src="../../../assets/js/site.js"></script>
+</body>
+</html>

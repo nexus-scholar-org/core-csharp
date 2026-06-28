@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Artifacts Module - Nexus Scholar Core</title>
+  <link rel="stylesheet" href="../../../assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <div class="nav-links" id="nav-links">
+        <a href="../../../developers/" aria-current="page">Developers</a>
+        <a href="../../../tutorials/">Tutorials</a>
+        <a href="../../../blog/">Blog</a>
+        <a href="../../../about/">About</a>
+        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+      </div>
+    </nav>
+  </header>
+  <main class="page">
+    <p class="eyebrow">Module documentation</p>
+    <h1>Artifacts</h1>
+    <p class="lede">Immutable artifact identity, provenance attachment, and path constraints for local bundle interoperability and reconstruction.</p>
+
+    <section class="content-section">
+      <h2>Scope and ownership</h2>
+      <p>The Artifacts module is a domain-level primitive for declaring what an artifact is, how it is identified, and how its byte identity is verified. It is not a persistence module, and it does not perform filesystem IO.</p>
+      <ul class="check-list">
+        <li>Canonical artifact envelope fields: ref, logical path, kind, media type, byte size, raw digest, schema id/version.</li>
+        <li>Optional binding fields: source record digest, workflow node, provenance event id and digest, required-for field.</li>
+        <li>Stable logical path rules: no absolute or URI forms, no traversal segments, no backslashes, no empty segments, no leading/trailing slash.</li>
+        <li>Artifact raw-byte digest is computed directly from provided bytes using SHA-256 and compared exactly.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Gate and ADR status</h2>
+      <p>
+        Gate 6 uses <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0009-portable-bundle-and-artifact-contract.md">ADR 0009</a> and is documented in
+        <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-06.md">GATE-06</a> plus
+        <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-06-EVIDENCE.md">GATE-06-EVIDENCE</a>.
+      </p>
+      <ul class="check-list">
+        <li>Manifest schema and scope: <code>nexus.review-bundle.manifest</code>, version <code>1.0.0</code>, manifest digest scope <code>bundle-manifest</code>.</li>
+        <li>Artifact digest scope: <code>raw-artifact-bytes</code> via <code>ContentDigest.Sha256(...)</code>.</li>
+        <li>Required logical-path bans include drive letters, URI forms, traversal, and empty or dot segments.</li>
+        <li>Known protocol/provenance digests are required for import-safe binding verification.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Core contracts</h2>
+      <ul class="check-list">
+        <li><code>ArtifactDescriptor</code>: canonical artifact metadata and path validation entry point.</li>
+        <li><code>ArtifactDescriptor.Create(...)</code>: constructor path and field validation, including fixed schema defaults only through overloads.</li>
+        <li><code>ArtifactDescriptor.ComputeRawByteDigest(...)</code>: SHA-256 of bytes.</li>
+        <li><code>ArtifactDescriptor.NormalizeLogicalPath(...)</code> + <code>TryValidateLogicalPath(...)</code>: strict logical path checks.</li>
+        <li><code>BundleArtifactEntry</code>, <code>ReviewBundleManifest</code>, <code>BundleProtocolBinding</code>, <code>BundleWorkflowBinding</code>, <code>BundleProvenanceBinding</code>.</li>
+        <li><code>BundleVerifier</code> enforces staged import validity, required-section presence, binding integrity, artifact tamper checks, and destructive-overwrite policy.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Source modules</h2>
+      <ul class="check-list">
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Artifacts/Artifacts.cs">src/NexusScholar.Artifacts/Artifacts.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Bundles/ReviewBundleManifest.cs">src/NexusScholar.Bundles/ReviewBundleManifest.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Bundles/BundleVerifier.cs">src/NexusScholar.Bundles/BundleVerifier.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Bundles/NexusScholar.Bundles.csproj">src/NexusScholar.Bundles/NexusScholar.Bundles.csproj</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Artifacts/NexusScholar.Artifacts.csproj">src/NexusScholar.Artifacts/NexusScholar.Artifacts.csproj</a></li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Validation and verification behavior</h2>
+      <ul class="check-list">
+        <li><strong>Path behavior:</strong> backslash, URI, absolute, traversal, dot/empty segment, leading/trailing slash paths are rejected.</li>
+        <li><strong>Artifact field checks:</strong> blank field rejection, non-negative size, and SHA-256 digest format checks.</li>
+        <li><strong>Verification flow:</strong> manifest identity + protocol binding + required schema checks + provenance checks + artifact bytes + overwrite checks.</li>
+        <li><strong>Deterministic ordering:</strong> artifacts, schema refs, provenance bindings, membership, and candidate arrays are canonically ordered before hashing.</li>
+        <li><strong>Error categories:</strong> includes <code>invalid-artifact-path</code>, <code>duplicate-artifact-path</code>, <code>negative-artifact-size</code>, <code>invalid-artifact-digest</code>, <code>missing-artifact</code>, <code>checksum-mismatch</code>, <code>unsupported-required-schema</code>, <code>invalid-protocol-binding</code>, <code>invalid-provenance-binding</code>, <code>destructive-overwrite</code>, and <code>invalid-manifest-digest</code>.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Fixtures and tests</h2>
+      <ul class="check-list">
+        <li>Conformance positive fixtures in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/fixtures/conformance/artifacts/">fixtures/conformance/artifacts</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/fixtures/conformance/bundles/">fixtures/conformance/bundles</a>.</li>
+        <li>Conformance fixture assertions in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/BundleFixtureTests.cs">BundleFixtureTests.cs</a>.</li>
+        <li>Behavioral tests for strict path, digest scope, ordering stability, and verifier results in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/BundleTests.cs">BundleTests.cs</a>.</li>
+        <li>Boundary assertions in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs">DependencyRulesTests.cs</a> keep bundles/artifacts inward-only.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Related modules</h2>
+      <ul class="check-list">
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Protocol/">Protocol</a> (protocol-content binding for bundle provenance and import replay).</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Workflow/">Workflow</a> (workflow declarations and artifact declarations carried into bundle manifest).</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Provenance/">Provenance</a> (event binding and event digest fields for bundle verification).</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Shared/">Shared</a> (shared-identity membership payloads carried as reviewed candidates).</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Bundles/">Bundles</a> (assembly point for artifact manifest logic).</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Known issues to track</h2>
+      <ul class="check-list">
+        <li><strong>No overwrite policy yet outside Gate 6:</strong> Gate 6 only rejects destructive overwrite by default and does not offer replacement policy variants.</li>
+        <li><strong>No transport or container binding:</strong> manifest and artifact digests intentionally exclude archive and transport metadata by design.</li>
+        <li><strong>No API/UI surfaces:</strong> import/export actions are fixture-backed and test-backed only; no CLI/API/plug-in execution surfaces are implemented in this gate.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Next module</h2>
+      <p>Move from artifacts to <a href="../provenance/">Provenance</a> and apply the same gate/ADR/files/tests structure.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><p>Artifacts module documentation scaffolded for Gate 6 local contract.</p></footer>
+  <script src="../../../assets/js/site.js"></script>
+</body>
+</html>

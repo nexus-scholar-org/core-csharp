@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Provenance Module - Nexus Scholar Core</title>
+  <link rel="stylesheet" href="../../../assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <div class="nav-links" id="nav-links">
+        <a href="../../../developers/" aria-current="page">Developers</a>
+        <a href="../../../tutorials/">Tutorials</a>
+        <a href="../../../blog/">Blog</a>
+        <a href="../../../about/">About</a>
+        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+      </div>
+    </nav>
+  </header>
+  <main class="page">
+    <p class="eyebrow">Module documentation</p>
+    <h1>Provenance</h1>
+    <p class="lede">Append-only scientific event records that bind human/automation actors, activities, protocol/workflow context, input/output references, and canonical event digest material.</p>
+
+    <section class="content-section">
+      <h2>Scope and ownership</h2>
+      <p>The Provenance module is the local evidence ledger for reconstructable events. It records immutable records only and intentionally excludes persistence, execution engines, and authority enforcement.</p>
+      <ul class="check-list">
+        <li>Records include agent, activity, subject, timestamp, optional protocol binding, optional workflow binding, ordered inputs/outputs, and event digest.</li>
+        <li>In-memory store is append-only with duplicate-event-id rejection and immutable snapshots.</li>
+        <li>Canonical checks reject non-canonical entity kinds for subject/input/output (cache/projection/wiki/local-path/generative items).</li>
+        <li>Event digest uses Kernel canonicalization and `DigestScope.ProvenanceEvent`.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Gate and ADR status</h2>
+      <p>Primary governing docs: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0008-provenance-ledger.md">ADR 0008</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-05.md">GATE-05</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-05-EVIDENCE.md">GATE-05-EVIDENCE</a>.</p>
+      <ul class="check-list">
+        <li>Record schema: <code>nexus.provenance-event</code> with schema version <code>1.0.0</code>.</li>
+        <li>Digest scope: <code>provenance-event</code>.</li>
+        <li>Stable error categories: <code>duplicate-event-id</code>, <code>missing-actor</code>, <code>missing-required-input</code>, <code>missing-required-output</code>, <code>projection-not-canonical</code>.</li>
+        <li>Non-claims remain explicit: no bundle parity, no persistence schema, no AI governance, no workflow execution, no provider/network behavior.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Core contracts</h2>
+      <ul class="check-list">
+        <li><code>ResearchEvent</code>: immutable event record with <code>Agent</code>, <code>Activity</code>, <code>Subject</code>, input/output refs, optional protocol/workflow bindings, and computed <code>EventDigest</code>.</li>
+        <li><code>ProvenanceActivity</code>: declares whether actor/input/output are required for the activity.</li>
+        <li><code>ProvenanceAgent</code>: actor identity and kind; canonical kinds include human/automation/plugin/system/import.</li>
+        <li><code>ProvenanceEntityRef</code>: entity reference with canonical kind enforcement via blacklist of non-canonical projections.</li>
+        <li><code>ProvenanceProtocolBinding</code> + <code>ProvenanceWorkflowBinding</code>: optional context references preserved by id and digest.</li>
+        <li><code>InMemoryProvenanceStore</code>: append-only, deduplicating by event id.</li>
+        <li><code>ResearchEventFactory</code>: validates required actor/input/output constraints and constructs event digest deterministically.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Source modules</h2>
+      <ul class="check-list">
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Provenance/ProvenanceEvent.cs">src/NexusScholar.Provenance/ProvenanceEvent.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Provenance/ResearchEventFactory.cs">src/NexusScholar.Provenance/ResearchEventFactory.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Provenance/ProvenanceStore.cs">src/NexusScholar.Provenance/ProvenanceStore.cs</a></li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Provenance/NexusScholar.Provenance.csproj">src/NexusScholar.Provenance/NexusScholar.Provenance.csproj</a></li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Validation and behavior details</h2>
+      <ul class="check-list">
+        <li><strong>Append-only semantics:</strong> store only appends and refuses duplicate event ids.</li>
+        <li><strong>Digest computation:</strong> event-level canonical serialization includes event id, actor, activity, timestamp, subject, protocol/workflow bindings, inputs, outputs.</li>
+        <li><strong>Entity kinds:</strong> subject/input/output kinds are validated as canonical through <code>ProvenanceEntityRef.ValidateCanonicalKind</code>.</li>
+        <li><strong>Activity requirements:</strong> if activity requires actor/input/output, those fields must be present and input/output must include content digests.</li>
+        <li><strong>Immutability:</strong> event records and store reads are cloned snapshots and exposed through immutable collections.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Fixtures and tests</h2>
+      <ul class="check-list">
+        <li>Gate 5 conformance fixtures in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/fixtures/conformance/provenance/">fixtures/conformance/provenance</a>.</li>
+        <li>Core tests in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProvenanceTests.cs">ProvenanceTests.cs</a>.</li>
+        <li>Conformance tests in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ProvenanceFixtureTests.cs">ProvenanceFixtureTests.cs</a>.</li>
+        <li>Architecture boundary tests in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs">DependencyRulesTests.cs</a>.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Related modules</h2>
+      <ul class="check-list">
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Protocol/">Protocol</a>: protocol identity and protocol-content digest are carried as optional provenance context.</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Workflow/">Workflow</a>: workflow identity and optional node-level references are recorded where applicable.</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Bundles/">Bundles</a>: uses event digests as optional provenance references during bundle verification.</li>
+        <li><a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Artifacts/">Artifacts</a>: provenance input/output digests can reference artifact identity.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Known issues to track</h2>
+      <ul class="check-list">
+        <li><strong>Scope is intentionally local.</strong> No persistence/API/UI/CLI import-export surface is implemented in this module.</li>
+        <li><strong>Entity-kind projection model is strict.</strong> Non-canonical kinds are rejected even if operationally useful; this is by design for scientific reconstruction.</li>
+        <li><strong>Store policy is minimal.</strong> There is no compaction, retention, archival rollover, or tamper-evidence envelope chain yet.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Next module</h2>
+      <p>Continue to <a href="../extensibility/">Extensibility</a> after provenance to document governance and capability boundaries.</p>
+    </section>
+  </main>
+  <footer class="site-footer"><p>Provenance module documentation scaffolded for Gate 5 local scope.</p></footer>
+  <script src="../../../assets/js/site.js"></script>
+</body>
+</html>
