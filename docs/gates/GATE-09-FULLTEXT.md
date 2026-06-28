@@ -1,12 +1,24 @@
 # Gate 9 Full Text
 
-Status: reconnaissance complete and `ADR 0014` accepted for local Full Text contract. No C# Full Text behavior is implemented by this gate document.
+Status: local no-network C# implementation complete for the first `ADR 0014` slice. Live provider, network, PDF extraction, OCR, persistence, API, UI, cloud, and PHP compatibility behavior remain out of scope.
 
 ## Goal
 
-Map pinned PHP Full Text retrieval behavior and CLI/Web full-text behavior, then define the local Full Text acquisition, artifact, and extraction contract before C# implementation.
+Implement the first local Full Text evidence bridge between Screening/candidate-set handoff and digest-bound artifact evidence.
 
-Full Text is the missing evidence bridge between Screening and actual paper artifacts. `ADR 0013` recognizes `full_text` Screening and requires digest-bound artifact evidence. `ADR 0014` now defines the local no-network Core contract for acquisition records, artifact evidence, source attempts, extraction records, and app projection boundaries.
+The implemented slice covers:
+
+- `nexus.fulltext.input` records from final title/abstract `include` and allowed `needs_review` Screening handoff;
+- rejection of raw Search trace input and raw Dedup member input;
+- default rejection of final title/abstract `exclude` decisions as retrieval candidates;
+- `nexus.fulltext.acquisition-record` records with actor/timestamp requirements for user-supplied and manual acquisitions;
+- ordered source attempts preserving failure, skipped, manual-needed, and success states;
+- `nexus.fulltext.artifact-evidence` records for `pdf`, `xml`, `text`, and `derived-text`;
+- raw byte digest validation using `raw-artifact-bytes`;
+- local validators for PDF signature, XML/HTML shape, text emptiness, media type, and max size;
+- duplicate artifact detection by raw byte digest only;
+- `nexus.fulltext.extraction-record` records binding derived evidence to source artifact id and source raw digest;
+- app/PHP/CLI/Web projection rejection as Core authority.
 
 ## Sources Read
 
@@ -14,217 +26,95 @@ Full Text is the missing evidence bridge between Screening and actual paper arti
 - `PLANS.md`
 - `docs/adr/0001-source-of-truth-and-porting.md`
 - `docs/adr/0002-canonical-json-and-digests.md`
+- `docs/adr/0007-shared-scientific-identity.md`
 - `docs/adr/0008-provenance-ledger.md`
 - `docs/adr/0009-portable-bundle-and-artifact-contract.md`
+- `docs/adr/0010-search-trace-and-plan-contract.md`
+- `docs/adr/0011-search-import-source-contract.md`
+- `docs/adr/0012-deduplication-evidence-and-cluster-contract.md`
 - `docs/adr/0013-screening-decision-and-conflict-contract.md`
 - `docs/adr/0014-fulltext-acquisition-artifact-and-extraction-contract.md`
+- `docs/port/php-fulltext-behavior.md`
+- `docs/port/php-fulltext-fixture-plan.md`
 - `docs/port/OPEN-CONFLICTS.md`
 - `docs/port/GOLDEN-FIXTURE-PLAN.md`
-- `docs/recon/apps/**`
-- `specs/SOURCE.lock.json`
-- pinned PHP `Dissemination` full-text source, handler, persistence, and tests under `../core`
-- CLI full-text commands and tests under `../nexus-cli`
-- Web full-text batch/item/retrieval/screening workflows under `../nexus-web`
 
-## Branch Scope
+## Implemented Files
 
-Allowed paths:
+- `src/NexusScholar.FullText/`
+- `tests/NexusScholar.Core.Tests/FullTextTests.cs`
+- `tests/NexusScholar.Conformance.Tests/FullTextFixtureTests.cs`
+- `fixtures/conformance/fulltext/*.json`
+- architecture and project wiring for the new domain assembly
 
-- `docs/adr/0014-fulltext-acquisition-artifact-and-extraction-contract.md`
-- `docs/gates/GATE-09-FULLTEXT.md`
-- `docs/port/OPEN-CONFLICTS.md`
-- `docs/port/GOLDEN-FIXTURE-PLAN.md`
-- `docs/port/php-fulltext-fixture-plan.md` only for fixture consequence clarification
+## Fixture Status
 
-Forbidden paths:
+The local fixture set under `fixtures/conformance/fulltext/` is hand-authored local conformance evidence only. It does not claim generated PHP fixture status or PHP compatibility.
 
-- `src/**`
-- `tests/**`
-- `fixtures/**`
-- `specs/**`
-- PHP reference repo changes
-- `nexus-cli` changes
-- `nexus-web` changes
-- generated PHP fixtures
-- C# Full Text implementation
-- live provider/network code
-- PDF extraction implementation
-- OCR implementation
-- persistence/API/UI/cloud behavior
+Implemented fixture ids:
 
-## Behavior Summary
+- `fulltext-input-from-screening-include.json`
+- `fulltext-input-from-screening-needs-review.json`
+- `fulltext-reject-raw-search-trace.json`
+- `fulltext-reject-raw-dedup-member.json`
+- `fulltext-exclude-not-retrievable-by-default.json`
+- `fulltext-user-supplied-pdf-artifact.json`
+- `fulltext-user-supplied-xml-artifact.json`
+- `fulltext-user-supplied-text-artifact.json`
+- `fulltext-deterministic-stub-artifact.json`
+- `fulltext-local-path-not-identity.json`
+- `fulltext-missing-raw-digest.json`
+- `fulltext-wrong-digest-scope.json`
+- `fulltext-digest-mismatch.json`
+- `fulltext-invalid-pdf-signature.json`
+- `fulltext-html-not-fulltext-xml.json`
+- `fulltext-empty-text-artifact.json`
+- `fulltext-artifact-too-large.json`
+- `fulltext-source-failure-followed-by-success.json`
+- `fulltext-duplicate-artifact-digest.json`
+- `fulltext-derived-extraction-binds-source-artifact.json`
+- `fulltext-partial-extraction-warning.json`
+- `fulltext-app-projection-not-authority.json`
 
-Pinned PHP Full Text behavior:
+## Verification
 
-- retrieves one `ScholarlyWork` at a time through `RetrieveFullTextHandler`;
-- requires a primary id or returns skipped;
-- optionally enforces locked project membership before retrieval;
-- checks cached successful fetch paths before source attempts;
-- tries sources in configured order and returns first successful artifact;
-- persists failure attempts and continues to later sources;
-- validates PDF, XML, and text payloads before storage;
-- stores PDF/XML artifacts and may derive text sidecars from XML;
-- records fetch audit rows in `pdf_fetches`;
-- exposes read APIs through `FullTextFetchReaderPort`.
+See `docs/gates/GATE-09-FULLTEXT-EVIDENCE.md` for command output summary and final verification status.
 
-Observed PHP source aliases:
+## Conflict Status
 
-- `direct`
-- `unpaywall`
-- `pmc`
-- `europe_pmc`
-- `arxiv`
-- `openalex`
-- `semantic_scholar`
-
-Observed result statuses:
-
-- `success`
-- `failure`
-- `skipped`
-
-Observed Web app statuses add product workflow state:
-
-- `queued`
-- `running`
-- `completed`
-- `completed_with_failures`
-- `failed`
-- `cancelled`
-- `manual_needed`
-
-## Core Boundary
-
-The PHP implementation stores and reports `filePath` / `artifact_path`, but this cannot be C# scientific identity.
-
-C# Full Text must use:
-
-- exact raw bytes or verified raw-byte digest;
-- `raw-artifact-bytes` digest scope from `ADR 0002`;
-- artifact logical references compatible with `ADR 0009`;
-- full-text Screening evidence refs compatible with `ADR 0013`.
-- acquisition, artifact, source-attempt, and extraction records compatible with `ADR 0014`.
-
-Local paths, storage-disk paths, app routes, app row ids, CLI manifests, Web batches/items, and Web audit rows are projections unless a later ADR maps them into Core records.
-
-## Open Conflicts
-
-`CF-025`: resolved for the local Full Text contract by `ADR 0014`.
+`CF-025`: implemented/resolved for local Full Text artifact evidence.
 
 Full Text artifact evidence uses exact accepted bytes plus `raw-artifact-bytes` digest. PHP storage paths, CLI manifest paths, Web routes, app row ids, and local paths remain projections.
 
-`CF-026`: narrowed by `ADR 0014`.
+`CF-026`: remains narrowed.
 
-The first C# Full Text implementation may proceed only as a no-network slice using user-supplied bytes, deterministic stub artifacts, manual acquisition records, source references, and digest-bound evidence. Live providers, HTTP downloads, provider SDKs, credentials, scraping, paywall bypass, and shadow-library sources remain future work.
+The implemented C# slice is no-network and supports user-supplied bytes, deterministic stub artifacts, manual acquisition records, source-reference metadata, validation, and digest-bound evidence. Live providers, HTTP downloads, provider SDKs, credentials, scraping, paywall bypass, and shadow-library sources remain blocked.
 
-`CF-027`: narrowed for Core by `ADR 0014`.
+`CF-027`: remains narrowed.
 
-Full-text Screening handoff requires digest-bound artifact or extraction evidence. CLI manifests, Web full-text batches/items, `pdf_fetches`, app audit rows, download routes, and source-full-text item links remain projections unless transformed into `ADR 0014` records.
+Core Full Text records preserve the app projection boundary. PHP `pdf_fetches`, CLI manifests, Web batches/items, app audit rows, routes, storage paths, and app row ids are not Core authority.
 
-## Fixture Plan
+`CF-024`: unchanged.
 
-Planned Full Text fixture families are recorded in `docs/port/php-fulltext-fixture-plan.md` and `docs/port/GOLDEN-FIXTURE-PLAN.md`.
+Screening app workflow rows remain projections.
 
-Required future fixture groups:
+## Explicit Non-Claims
 
-- retrieval input and candidate boundary;
-- source candidate resolution;
-- artifact raw-byte digest and validation;
-- retrieval result and source-attempt audit;
-- acquisition record and no-network source-reference evidence;
-- extraction record and derived-text source binding;
-- full-text Screening handoff;
-- app projection boundary.
-
-Required negative categories:
-
-- raw Search trace used directly as Full Text input;
-- CLI title match used as Core candidate identity;
-- no-primary-id work treated as retrievable target;
-- closed/non-OA source accepted;
-- shadow-library or paywall-bypass source accepted;
-- local path or storage path used as artifact identity;
-- missing raw artifact digest;
-- wrong digest scope;
-- invalid PDF/XML/text payload accepted;
-- failed/skipped item sent to full-text Screening as screenable;
-- derived text accepted without source artifact digest binding;
-- extraction output treated as replacement for raw artifact;
-- OCR or PDF parsing implementation claimed by contract fixtures;
-- app batch/item/audit rows treated as Core authority;
-- PHP compatibility claimed without generated fixtures.
-
-## Comparator Plan
-
-Comparators must preserve:
-
-- source alias;
-- artifact type;
-- raw-byte digest;
-- digest scope;
-- success/failure/skipped status;
-- source attempt outcome;
-- acquisition kind;
-- extraction source artifact digest when derived evidence is present;
-- error category;
-- metadata that affects legal/source evidence;
-- Screening handoff candidate and artifact evidence refs.
-
-Comparators may ignore:
-
-- generated ids;
-- runtime durations;
-- attempted timestamps;
-- local storage paths;
-- app route URLs;
-
-only when fixture metadata explicitly marks them non-semantic.
-
-Comparators must not ignore artifact byte digest, digest scope, artifact type, source alias, Screening handoff binding, or authority/projection markers.
-
-## Implementation Readiness
-
-Implementation readiness: **yes, for local no-network C# Full Text implementation against `ADR 0014`**.
-
-Allowed first implementation scope:
-
-- Screening/candidate-set handoff input validation;
-- user-supplied local bytes and deterministic stub artifact bytes;
-- manual acquisition records and no-network source references;
-- raw artifact byte digest validation with `raw-artifact-bytes`;
-- source attempt records;
-- artifact evidence records;
-- derived extraction records or stub/user-supplied extracted text records with source artifact digest binding;
-- full-text Screening evidence references compatible with `ADR 0013`.
-
-Implementation readiness remains **no** for:
-
-- live providers;
-- HTTP downloads;
-- provider SDKs or credentials;
-- actual PDF parsing implementation;
-- OCR;
-- artifact storage implementation;
-- persistence/API/UI/cloud behavior;
-- PHP compatibility and generated PHP fixture comparison.
-
-## Explicit Claims Not Made
-
-- no C# Full Text implementation
-- no generated PHP fixtures
-- no PHP compatibility
 - no live provider/network behavior
-- no provider SDKs, credentials, API integrations, or HTTP clients in C# Core
-- no Unpaywall, PMC, Europe PMC, arXiv, OpenAlex, Semantic Scholar, publisher, or direct download implementation
+- no HTTP clients
+- no Unpaywall, PMC, Europe PMC, arXiv, OpenAlex, Semantic Scholar, publisher, or Direct PDF integration
+- no provider SDKs or credentials
 - no paywall bypass
 - no shadow-library source
-- no scraping
-- no PDF extraction implementation
+- no Google Scholar scraping
+- no actual PDF parsing implementation
 - no OCR implementation
 - no persistence/API/UI/cloud behavior
-- no CLI/Web behavior change
-- no app behavior made authoritative
-- no full-text Screening implementation change
+- no CLI/Web behavior changes
+- no PHP reference repo changes
+- no generated PHP fixtures
+- no PHP compatibility claim
+- no Search/Deduplication/Screening behavior changes
 - no artifact storage implementation
 - no bundle behavior change
 - no blueprint conformance

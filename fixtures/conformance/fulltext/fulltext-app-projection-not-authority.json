@@ -1,0 +1,12 @@
+{
+  "fixtureId": "fulltext-app-projection-not-authority",
+  "sourceKind": "local-gate-9-fulltext-implementation",
+  "sourceCommit": "local-gate-9-fulltext-local",
+  "generatorCommand": "hand-authored local Gate 9 Full Text fixture",
+  "generatorVersion": "gate-9-fulltext-v1",
+  "sourceRefs": ["docs/adr/0014-fulltext-acquisition-artifact-and-extraction-contract.md"],
+  "comparisonRules": ["no-php-compatibility-claim", "no-generated-php-fixture", "no-network-provider-behavior", "app-projection-not-core-authority"],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000022",
+  "outputDigest": "sha256:1000000000000000000000000000000000000000000000000000000000000022",
+  "case": { "projectionKind": "project_full_text_item_id", "expected": { "category": "app-projection-not-core-authority" } }
+}

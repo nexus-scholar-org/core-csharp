@@ -6,6 +6,7 @@ using NexusScholar.Avalonia.Blocks.SampleHost;
 using NexusScholar.Bundles;
 using NexusScholar.Deduplication;
 using NexusScholar.Extensibility;
+using NexusScholar.FullText;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Provenance;
@@ -50,6 +51,7 @@ public sealed class DependencyRulesTests
             typeof(WorkId).Assembly,
             typeof(SearchTrace).Assembly,
             typeof(ScreeningService).Assembly,
+            typeof(FullTextInput).Assembly,
             typeof(ReviewBundleManifest).Assembly,
             typeof(ExtensionManifest).Assembly,
             typeof(AiTaskPolicy).Assembly,
@@ -96,7 +98,8 @@ public sealed class DependencyRulesTests
             typeof(WorkflowDefinition).Assembly,
             typeof(WorkId).Assembly,
             typeof(SearchTrace).Assembly,
-            typeof(ScreeningService).Assembly
+            typeof(ScreeningService).Assembly,
+            typeof(FullTextInput).Assembly
         };
 
         foreach (var assembly in digestConsumerAssemblies)
@@ -245,6 +248,23 @@ public sealed class DependencyRulesTests
     }
 
     [TestMethod]
+    public void FullText_project_depends_only_on_kernel_inside_nexus_domain()
+    {
+        var fullTextAssembly = typeof(FullTextInput).Assembly;
+        var kernelAssemblyName = typeof(IClock).Assembly.GetName().Name;
+        var disallowed = fullTextAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !string.Equals(name, kernelAssemblyName, StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(
+            0,
+            disallowed.Length,
+            $"NexusScholar.FullText must depend only on Kernel inside the domain. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
     public void Core_domain_projects_do_not_reference_ui_contracts()
     {
         var uiContractsAssemblyName = typeof(WorkspacePlan).Assembly.GetName().Name;
@@ -260,6 +280,7 @@ public sealed class DependencyRulesTests
             typeof(WorkId).Assembly,
             typeof(SearchTrace).Assembly,
             typeof(ScreeningService).Assembly,
+            typeof(FullTextInput).Assembly,
             typeof(ReviewBundleManifest).Assembly,
             typeof(ExtensionManifest).Assembly,
             typeof(AiTaskPolicy).Assembly

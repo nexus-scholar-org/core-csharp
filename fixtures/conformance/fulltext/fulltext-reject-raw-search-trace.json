@@ -1,0 +1,15 @@
+{
+  "fixtureId": "fulltext-reject-raw-search-trace",
+  "sourceKind": "local-gate-9-fulltext-implementation",
+  "sourceCommit": "local-gate-9-fulltext-local",
+  "generatorCommand": "hand-authored local Gate 9 Full Text fixture",
+  "generatorVersion": "gate-9-fulltext-v1",
+  "sourceRefs": ["docs/adr/0010-search-trace-and-plan-contract.md", "docs/adr/0014-fulltext-acquisition-artifact-and-extraction-contract.md"],
+  "comparisonRules": ["no-php-compatibility-claim", "no-generated-php-fixture", "no-network-provider-behavior"],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000003",
+  "outputDigest": "sha256:1000000000000000000000000000000000000000000000000000000000000003",
+  "case": {
+    "input": { "sourceKind": "raw-search-trace", "candidateSetId": "candidate-set-raw", "candidateId": "candidate-raw" },
+    "expected": { "category": "raw-search-trace-not-fulltext-input" }
+  }
+}

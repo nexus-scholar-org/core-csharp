@@ -1,0 +1,12 @@
+{
+  "fixtureId": "fulltext-empty-text-artifact",
+  "sourceKind": "local-gate-9-fulltext-implementation",
+  "sourceCommit": "local-gate-9-fulltext-local",
+  "generatorCommand": "hand-authored local Gate 9 Full Text fixture",
+  "generatorVersion": "gate-9-fulltext-v1",
+  "sourceRefs": ["docs/adr/0014-fulltext-acquisition-artifact-and-extraction-contract.md"],
+  "comparisonRules": ["no-php-compatibility-claim", "no-generated-php-fixture", "no-network-provider-behavior"],
+  "inputDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000016",
+  "outputDigest": "sha256:1000000000000000000000000000000000000000000000000000000000000016",
+  "case": { "artifact": { "artifactKind": "text", "mediaType": "text/plain", "bytes": "   " }, "expected": { "category": "empty-text-artifact" } }
+}
