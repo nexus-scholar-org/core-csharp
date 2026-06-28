@@ -23,15 +23,29 @@
   <main class="page">
     <p class="eyebrow">Module documentation</p>
     <h1>Workflow</h1>
-    <p class="lede">Deterministic workflow compilation from approved protocol versions into reproducible planned graphs with gate, waiver, and invalidation planning semantics.</p>
+    <p class="lede">Deterministic workflow compilation from approved protocol versions into reproducible planned graphs with explicit gate semantics, waiver controls, capability requirements, and invalidation planning.</p>
 
     <section class="content-section">
       <h2>Scope and ownership</h2>
-      <p>Workflow turns approved protocol authority into a planned execution graph, without implementing execution, persistence, UI, or plugin host behavior. It is a domain module that depends on Kernel and Protocol and emits canonicalized workflow definitions.</p>
+      <p>Workflow is a domain module that translates approved protocol content into a planned graph for controlled scientific conduct. It does not execute tasks, persist workflows, host plugins, or call providers. It only composes planning artifacts that other modules (CLI, bundles, provenance, UI) consume.</p>
       <ul class="check-list">
-        <li>Input contract: <code>WorkflowCompileInput</code> with approved protocol version + schema-closed template + optional amendment/notice material.</li>
-        <li>Compile output: <code>WorkflowDefinition</code> containing deterministic node graph, resolved input bindings, approval/capability declarations, artifact declarations, and optional invalidation plan.</li>
+        <li>Primary input: <code>WorkflowCompileInput</code> (protocol + template + compile parameters + known schema refs + optional amendments + notices + compiler id/version).</li>
+        <li>Primary output: <code>WorkflowDefinition</code> (workflow id, workflow digest, resolved input bindings, topologically-ordered nodes/edges, approval requirements, capability requirements, artifact declarations, invalidation plan).</li>
+        <li>Domain ownership: all canonical graph/digest decisions remain here. Runtime execution, storage, and plugin capability grants are handled outside Gate 4.</li>
         <li>Authority boundary: protocol approval is authoritative for protocol versions; workflow approval is compiled planning metadata only.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Core types and contracts</h2>
+      <ul class="check-list">
+        <li><code>WorkflowTemplate</code>: identity (<code>template_id</code>, <code>template_version</code>), digests, schema id/version, inputs, nodes, edges, gates, approval/capability/waiver/invalidation policy sets.</li>
+        <li><code>WorkflowTemplateInput</code> with <code>ScientificConduct</code> or <code>ExecutionParameter</code> mode and optional default values.</li>
+        <li><code>WorkflowTemplateNode</code> with kind/mode, dependencies, produced artifacts, optional approval / waiver / invalidation references.</li>
+        <li><code>WorkflowCompiledNode</code> and <code>WorkflowCompiledEdge</code> represent graph structure after validation and topological ordering.</li>
+        <li><code>WorkflowResolvedInputBinding</code> records exact source authority for each required input, including source type and digests.</li>
+        <li><code>WorkflowInvalidationPlanEntry</code> records amendment / notice binding for impacted workflow nodes and artifacts.</li>
+        <li><code>WorkflowRuleException</code> carries stable categories (e.g. <code>invalid-protocol-status</code>, <code>unknown-node-requirement</code>, <code>invalid-hybrid-node</code>).</li>
       </ul>
     </section>
 
@@ -39,11 +53,13 @@
       <h2>Gate and ADR status</h2>
       <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-04.md">GATE-04</a> is implemented for local deterministic workflow compiler scope. Core decisions are <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0005-workflow-template-contract.md">ADR 0005</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0006-workflow-compiler-semantics.md">ADR 0006</a>.</p>
       <ul class="check-list">
+        <li>Compile is explicit-only: <code>WorkflowCompiler.Compile(ProtocolVersion)</code> must not be used; callers must pass <code>WorkflowCompileInput</code>.</li>
+        <li>Protocol status contract: only <code>ProtocolStatus.Approved</code> is accepted by default compiler mode.</li>
         <li>Compile is explicit-only: <code>WorkflowCompiler.Compile(ProtocolVersion)</code> is rejected in favor of <code>Compile(WorkflowCompileInput)</code> (<code>explicit-compile-input-required</code>).</li>
         <li>Workflow compilation requires <code>ProtocolStatus.Approved</code>; other statuses are rejected (<code>invalid-protocol-status</code>).</li>
-        <li>Template and protocol identity/digests are validated and enforced; stale values are rejected.</li>
-        <li>Schema closure is enforced with repository-known schema refs; missing/unknown schema ids are hard failures.</li>
-        <li>Deterministic ordering is enforced for nodes, edges, approvals, capabilities, artifacts, resolved bindings, and invalidation entries.</li>
+        <li>Template and protocol digests are recomputed during compilation and must match supplied digests (<code>stale-template-digest</code>, <code>stale-protocol-digest</code>).</li>
+        <li>Template schema closure is mandatory: missing schema id/version or unknown schema pair fails locally.</li>
+        <li>Deterministic outputs: graph order, bindings, approvals, capabilities, artifacts, and invalidation entries are normalized before digesting.</li>
       </ul>
       <p>Evidence: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/GATE-04-EVIDENCE.md">GATE-04-EVIDENCE</a>.</p>
     </section>
@@ -58,14 +74,118 @@
     </section>
 
     <section class="content-section">
+      <h2>Validation pipeline</h2>
+      <ul class="check-list">
+        <li>Input normalization: template nodes are normalized for null-safe arrays and id trimming/validation.</li>
+        <li>Amendment witness check: amended protocol versions require matching amendment source in compile input.</li>
+        <li>Protocol digest validation: prevents accepting stale protocol material.</li>
+        <li>Template schema closure: validates all schema references against known refs supplied in input.</li>
+        <li>Template digest validation: digest mismatch stops compilation.</li>
+        <li>Template graph validation:
+          <ul>
+            <li>duplicate node ids</li>
+            <li>edges reference known nodes</li>
+            <li>no self-edges</li>
+            <li>topological sorting without cycles</li>
+          </ul>
+        </li>
+        <li>Artifact checks:
+          <ul>
+            <li>all produced artifacts must be declared</li>
+            <li>all declarations must name an existing producer node</li>
+            <li>artifact declarations are carried into compiled output</li>
+          </ul>
+        </li>
+        <li>Role/authority checks:
+          <ul>
+            <li>approval roles exist in template role registry</li>
+            <li>human-only approval policy is required (<code>allows_automation=false</code>)</li>
+            <li>approval gating/decision references are known</li>
+          </ul>
+        </li>
+        <li>Node requirements:
+          <ul>
+            <li>node requirement refs resolve to template approvals, waivable items, or invalidation policy refs</li>
+            <li>hybrid nodes require capability refs and an explicit human approval/review path</li>
+          </ul>
+        </li>
+        <li>Input resolution:
+          <ul>
+            <li>scientific conduct inputs resolve only from protocol decisions/waivers, never from compile parameters</li>
+            <li>execution parameters may resolve from explicit parameters or template defaults</li>
+            <li>unknown compile parameter keys are rejected</li>
+          </ul>
+        </li>
+        <li>Waiver validation:
+          <ul>
+            <li>waiver must map to required template requirements</li>
+            <li>disclosure and consequence warning required</li>
+            <li>must not be expired relative to approved protocol time</li>
+            <li>must bind to approval identity</li>
+          </ul>
+        </li>
+        <li>Invalidation planning:
+          <ul>
+            <li>requires amendment + notices for amended versions</li>
+            <li>rejects stale, unknown, or mismatched notices</li>
+            <li>rejects affected artifact digest mismatch and unknown node ids</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Digest and identity contracts</h2>
+      <ul class="check-list">
+        <li><code>workflow_id</code> format: <code>workflow-{first16lowercasehexsha256(material)}</code>.</li>
+        <li>Workflow id material includes protocol id/version + content digest + template id/version + compiler id/version.</li>
+        <li><code>workflow_digest</code> scope: <code>canonical-json-record</code>, schema <code>nexus.workflow-definition</code>, version <code>1.0.0</code>.</li>
+        <li>Template digest scope: <code>canonical-json-record</code>, schema <code>nexus.workflow-template</code>, version <code>1.0.0</code>.</li>
+        <li>Digest exclusions include execution records, provenance events, bundle manifests, provider responses, machine-local file paths, and caches.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
       <h2>Fixtures and tests</h2>
       <ul class="check-list">
         <li>Conformance fixtures: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/fixtures/conformance/workflow/">fixtures/conformance/workflow/</a>.</li>
-        <li>Positive fixtures: rapid/hybrid/waiver/invalidation/determinism/inclusion-exclusion pairs.</li>
+        <li>Positive fixtures:
+          <ul>
+            <li><code>workflow-compile-rapid-review.json</code></li>
+            <li><code>workflow-compile-hybrid-ai-audit.json</code></li>
+            <li><code>workflow-compile-authorized-waiver.json</code></li>
+            <li><code>workflow-compile-invalidation-plan.json</code></li>
+            <li><code>workflow-compile-order-permutation-same-digest.json</code></li>
+            <li><code>workflow-compile-digest-exclusion-stable.json</code></li>
+            <li><code>workflow-compile-digest-inclusion-changed.json</code></li>
+          </ul>
+        </li>
         <li>Negative fixture pack: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/fixtures/conformance/workflow/workflow-compile-negative-cases.json">workflow-compile-negative-cases.json</a>.</li>
         <li>Core tests: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/WorkflowCompilerTests.cs">WorkflowCompilerTests.cs</a>.</li>
         <li>Conformance tests: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/WorkflowFixtureTests.cs">WorkflowFixtureTests.cs</a>.</li>
         <li>Architecture boundary checks including inward-domain dependency assertions in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Architecture.Tests/DependencyRulesTests.cs">DependencyRulesTests.cs</a>.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Known issue taxonomy currently covered</h2>
+      <ul class="check-list">
+        <li><strong>No runtime execution claims:</strong> this gate does not execute tasks, emit UI state, or persist execution events.</li>
+        <li><strong>No PHP/blueprint compatibility claim:</strong> explicit comparison rules and fixture metadata keep this local-scoped.</li>
+        <li><strong>No AI execution claim:</strong> AI/task references in templates remain capability declarations only.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Error categories (non-exhaustive; stable local contract)</h2>
+      <ul class="check-list">
+        <li><code>invalid-protocol-status</code>, <code>stale-protocol-digest</code>, <code>stale-template-digest</code>, <code>missing-schema-id</code>, <code>unknown-schema-id</code>, <code>missing-schema-version</code></li>
+        <li><code>duplicate-node-id</code>, <code>unknown-edge-endpoint</code>, <code>self-edge</code>, <code>dependency-cycle</code>, <code>workflow-id-mismatch</code></li>
+        <li><code>unknown-node-requirement</code>, <code>unknown-approval-role</code>, <code>unknown-gate-policy</code>, <code>unknown-gate-artifact-ref</code>, <code>unknown-gate-decision-ref</code></li>
+        <li><code>undeclared-produced-artifact</code>, <code>unknown-producing-node</code>, <code>unknown-capability-reference</code>, <code>unknown-compile-parameter</code></li>
+        <li><code>missing-required-input</code>, <code>conduct-input-from-compile-parameter</code>, <code>invalid-approval-requirement</code>, <code>automation-approval-authority</code></li>
+        <li><code>invalid-hybrid-node</code>, <code>missing-waiver-disclosure-mapping</code>, <code>missing-waiver-consequence-warning</code>, <code>expired-waiver</code>, <code>waiver-affected-requirement-mismatch</code>, <code>waiver-missing-approval-binding</code>, <code>unauthorized-waiver</code></li>
+        <li><code>missing-invalidation-source</code>, <code>stale-invalidation-notice</code>, <code>affected-artifact-mismatch</code>, <code>affected-node-not-found</code></li>
       </ul>
     </section>
 
@@ -83,9 +203,9 @@
     <section class="content-section">
       <h2>Current issues to track</h2>
       <ul class="check-list">
-        <li><strong>Execution semantics are still outside scope.</strong> Gate 4 documents compile output only; no workflow engine, provider calls, artifact storage, or persistence is implemented here.</li>
-        <li><strong>Blueprint/protocol compatibility remains a non-claim.</strong> Negative/positive fixtures explicitly enforce <code>no-blueprint-conformance-claim</code> and <code>no-php-compatibility-claim</code>.</li>
-        <li><strong>Gate-5 and beyond are pending.</strong> Workflow execution records and governance runtime behavior are handled in later gates.</li>
+        <li><strong>Execution engine absent by design.</strong> Gate 4 scope is planning-only, no runtime planner runner.</li>
+        <li><strong>Compatibility boundary explicit.</strong> Fixture comparison rules state no PHP compatibility and no blueprint conformance claims.</li>
+        <li><strong>Runtime governance not yet integrated.</strong> Execution-level governance and audit append behavior remain future gates.</li>
       </ul>
     </section>
 
