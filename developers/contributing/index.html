@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contributing - Nexus Scholar Core</title>
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
+      <div class="nav-links" id="nav-links">
+        <a href="../../developers/" aria-current="page">Developers</a>
+        <a href="../../tutorials/">Tutorials</a>
+        <a href="../../blog/">Blog</a>
+        <a href="../../about/">About</a>
+        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+      </div>
+    </nav>
+  </header>
+  <main class="page">
+    <p class="eyebrow">Contributing</p>
+    <h1>Change behavior with evidence</h1>
+    <p class="lede">This scaffold should become the public contributor guide for validation, source authority, fixture generation, and completion reports.</p>
+    <section class="content-section">
+      <h2>Baseline verification</h2>
+      <pre><code>dotnet build NexusScholar.Core.slnx -c Release
+dotnet test NexusScholar.Core.slnx -c Release --no-build
+dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore</code></pre>
+    </section>
+    <section class="content-section">
+      <h2>Docs to add later</h2>
+      <ul class="check-list">
+        <li>How to propose an ADR.</li>
+        <li>How to generate or review golden fixtures.</li>
+        <li>How to write a completion report.</li>
+        <li>How to separate app behavior from Core contracts.</li>
+      </ul>
+    </section>
+  </main>
+  <footer class="site-footer"><p>Nexus Scholar Core contributor scaffold.</p></footer>
+  <script src="../../assets/js/site.js"></script>
+</body>
+</html>
