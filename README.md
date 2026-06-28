@@ -6,9 +6,9 @@ This branch is the GitHub Pages source for the Nexus Scholar Core project site.
 
 - `index.html` - project homepage and ecosystem entry point.
 - `about/` - project vision and principles.
-- `blog/` - blog index and starter post.
-- `developers/` - developer documentation scaffold.
-- `tutorials/` - tutorial scaffold.
+- `blog/` - public project narrative, motivation, positioning, and community posts.
+- `developers/` - developer documentation.
+- `tutorials/` - tutorial pages.
 - `assets/` - shared styles, scripts, and generated visuals.
 
 The site is intentionally static and dependency-free. GitHub Pages can serve it directly from the `gh-pages` branch root.
