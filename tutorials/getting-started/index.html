@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../../assets/css/site.css">
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="nav" aria-label="Primary navigation">
       <a class="brand" href="../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
@@ -20,24 +21,133 @@
       </div>
     </nav>
   </header>
-  <main class="article">
-    <p class="eyebrow">Tutorial</p>
-    <h1>Getting started with the Core workspace</h1>
-    <p class="lede">This tutorial is a placeholder for the first complete public walkthrough.</p>
-    <h2>Planned outline</h2>
-    <ol class="step-list">
-      <li>Clone the repository and read the working agreement.</li>
-      <li>Bootstrap local tooling.</li>
-      <li>Run the standard verification commands.</li>
-      <li>Open the module guide and map a behavior to its authority source.</li>
-      <li>Make a small docs-only change and produce a completion report.</li>
-    </ol>
-    <h2>Verification commands</h2>
-    <pre><code>dotnet build NexusScholar.Core.slnx -c Release
+  <main id="main" class="page doc-page">
+    <p class="eyebrow">First-tester walkthrough</p>
+    <h1>Run Nexus Scholar Core in 10 to 15 minutes</h1>
+    <p class="lede">This walkthrough is for developers, methodologists, and early research-tool testers who want to inspect the current local Core surface and report useful feedback. It is not a researcher production workflow.</p>
+
+    <div class="doc-shell">
+      <div class="doc-main">
+        <section class="content-section" id="before-you-start">
+          <h2>Before you start</h2>
+          <p>You need Git, PowerShell or another terminal, and a .NET SDK that can build <code>net10.0</code>. The commands below use PowerShell syntax, but the same <code>dotnet</code> commands work from other shells.</p>
+          <p class="section-note">Use the repository's current <code>main</code> branch. The public feedback packet with issue templates and the deterministic local CLI demo is merged there.</p>
+        </section>
+
+        <section class="content-section" id="clone">
+          <h2>1. Clone the repository</h2>
+          <pre><code>git clone https://github.com/nexus-scholar/core-csharp.git
+cd core-csharp
+git switch main
+git pull origin main</code></pre>
+          <p>This gives you the C# Core workspace, the CLI, the sample host, module docs, tests, and local conformance fixtures.</p>
+        </section>
+
+        <section class="content-section" id="verify">
+          <h2>2. Verify the workspace</h2>
+          <pre><code>dotnet restore NexusScholar.Core.slnx
+dotnet build NexusScholar.Core.slnx -c Release --no-restore
 dotnet test NexusScholar.Core.slnx -c Release --no-build
 dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore</code></pre>
+          <p>If one of these commands fails, open a bug report and include the exact command, operating system, .NET SDK version, expected result, and actual result.</p>
+        </section>
+
+        <section class="content-section" id="cli">
+          <h2>3. Run the CLI path</h2>
+          <p>The CLI is a local inspection surface. It is useful for first feedback because it exercises implemented contracts without calling live services.</p>
+          <pre><code>dotnet run --project src/NexusScholar.Cli -- doctor
+dotnet run --project src/NexusScholar.Cli -- sample
+dotnet run --project src/NexusScholar.Cli -- demo</code></pre>
+          <p>The <code>doctor</code> command prints local environment and policy information. The <code>sample</code> command walks a small protocol, workflow, provenance, and bundle-verification path. The <code>demo</code> command shows deterministic local Search-import and Deduplication evidence using embedded sample bytes.</p>
+          <p>Expected stable <code>demo</code> summary:</p>
+          <pre><code>Nexus Scholar Core local demo
+Mode: deterministic local sample
+Network: none
+Live providers: none
+Persistence: none
+Import source: scopus-csv
+Imported records: 5
+Search sightings: 4
+Parser warnings: 2
+Source digest scope: raw-artifact-bytes
+Dedup raw candidates: 4
+Dedup exact clusters: 1
+Dedup review-required pairs: 1
+Non-claims: no live providers; no provider SDKs; no persistence/API/cloud; no PDF/OCR; no PHP compatibility</code></pre>
+        </section>
+
+        <section class="content-section" id="sample-host">
+          <h2>4. Inspect the sample host</h2>
+          <pre><code>dotnet run --project samples/NexusScholar.Avalonia.Blocks.SampleHost</code></pre>
+          <p>The sample host is a visual inspection harness for non-authoritative <code>WorkspacePlan</code> JSON rendered through <code>NexusScholar.UiContracts</code> and <code>NexusScholar.Avalonia.Blocks</code>. It is not a product desktop app, not an app-service layer, and not a Core command surface.</p>
+          <p>Look for whether the blocks, evidence references, validation references, and placeholder action labels make sense to you. If the visual language is confusing, file documentation or UI feedback rather than treating the sample host as a finished workflow.</p>
+        </section>
+
+        <section class="content-section" id="what-this-proves">
+          <h2>What this proves</h2>
+          <ul class="check-list">
+            <li>The repository builds and tests locally on your machine.</li>
+            <li>The Core contracts can be exercised without network access.</li>
+            <li>The CLI can show environment policy, a small protocol/workflow/bundle path, and deterministic import/dedup evidence.</li>
+            <li>The sample host can render contract-shaped workspace blocks without giving the renderer Core authority.</li>
+            <li>The project is ready for architecture, onboarding, methodology, and workflow-boundary feedback.</li>
+          </ul>
+        </section>
+
+        <section class="content-section" id="what-this-does-not-prove">
+          <h2>What this does not prove</h2>
+          <ul class="check-list">
+            <li>It does not prove production readiness for running a real systematic review.</li>
+            <li>It does not prove live provider access, provider SDK support, Scopus or Web of Science API support, or Google Scholar scraping.</li>
+            <li>It does not prove HTTP download, paywall bypass, shadow-library behavior, PDF extraction, or OCR.</li>
+            <li>It does not prove persistence, API, cloud sync, collaboration, or a product desktop shell.</li>
+            <li>It does not prove PHP compatibility. That requires generated fixtures and semantic comparators.</li>
+            <li>It does not make AI outputs scientifically authoritative. Suggestions remain proposals until an authorized human action accepts them.</li>
+          </ul>
+        </section>
+
+        <section class="content-section" id="feedback">
+          <h2>Send useful feedback</h2>
+          <p>After running the walkthrough, open the issue type that best matches what you found. Include exact commands and outputs when possible.</p>
+          <ul class="link-list">
+            <li><a href="https://github.com/nexus-scholar/core-csharp/issues/new?template=first-tester-run.yml">First tester run</a> for setup, command, or walkthrough feedback.</li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/issues/new?template=architecture-boundary-review.yml">Architecture boundary review</a> for Core authority, dependency, or non-claim concerns.</li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/issues/new?template=research-workflow-use-case.yml">Research workflow use case</a> for real workflow pain points Nexus should eventually understand.</li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/issues/new?template=documentation-confusion.yml">Documentation confusion</a> for unclear, stale, or contradictory docs.</li>
+            <li><a href="https://github.com/nexus-scholar/core-csharp/issues/new?template=bug-report.yml">Bug report</a> for reproducible local failures.</li>
+          </ul>
+        </section>
+      </div>
+
+      <aside class="doc-aside">
+        <section class="doc-card">
+          <h2>Walkthrough steps</h2>
+          <ul class="link-list">
+            <li><a href="#clone">Clone</a></li>
+            <li><a href="#verify">Verify</a></li>
+            <li><a href="#cli">Run CLI commands</a></li>
+            <li><a href="#sample-host">Inspect sample host</a></li>
+            <li><a href="#feedback">File feedback</a></li>
+          </ul>
+        </section>
+        <section class="doc-card">
+          <h2>Best feedback</h2>
+          <ul>
+            <li>Exact commands run</li>
+            <li>Expected result</li>
+            <li>Actual result</li>
+            <li>Confusing docs or wording</li>
+            <li>Boundary claims that seem too broad</li>
+          </ul>
+        </section>
+        <section class="doc-card">
+          <h2>Boundary reminder</h2>
+          <p>Local and deterministic means no live providers, no provider SDKs, no persistence/API/cloud, no PDF/OCR, and no PHP compatibility claim.</p>
+        </section>
+      </aside>
+    </div>
   </main>
-  <footer class="site-footer"><p>Nexus Scholar Core tutorial.</p></footer>
+  <footer class="site-footer"><p>Nexus Scholar Core first-tester walkthrough.</p></footer>
   <script src="../../assets/js/site.js"></script>
 </body>
 </html>
