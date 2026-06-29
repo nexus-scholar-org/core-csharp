@@ -1,13 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using NexusScholar.UiContracts;
 
 namespace NexusScholar.Avalonia.Blocks;
 
-public sealed class WorkspacePlanView : UserControl
+public sealed class WorkspacePlanView : Border
 {
     private readonly StackPanel _root = new() { Spacing = 12 };
     private static readonly IBrush Accent = new SolidColorBrush(Color.Parse("#0f766e"));
@@ -22,16 +21,8 @@ public sealed class WorkspacePlanView : UserControl
     {
         _root.Margin = new Thickness(2);
 
-        Content = new Border
-        {
-            Background = Paper,
-            Child = new ScrollViewer
-            {
-                Content = _root,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-            }
-        };
+        Background = Paper;
+        Child = _root;
     }
 
     public void Render(WorkspacePlan plan, BlockActionCallback? actionCallback = null)

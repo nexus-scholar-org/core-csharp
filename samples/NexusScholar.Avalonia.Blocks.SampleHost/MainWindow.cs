@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -13,6 +14,7 @@ public sealed class MainWindow : Window
     {
         TextWrapping = TextWrapping.Wrap
     };
+    private Border? _hostRoot;
 
     public MainWindow()
         : this(SampleWorkspaceLoader.LoadDefaultSamples())
@@ -34,9 +36,13 @@ public sealed class MainWindow : Window
         Height = 840;
         MinWidth = 760;
         MinHeight = 520;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Color.Parse("#f7f4ed"));
 
         Content = BuildContent();
+        Opened += (_, _) => ApplyHostClientSize();
+        SizeChanged += (_, _) => ApplyHostClientSize();
+
         RenderSample(_samples[0]);
     }
 
@@ -97,24 +103,77 @@ public sealed class MainWindow : Window
             Child = _status
         };
 
-        var panel = new DockPanel
+        _hostRoot = BuildHostLayout(header, _workspaceView, statusBar);
+        return _hostRoot;
+    }
+
+    internal static Border BuildHostLayout(Control header, Control workspaceView, Control statusBar)
+    {
+        ArgumentNullException.ThrowIfNull(header);
+        ArgumentNullException.ThrowIfNull(workspaceView);
+        ArgumentNullException.ThrowIfNull(statusBar);
+
+        var layout = new Grid
         {
-            LastChildFill = true,
-            Margin = new Thickness(16)
+            Margin = new Thickness(16),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
         };
+        layout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        layout.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+        layout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        DockPanel.SetDock(header, Dock.Top);
-        DockPanel.SetDock(statusBar, Dock.Bottom);
+        var workspaceScroller = new ScrollViewer
+        {
+            ClipToBounds = true,
+            Content = workspaceView,
+            Focusable = true,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible
+        };
+        workspaceScroller.HorizontalAlignment = HorizontalAlignment.Stretch;
+        workspaceScroller.VerticalAlignment = VerticalAlignment.Stretch;
 
-        panel.Children.Add(header);
-        panel.Children.Add(statusBar);
-        panel.Children.Add(_workspaceView);
+        workspaceView.HorizontalAlignment = HorizontalAlignment.Stretch;
+        workspaceView.VerticalAlignment = VerticalAlignment.Top;
+
+        Grid.SetRow(header, 0);
+        Grid.SetRow(workspaceScroller, 1);
+        Grid.SetRow(statusBar, 2);
+
+        layout.Children.Add(header);
+        layout.Children.Add(workspaceScroller);
+        layout.Children.Add(statusBar);
 
         return new Border
         {
             Background = new SolidColorBrush(Color.Parse("#f7f4ed")),
-            Child = panel
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Child = layout
         };
+    }
+
+    private void ApplyHostClientSize()
+    {
+        if (_hostRoot is null)
+        {
+            return;
+        }
+
+        if (ClientSize.Width > 0)
+        {
+            _hostRoot.Width = ClientSize.Width;
+        }
+
+        if (ClientSize.Height > 0)
+        {
+            _hostRoot.Height = ClientSize.Height;
+            if (_hostRoot.Child is Grid layout)
+            {
+                layout.Height = Math.Max(0, ClientSize.Height - layout.Margin.Top - layout.Margin.Bottom);
+            }
+        }
     }
 
     private void RenderSample(SampleWorkspace sample)
