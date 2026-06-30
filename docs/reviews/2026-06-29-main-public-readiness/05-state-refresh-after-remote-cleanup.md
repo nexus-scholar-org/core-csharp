@@ -2,7 +2,9 @@
 
 Date: 2026-06-29
 
-## Current Git State
+Historical status: this snapshot records the state after the first remote cleanup pass at `ebb7bba`. For the current state after public-feedback onboarding, `gh-pages` first-tester walkthrough, and UI polish, use `06-state-refresh-after-public-feedback-and-ui-polish.md`.
+
+## Historical Git State
 
 Local status:
 
@@ -31,7 +33,7 @@ origin/gh-pages
 ebb7bba6131c27a5608a63d302de555b26db849e refs/heads/main
 ```
 
-## Current Main Head
+## Historical Main Head
 
 ```text
 ebb7bba docs: refresh readmes after main consolidation
@@ -57,7 +59,7 @@ dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore
 powershell -ExecutionPolicy Bypass -File ./scripts/verify.ps1
 ```
 
-Result: passed, 318 tests.
+Historical result: passed, 318 tests.
 
 Hosted:
 
@@ -67,7 +69,7 @@ Commit: ebb7bba
 Result: passed on ubuntu-latest and windows-latest
 ```
 
-## Current Review Verdict
+## Historical Review Verdict
 
 The repository is clean enough for public architecture and developer feedback. It is not yet ready as a general researcher product.
 

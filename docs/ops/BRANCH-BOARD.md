@@ -1,16 +1,15 @@
 # Codex Branch Board
 
-Source: live branch probes after main consolidation, remote `cdx/*` cleanup, first public-feedback planning, and branch creation.
+Source: live branch probes after public-feedback onboarding, `gh-pages` first-tester walkthrough, PR #6 UI presentation merge, and stale remote branch cleanup.
 
 ## Main Baseline
 
-- Current branch: `cdx/public-feedback-cli-onboarding`.
-- Current `main`: `7cd63ae` (`docs: plan first public feedback loop`).
-- Current `origin/main`: `7cd63ae`.
-- Current public site branch: `gh-pages` / `origin/gh-pages` at `53d7aa4`.
+- Operating baseline: `main` / `origin/main` at `ac0307c` (`Polish Avalonia sample host presentation and scrolling`).
+- Public site branch: `gh-pages` / `origin/gh-pages` at `32475f4` (`docs(site): add first tester getting started walkthrough`).
 - Remote heads are only `main` and `gh-pages`.
-- Local heads include `main`, `gh-pages`, and active branch `cdx/public-feedback-cli-onboarding`.
-- Hosted `main` CI run `28381357879` passed Ubuntu and Windows restore, build, test, and format for the review-refresh baseline. The first public-feedback plan commit was then pushed to `main`.
+- Local durable heads are `main` and `gh-pages`.
+- This state-refresh branch, `cdx/state-refresh-public-comprehension`, is docs-only and exists to align stale ops/review files with the current baseline.
+- Latest hosted `main` CI: `gate-01` run `28402404840`, passed for `ac0307c` on Ubuntu and Windows.
 
 ## Main Contains
 
@@ -22,16 +21,23 @@ Source: live branch probes after main consolidation, remote `cdx/*` cleanup, fir
 - Gate 9 Full Text reconnaissance, ADR 0014 contract, and local no-network Full Text implementation.
 - UI contracts and sample block plans.
 - Avalonia block renderer prototype.
-- Avalonia sample host.
-- README, review docs, ops docs, and first public-feedback plan.
+- Avalonia sample host with presentation and scrolling polish.
+- Public-feedback onboarding docs, issue templates, PR template, and deterministic CLI `demo`.
+- README quick start for `doctor`, `sample`, `demo`, and the sample host.
+
+## Public Site Contains
+
+- First-tester getting-started walkthrough on `gh-pages`.
+- Public site pages for project narrative, architecture, module documentation, and tutorials.
+- The remaining public-site gap is a fresh sample-host screenshot or GIF linked from the walkthrough.
 
 ## Branch Classes
 
-- merged: all prior local `cdx/*` branches needed for the current baseline have been merged, cherry-picked, or superseded into `main`.
+- merged: all prior implementation and public-feedback `cdx/*` branches needed for the current baseline have been merged, squash-merged, cherry-picked, or superseded into `main`.
 - cleanup: none pending locally or remotely.
-- active: `cdx/public-feedback-cli-onboarding`.
-- review: none.
-- blocked: PHP compatibility claims, generated PHP fixtures, persistence/API/UI/cloud, live provider/network behavior, Scopus API, Web of Science API, Google Scholar scraping, paywall bypass, shadow-library sources, AI governance beyond proposal contracts, full-text artifact storage, actual PDF parsing, OCR, and app integration claims remain out of scope.
+- active: docs-only state refresh on `cdx/state-refresh-public-comprehension`.
+- review: none yet.
+- blocked: PHP compatibility claims, generated PHP fixtures, persistence/API/cloud, live provider/network behavior, Scopus API, Web of Science API, Google Scholar scraping, paywall bypass, shadow-library sources, AI governance beyond proposal contracts, full-text artifact storage, actual PDF parsing, OCR, and product-shell behavior remain out of scope.
 - stale: none retained locally or remotely.
 - public-site: `gh-pages`.
 
@@ -40,16 +46,18 @@ Source: live branch probes after main consolidation, remote `cdx/*` cleanup, fir
 `git ls-remote --heads origin`:
 
 ```text
-53d7aa429471faf65ea6b94c3febd1015c1e94a1 refs/heads/gh-pages
-7cd63ae9f80962b47ac478e0a6b5b156c5d83d6b refs/heads/main
+32475f4e5fc2bf5b33becfff02d9607f16016fda refs/heads/gh-pages
+ac0307c7a5e396c36325c42632a02b2faca10172 refs/heads/main
 ```
 
-Remote branches deleted in this consolidation:
+Branches deleted during the public-feedback cleanup:
 
 - `cdx/gate-9-fulltext-contract`
 - `cdx/gate-9-fulltext-recon`
+- `cdx/public-feedback-cli-onboarding`
 - `cdx/ui-phase-3-5-avalonia-sample-host`
 - `cdx/ui-phase-3-avalonia-renderer`
+- `cdx/ui-presentation-pass`
 
 ## Safe Cleanup Candidates
 
@@ -62,21 +70,23 @@ None.
 - `origin/main`
 - `origin/gh-pages`
 
-## Next Work
+## Completed Public-Feedback Packets
 
-Active branch was created fresh from current `main`.
+- PF-01 maintainer routing docs.
+- PF-02 GitHub issue templates and PR template.
+- CLI-01 local CLI demo contract.
+- CLI-02 deterministic local `demo` command.
+- CLI-03 README and public-readiness demo docs.
+- WEB-01 public first-tester getting-started tutorial on `gh-pages`.
+- UI presentation pass for the Avalonia sample host, merged as PR #6.
 
-Current work:
+## Current Recommended Next Work
 
-1. PF-01 maintainer routing docs.
-2. PF-02 feedback issue templates and PR template.
-3. CLI-01 local deterministic demo contract.
-
-Explicit stop point: do not implement the CLI demo until CLI-01 is reviewed.
-
-Detailed plan:
-
-- `docs/ops/FIRST-PUBLIC-FEEDBACK-PLAN-2026-06-29.md`
+1. Finish this state refresh so ops/review docs match `main` and `gh-pages`.
+2. Add first-tester polish: sample-host screenshot/GIF on `gh-pages`, root contributor/license/security docs, and README links to the public tutorial and feedback templates.
+3. Add CI or script smoke coverage for the public CLI path: `doctor`, `sample`, and `demo`.
+4. Plan APP-01 as a narrow ADR for read-only AppServices composition from Search Import + Deduplication into `WorkspacePlan`.
+5. Keep provider work planning-only until a provider/network/legal ADR exists.
 
 ## Unresolved Boundaries
 

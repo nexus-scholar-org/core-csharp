@@ -4,7 +4,7 @@
 
 Do not jump straight into broad implementation.
 
-The repository state is now clean enough to show, but the next valuable work is a public-feedback runway and one tester-visible workflow path. Otherwise, you will keep adding correct internals while public readers cannot understand how to approach the project.
+The repository is now clean enough to show for architecture, developer, and methodology feedback. The next valuable work is to make the existing kernel understandable to first testers, then plan the first read-only application-service bridge. Otherwise, more correct internals will keep accumulating while public readers still cannot see how the parts connect.
 
 ## Completed Since Earlier Review
 
@@ -13,79 +13,85 @@ The repository state is now clean enough to show, but the next valuable work is 
 - Remote `cdx/*` branches were deleted.
 - Local obsolete `cdx/*` branches and clean worktrees were removed.
 - README and UI README were refreshed.
-- Hosted CI passed for pushed `main`.
+- Public feedback issue templates and PR template were added.
+- CLI `demo` was specified, implemented, tested, and documented.
+- `gh-pages` getting-started tutorial was replaced with a real first-tester walkthrough.
+- Avalonia sample-host presentation and scrolling were polished.
+- Hosted CI passed for `main` at `ac0307c`.
 
 ## Next Four Moves
 
-### Move 1: Finish Public Onboarding
+### Move 1: Finish First-Tester Polish
 
-Goal: make one person able to test something real in 10-15 minutes.
-
-Tasks:
-
-- replace placeholder getting-started tutorial on `gh-pages`;
-- add sample host screenshot/GIF to `gh-pages`;
-- add a first-tester checklist;
-- add "what feedback I want" page/post;
-- verify all commands locally and record exact output expectations.
-
-Exit criteria:
-
-- a tester can clone, verify, run CLI doctor/sample, run sample host, and file useful feedback.
-
-### Move 2: Add Feedback Channels
-
-Goal: make feedback structured enough to act on.
+Goal: let one external tester understand what they are seeing without reading the whole repo.
 
 Tasks:
 
-- add issue templates;
-- add PR template;
-- add a pinned feedback issue;
-- add labels for architecture, docs, first-tester, workflow-use-case, and validation-failure.
+- add a sample-host screenshot/GIF to `gh-pages`;
+- reference it from the getting-started tutorial;
+- add root `LICENSE`, `CONTRIBUTING.md`, and `SECURITY.md`;
+- add README links to the public tutorial and feedback templates;
+- verify issue-template labels or document that labels are optional;
+- add a pinned or clearly linked first-feedback issue.
 
 Exit criteria:
 
-- public feedback is routed into actionable buckets instead of free-form noise.
+- a tester can clone, verify, run CLI `doctor`/`sample`/`demo`, view the sample host, and file useful feedback.
 
-### Move 3: Refresh Maintainer Routing Docs
+### Move 2: Add CLI Public-Path Smoke
 
-Goal: prevent future work from restarting at old gates.
+Goal: make the public commands part of the release gate.
 
 Tasks:
 
-- rewrite `CODEX-START-HERE.md`;
-- update `PLANS.md` so historical gates are separated from current roadmap;
-- keep `docs/ops/*` refreshed after each branch/PR;
-- add a "current baseline" note pointing to `README.md`, `docs/adr/`, `docs/gates/`, and this review package.
+- add CI or `scripts/verify` smoke for `doctor`, `sample`, and `demo`;
+- keep the commands local-only and deterministic;
+- make Bash and PowerShell verification paths as symmetric as practical.
 
 Exit criteria:
 
-- future Codex work starts from the current `main` state, not Gate 0.
+- CI or the main verification script proves the README/public tutorial command path still runs.
 
-### Move 4: First Useful Product Slice
+### Move 3: Plan APP-01
 
 Goal: bridge kernel truth to a tester-visible workflow without making Core depend on UI or persistence.
 
 Best next slice:
 
-> AppServices block composition for Import + Dedup sample state.
+> Read-only AppServices composition for Search Import + Deduplication into `WorkspacePlan`.
 
 Why this slice:
 
 - public testers can understand import warnings and duplicate review;
-- it uses already-implemented Search import and Deduplication;
+- it uses already-implemented Search Import and Deduplication;
 - it turns Core evidence into `WorkspacePlan` without letting UI mutate Core;
 - it prepares a real app without needing persistence/cloud.
 
 Scope:
 
-- `NexusScholar.AppServices` or equivalent planning ADR first;
+- ADR 0015 or equivalent planning doc first;
 - read-only composition from existing Core records into `WorkspacePlan`;
 - no persistence;
 - no command execution;
 - no real researcher project storage;
+- no provider/network calls;
 - tests asserting Core remains UI-free.
+
+### Move 4: Implement The Smallest AppServices Slice
+
+Goal: make the sample host display a real block plan generated from Core evidence through an application boundary.
+
+Tasks after APP-01 is accepted:
+
+- add `NexusScholar.AppServices` or the accepted equivalent;
+- map Search Import + Deduplication results to `WorkspacePlan`;
+- preserve evidence refs and validation refs;
+- keep output deterministic;
+- keep Avalonia renderer independent of Core.
+
+Exit criteria:
+
+- the renderer can consume generated `WorkspacePlan` output without making UI authoritative.
 
 ## What Not To Do Next
 
@@ -106,7 +112,7 @@ The wedge is:
 
 Why:
 
-- Search import, Deduplication, Screening, Full Text, Bundles, and UiContracts support the concept.
+- Search Import, Deduplication, Screening, Full Text, Bundles, and UiContracts support the concept.
 - It is easier to demonstrate than full review execution.
 - It exposes the project philosophy in a concrete way.
 - It creates useful feedback from real researchers: "Does this match how messy search exports and duplicate candidates feel?"

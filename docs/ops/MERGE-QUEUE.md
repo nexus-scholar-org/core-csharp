@@ -1,28 +1,37 @@
 # Merge Queue
 
-Source: live status after main consolidation, remote branch cleanup, first public-feedback planning, and branch creation.
+Source: live status after public-feedback onboarding, `gh-pages` walkthrough, PR #6 UI presentation merge, and stale branch cleanup.
 
 ## Current Queue
 
-Active docs/planning branch: `cdx/public-feedback-cli-onboarding`.
+Active branch:
+
+- `cdx/state-refresh-public-comprehension`
+
+Purpose:
+
+- docs-only state refresh so ops/review files describe the current `main` and `gh-pages` state.
 
 Current baseline:
 
-- `main` head: `7cd63ae` (`docs: plan first public feedback loop`).
-- `origin/main`: `7cd63ae`.
-- Hosted `main` CI: `gate-01` run `28381357879`, passed on Ubuntu and Windows for the review-refresh baseline. The first public-feedback plan commit was then pushed to `main`.
+- `main` head: `ac0307c` (`Polish Avalonia sample host presentation and scrolling`).
+- `origin/main`: `ac0307c`.
+- `gh-pages` / `origin/gh-pages`: `32475f4` (`docs(site): add first tester getting started walkthrough`).
+- Hosted `main` CI: `gate-01` run `28402404840`, passed on Ubuntu and Windows for `ac0307c`.
 - Remote branches: `main`, `gh-pages`.
-- Local branches include `main`, `gh-pages`, and active branch `cdx/public-feedback-cli-onboarding`.
+- Local durable branches: `main`, `gh-pages`.
 
 ## Completed Consolidation
 
-- `origin/main` was advanced from `16cabc3` to `ebb7bba`.
+- `origin/main` was advanced from `16cabc3` through Full Text implementation, review refresh, public-feedback onboarding, local CLI demo, and UI presentation polish.
 - Full Text implementation was ported from old local commit `a520616` into `main` as `5a13abc`.
 - Review and README refresh landed as `ebb7bba`.
 - Review/ops state refresh landed as `e79f5cd`.
 - First public-feedback plan landed as `7cd63ae`.
-- Remote `cdx/*` branches were deleted.
-- Local `cdx/*` branches and clean obsolete worktrees were deleted.
+- Public feedback onboarding and local CLI demo landed as `506ab35`.
+- Avalonia sample host presentation and scrolling polish landed as `ac0307c`.
+- `gh-pages` first-tester tutorial landed as `32475f4`.
+- Remote and local `cdx/*` branches from the completed packets were deleted.
 
 ## Completed Merges And Ports
 
@@ -37,6 +46,9 @@ Current baseline:
 - UI contract/block-plan samples.
 - Avalonia block renderer prototype.
 - Avalonia sample host.
+- Public-feedback issue templates and PR template.
+- CLI `doctor`, `sample`, and deterministic local `demo`.
+- Public getting-started walkthrough on `gh-pages`.
 
 ## Not Queued Yet
 
@@ -51,37 +63,56 @@ Current baseline:
 - full-text artifact storage
 - PHP compatibility claims
 - generated PHP fixtures
-- persistence/API/UI/cloud behavior
-- CLI/Web app alignment
+- persistence/API/cloud behavior
+- product desktop shell behavior
 - AI governance beyond current proposal contracts
 
 ## Active Work
 
-Current branch:
+Current packet:
 
-- `cdx/public-feedback-cli-onboarding`
+- State-refresh docs after public-feedback and UI presentation merges.
 
-Current packets:
+Allowed scope:
 
-1. PF-01 maintainer routing docs.
-2. PF-02 issue/PR feedback templates.
-3. CLI-01 local deterministic demo contract.
+- ops docs;
+- review docs;
+- maintainer routing docs if they still point at old work.
 
-Stop after CLI-01 review. Do not implement CLI demo code yet.
+Do not implement AppServices, providers, persistence, API/cloud, PDF/OCR, live HTTP, or a UI product shell in this branch.
 
-Current detailed plan:
+## Next Queue
 
-- `docs/ops/FIRST-PUBLIC-FEEDBACK-PLAN-2026-06-29.md`
+Recommended next packets after this docs refresh:
+
+1. **Public tester polish**: sample-host screenshot/GIF, root `LICENSE` / `CONTRIBUTING.md` / `SECURITY.md`, README links to public tutorial and issue templates.
+2. **CLI public-path CI smoke**: run `doctor`, `sample`, and `demo` in CI or `scripts/verify`.
+3. **APP-01 planning**: draft ADR 0015 for read-only AppServices composition from Search Import + Deduplication into `WorkspacePlan`.
+4. **Provider planning note only**: provider/network/legal questions without implementation.
 
 ## Verification
 
-Local consolidation verification passed:
+Latest known local post-merge verification for `main`:
 
-- `dotnet build NexusScholar.Core.slnx -c Release`
-- `dotnet test NexusScholar.Core.slnx -c Release --no-build` with 318 tests
-- `dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore`
-- `powershell -ExecutionPolicy Bypass -File ./scripts/verify.ps1`
+```text
+dotnet build NexusScholar.Core.slnx -c Release
+dotnet test NexusScholar.Core.slnx -c Release --no-build
+dotnet run --project samples/NexusScholar.Avalonia.Blocks.SampleHost
+```
 
-Hosted verification passed:
+Result:
 
-- https://github.com/nexus-scholar/core-csharp/actions/runs/28380516236
+- build passed;
+- tests passed;
+- sample host launch smoke passed and closed cleanly.
+
+Current source scan:
+
+- 324 `[TestMethod]` declarations.
+
+Latest hosted verification:
+
+- `gate-01` run `28402404840`
+- commit `ac0307c`
+- result: passed on `ubuntu-latest` and `windows-latest`
+- URL: https://github.com/nexus-scholar/core-csharp/actions/runs/28402404840
