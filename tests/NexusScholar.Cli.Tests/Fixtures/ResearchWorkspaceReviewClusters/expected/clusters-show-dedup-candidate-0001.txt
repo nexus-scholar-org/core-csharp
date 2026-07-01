@@ -1,0 +1,23 @@
+Candidate: dedup-candidate-0001
+Status: review required
+
+Left record
+  Id: record-asreview-openalex
+  Title: ASReview: active learning for systematic reviews
+  Year: 2021
+  Source: openalex
+
+Right record
+  Id: record-asreview-scholar
+  Title: ASReview: Active learning for systematic reviews
+  Year: 2021
+  Source: google-scholar
+
+Why Nexus flagged this
+  near-identical title and year; missing stable DOI on one side
+  Score: 0.91
+  Threshold: 0.85
+
+APP-01 action
+  Human merge decision required.
+  This CLI version only displays the decision gate.

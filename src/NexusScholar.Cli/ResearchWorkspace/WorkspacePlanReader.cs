@@ -1,0 +1,60 @@
+using System.Text.Json;
+using NexusScholar.UiContracts;
+
+namespace NexusScholar.Cli.ResearchWorkspace;
+
+internal static class WorkspacePlanReader
+{
+    public static LoadedWorkspacePlan Read(string workingDirectory)
+    {
+        var location = ResearchWorkspaceStore.FindFrom(workingDirectory);
+        if (location is null)
+        {
+            throw new WorkspacePlanReadException(
+                "No Nexus research workspace found in the current folder or its parents.",
+                ResearchWorkspaceExitCodes.MissingProjectOrInput);
+        }
+
+        var project = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+        if (!string.Equals(project.Schema, ResearchWorkspaceProject.CurrentSchema, StringComparison.Ordinal))
+        {
+            throw new WorkspacePlanReadException(
+                $"Unsupported Nexus project schema: {project.Schema}",
+                ResearchWorkspaceExitCodes.UnsupportedSchemaOrFormat);
+        }
+
+        var planPath = ResearchWorkspacePaths.InProject(location.RootDirectory, ResearchWorkspacePaths.CurrentWorkspacePlan);
+        if (!File.Exists(planPath))
+        {
+            throw new WorkspacePlanReadException(
+                $"Generated workspace plan not found: {ResearchWorkspacePaths.CurrentWorkspacePlan}",
+                ResearchWorkspaceExitCodes.MissingProjectOrInput);
+        }
+
+        var plan = JsonSerializer.Deserialize<WorkspacePlan>(
+            File.ReadAllText(planPath),
+            UiContractJson.SerializerOptions);
+        if (plan is null)
+        {
+            throw new JsonException("Workspace plan file did not contain an object.");
+        }
+
+        return new LoadedWorkspacePlan(location, project, plan);
+    }
+}
+
+internal sealed record LoadedWorkspacePlan(
+    ResearchWorkspaceLocation Location,
+    ResearchWorkspaceProject Project,
+    WorkspacePlan Plan);
+
+internal sealed class WorkspacePlanReadException : Exception
+{
+    public WorkspacePlanReadException(string message, int exitCode)
+        : base(message)
+    {
+        ExitCode = exitCode;
+    }
+
+    public int ExitCode { get; }
+}

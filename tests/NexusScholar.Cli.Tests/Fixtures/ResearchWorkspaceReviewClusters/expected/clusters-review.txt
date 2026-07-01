@@ -1,0 +1,9 @@
+Review-required duplicate candidates
+
+[dedup-candidate-0001]
+  Score: 0.91
+  Reason: near-identical title and year; missing stable DOI on one side
+  Left:  ASReview: active learning for systematic reviews
+  Right: ASReview: Active learning for systematic reviews
+  Sources: openalex, google-scholar
+  Show: nexus clusters show dedup-candidate-0001

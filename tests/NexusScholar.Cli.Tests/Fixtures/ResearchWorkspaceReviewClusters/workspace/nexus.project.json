@@ -1,0 +1,15 @@
+{
+  "schema": "nexus.project.v0",
+  "workspaceId": "workspace-pr06-review-demo",
+  "title": "PR06 review and clusters demo",
+  "createdAt": "2026-07-01T00:00:00Z",
+  "inputs": [],
+  "outputs": {
+    "latestWorkspacePlan": "nexus-output/workspace/current.workspace-plan.json"
+  },
+  "nonClaims": [
+    "local-folder-project",
+    "read-only-review",
+    "no-command-execution"
+  ]
+}

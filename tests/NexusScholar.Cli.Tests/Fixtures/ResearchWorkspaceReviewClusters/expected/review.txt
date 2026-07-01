@@ -1,0 +1,19 @@
+Review queue
+Workspace: PR06 review and clusters demo
+Mode: Review
+
+Blocking
+  1 human merge decision requires review
+
+Review required
+  1 duplicate record comparison
+  1 import warning category
+
+Top items
+  [dedup-candidate-0001] Review duplicate candidate: ASReview
+      Reason: near-identical title and year; missing stable DOI on one side
+      Command: nexus clusters show dedup-candidate-0001
+  [import-warning] missing-required-field: 1 warning
+
+APP-01 note
+  Merge actions are placeholders only. This CLI does not accept, reject, or execute merge decisions yet.

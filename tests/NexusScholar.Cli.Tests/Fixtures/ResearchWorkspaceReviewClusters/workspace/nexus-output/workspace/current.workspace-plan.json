@@ -1,0 +1,213 @@
+{
+  "workspaceId": "workspace-pr06-review-demo",
+  "title": "PR06 review and clusters demo",
+  "mode": "Review",
+  "description": "Read-only app projection from imported search and deduplication evidence. Non-authoritative CLI fixture.",
+  "contextRefs": [
+    {
+      "kind": "import-source",
+      "value": "trace-pr06-aggregate",
+      "label": "Aggregated search import trace"
+    },
+    {
+      "kind": "deduplication-result",
+      "value": "dedup-pr06-demo",
+      "label": "Deduplication result"
+    }
+  ],
+  "blocks": [
+    {
+      "blockId": "import-summary-pr06",
+      "kind": "nexus.block.import.summary",
+      "title": "Import summary",
+      "mode": "Review",
+      "severity": "Warning",
+      "sourceKind": "AppProjection",
+      "evidenceRefs": [
+        {
+          "kind": "import-source",
+          "value": "trace-pr06-aggregate",
+          "digest": "sha256:fixture-import-digest"
+        }
+      ],
+      "validationRefs": [
+        {
+          "code": "nexus.import.parser-warnings-present",
+          "severity": "Warning",
+          "message": "Parser warnings require review."
+        }
+      ],
+      "actions": [
+        {
+          "actionId": "show-import-details",
+          "kind": "ShowDetails",
+          "label": "Show import details",
+          "requiresHumanConfirmation": false,
+          "isDestructive": false
+        }
+      ],
+      "summary": "14 imported records, 5 parser warnings, 2 skipped records.",
+      "payloadJson": "{\"importedRecords\":14,\"parserWarnings\":5,\"skippedRecords\":2,\"network\":\"none\",\"liveProviders\":\"none\"}"
+    },
+    {
+      "blockId": "import-warning-missing-title",
+      "kind": "nexus.block.import.warning-summary",
+      "title": "Import warning: missing title",
+      "mode": "Review",
+      "severity": "ReviewRequired",
+      "sourceKind": "AppProjection",
+      "evidenceRefs": [
+        {
+          "kind": "raw-record-digest",
+          "value": "sha256:fixture-missing-title"
+        }
+      ],
+      "validationRefs": [
+        {
+          "code": "nexus.search.import.missing-required-field",
+          "severity": "ReviewRequired",
+          "message": "One or more imported records are missing a required title."
+        }
+      ],
+      "actions": [
+        {
+          "actionId": "show-warning-details",
+          "kind": "ShowDetails",
+          "label": "Show warning details",
+          "requiresHumanConfirmation": false,
+          "isDestructive": false
+        }
+      ],
+      "summary": "Missing title warnings were found in imported search records.",
+      "payloadJson": "{\"category\":\"missing-required-field\",\"count\":1,\"exampleRecord\":\"record-pr06-warning-001\"}"
+    },
+    {
+      "blockId": "dedup-cluster-exact-0001",
+      "kind": "nexus.block.dedup.candidate-cluster",
+      "title": "Exact duplicate cluster: Rayyan",
+      "mode": "Review",
+      "severity": "Success",
+      "sourceKind": "AppProjection",
+      "evidenceRefs": [
+        {
+          "kind": "deduplication-result",
+          "value": "dedup-pr06-demo"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-rayyan-scopus"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-rayyan-wos"
+        }
+      ],
+      "validationRefs": [],
+      "actions": [
+        {
+          "actionId": "open-cluster-0001",
+          "kind": "ShowDetails",
+          "label": "Show cluster details",
+          "requiresHumanConfirmation": false,
+          "isDestructive": false
+        }
+      ],
+      "summary": "Two records share DOI 10.1186/s13643-016-0384-4.",
+      "payloadJson": "{\"clusterId\":\"dedup-cluster-0001\",\"memberIds\":[\"record-rayyan-scopus\",\"record-rayyan-wos\"],\"matchBasis\":\"exact-doi\",\"doi\":\"10.1186/s13643-016-0384-4\"}"
+    },
+    {
+      "blockId": "dedup-candidate-0001",
+      "kind": "nexus.block.dedup.record-comparison",
+      "title": "Review duplicate candidate: ASReview",
+      "mode": "Review",
+      "severity": "ReviewRequired",
+      "sourceKind": "AppProjection",
+      "evidenceRefs": [
+        {
+          "kind": "deduplication-result",
+          "value": "dedup-pr06-demo"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-asreview-openalex"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-asreview-scholar"
+        }
+      ],
+      "validationRefs": [
+        {
+          "code": "nexus.dedup.review-required",
+          "severity": "ReviewRequired",
+          "message": "Near-identical title and year, but missing stable DOI on one side."
+        }
+      ],
+      "actions": [
+        {
+          "actionId": "show-dedup-candidate-0001",
+          "kind": "ShowDetails",
+          "label": "Show comparison",
+          "requiresHumanConfirmation": false,
+          "isDestructive": false
+        }
+      ],
+      "summary": "Possible duplicate needs human review.",
+      "payloadJson": "{\"candidateId\":\"dedup-candidate-0001\",\"left\":{\"recordId\":\"record-asreview-openalex\",\"title\":\"ASReview: active learning for systematic reviews\",\"year\":\"2021\",\"source\":\"openalex\"},\"right\":{\"recordId\":\"record-asreview-scholar\",\"title\":\"ASReview: Active learning for systematic reviews\",\"year\":\"2021\",\"source\":\"google-scholar\"},\"score\":0.91,\"threshold\":0.85,\"reason\":\"near-identical title and year; missing stable DOI on one side\"}"
+    },
+    {
+      "blockId": "human-gate-merge-dedup-candidate-0001",
+      "kind": "nexus.block.human-gate.merge-decision",
+      "title": "Human merge decision required",
+      "mode": "Review",
+      "severity": "Blocking",
+      "sourceKind": "AppProjection",
+      "evidenceRefs": [
+        {
+          "kind": "deduplication-result",
+          "value": "dedup-pr06-demo"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-asreview-openalex"
+        },
+        {
+          "kind": "import-record",
+          "value": "record-asreview-scholar"
+        }
+      ],
+      "validationRefs": [
+        {
+          "code": "nexus.human-gate.merge-decision-required",
+          "severity": "Blocking",
+          "message": "APP-01 only displays this gate. It does not execute merge decisions."
+        }
+      ],
+      "actions": [
+        {
+          "actionId": "placeholder-accept-merge-dedup-candidate-0001",
+          "kind": "AcceptMerge",
+          "label": "Accept merge (placeholder)",
+          "requiresHumanConfirmation": true,
+          "isDestructive": false
+        },
+        {
+          "actionId": "placeholder-reject-merge-dedup-candidate-0001",
+          "kind": "RejectMerge",
+          "label": "Reject merge (placeholder)",
+          "requiresHumanConfirmation": true,
+          "isDestructive": false
+        },
+        {
+          "actionId": "placeholder-mark-unresolved-dedup-candidate-0001",
+          "kind": "MarkUnresolved",
+          "label": "Mark unresolved (placeholder)",
+          "requiresHumanConfirmation": true,
+          "isDestructive": false
+        }
+      ],
+      "summary": "Human review required. No command is executed in APP-01.",
+      "payloadJson": "{\"candidateId\":\"dedup-candidate-0001\",\"gate\":\"merge-decision\",\"state\":\"placeholder-only\",\"commandExecution\":\"none\"}"
+    }
+  ]
+}

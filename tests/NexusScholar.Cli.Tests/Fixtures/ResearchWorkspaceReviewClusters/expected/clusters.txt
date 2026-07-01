@@ -1,0 +1,12 @@
+Duplicate clusters
+
+Exact duplicate clusters
+  1 cluster
+
+Review-required candidates
+  1 candidate
+
+Use:
+  nexus clusters exact
+  nexus clusters review
+  nexus clusters show <id>
