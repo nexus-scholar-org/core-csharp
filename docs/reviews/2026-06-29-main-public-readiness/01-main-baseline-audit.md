@@ -1,6 +1,8 @@
 # Main Baseline Audit
 
-Baseline: `origin/main` at `ebb7bba`.
+Historical status: this report audited `origin/main` at `ebb7bba`. It is preserved as an audit record. For the current state, use `README.md` in this folder and `06-state-refresh-after-public-feedback-and-ui-polish.md`.
+
+Historical baseline: `origin/main` at `ebb7bba`.
 
 ## Bottom Line
 
@@ -8,9 +10,9 @@ Baseline: `origin/main` at `ebb7bba`.
 
 The remaining weakness is public product readiness: the repo can be reviewed by developers and methodologists, but it still lacks a complete first-tester walkthrough, issue templates, screenshots/GIFs, and a current public getting-started page.
 
-## Measured Current State
+## Historical Measured State
 
-Measured from the current clean `main` worktree:
+Measured from the clean `main` worktree at the historical `ebb7bba` baseline:
 
 - 16 source projects under `src/`.
 - 2 sample folders under `samples/`.
@@ -67,7 +69,7 @@ Implemented or scaffolded module surface:
 
    Remote branches are now only `main` and `gh-pages`. Local branches are `main` and `gh-pages`. Old `cdx/*` branches were deleted after the useful Full Text implementation was ported.
 
-## Remaining Public-Readiness Findings
+## Historical Public-Readiness Findings
 
 ### 1. The top-level README drift is resolved.
 
@@ -91,11 +93,11 @@ Fix: route to the current maintainer path:
 
 ### 3. Ops docs were stale and have now been refreshed.
 
-`docs/ops/BRANCH-BOARD.md`, `MERGE-QUEUE.md`, and `CHAT-ROSTER.md` now describe `main` at `ebb7bba`, remote branches `main`/`gh-pages`, and no active `cdx/*` branch queue.
+At the historical `ebb7bba` point, `docs/ops/BRANCH-BOARD.md`, `MERGE-QUEUE.md`, and `CHAT-ROSTER.md` described `main`, remote branches `main`/`gh-pages`, and no active `cdx/*` branch queue.
 
 Residual risk: these docs should be refreshed again after the next real branch/PR.
 
-### 4. The public tutorial is still a placeholder.
+### 4. Historical finding at `ebb7bba`: the public tutorial was still a placeholder.
 
 `gh-pages/tutorials/getting-started/index.html` says it is a placeholder for the first complete public walkthrough.
 
@@ -112,7 +114,7 @@ Fix: create one verified tutorial:
 7. inspect `samples/block-plans/dedup-review.sample.json`;
 8. report feedback through a GitHub issue template.
 
-### 5. No GitHub issue templates exist.
+### 5. Historical finding at `ebb7bba`: no GitHub issue templates existed.
 
 Only `.github/workflows/gate-01.yml` exists. There are no public feedback issue templates.
 
@@ -147,13 +149,13 @@ dotnet build NexusScholar.Core.slnx -c Release
 Passed
 
 dotnet test NexusScholar.Core.slnx -c Release --no-build
-Passed: 318 tests
+Historical result: passed, 318 tests
 
 dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore
 Passed
 
 powershell -ExecutionPolicy Bypass -File ./scripts/verify.ps1
-Passed: 318 tests
+Historical result: passed, 318 tests
 
 Hosted gate-01 run 28380516236
 Passed: ubuntu-latest and windows-latest

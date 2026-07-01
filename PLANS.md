@@ -4,17 +4,29 @@ This file keeps the historical gate map and points to the current operating plan
 
 ## Current Operating Plan
 
+The first public-feedback runway is now mostly in place:
+
+- public-feedback issue templates and PR template are merged;
+- the deterministic local CLI `demo` is merged and documented;
+- the public getting-started walkthrough is merged on `gh-pages`;
+- the Avalonia sample host presentation and scrolling polish is merged.
+
 Current recommended work:
 
-- `docs/ops/FIRST-PUBLIC-FEEDBACK-PLAN-2026-06-29.md`
-
-Today-level scope from that plan:
-
-1. PF-01 maintainer routing docs.
-2. PF-02 GitHub issue and PR templates.
-3. CLI-01 local CLI demo contract.
+1. Refresh stale ops/review docs so they match `main` at `ac0307c` and `gh-pages` at `32475f4`.
+2. Finish public tester polish: sample-host screenshot/GIF, root contributor/license/security docs, README links to public tutorial and feedback templates.
+3. Add CI or script smoke for the public CLI path: `doctor`, `sample`, and `demo`.
+4. Plan APP-01 as a narrow read-only AppServices composition ADR before implementation.
+5. Keep provider work planning-only until a provider/network/legal ADR exists.
 
 Do not implement providers, persistence, API/cloud behavior, PDF/OCR, live HTTP, or a UI product shell under the current plan.
+
+## Current Detailed References
+
+- `docs/ops/BRANCH-BOARD.md`
+- `docs/ops/MERGE-QUEUE.md`
+- `docs/ops/FIRST-PUBLIC-FEEDBACK-PLAN-2026-06-29.md`
+- `docs/reviews/2026-06-29-main-public-readiness/README.md`
 
 ## Historical Implementation Gates
 

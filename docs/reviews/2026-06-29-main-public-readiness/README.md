@@ -1,33 +1,34 @@
 # Main Public-Readiness Review - 2026-06-29
 
-Status: refreshed after local consolidation, remote push, remote branch cleanup, and hosted CI.
+Status: refreshed after public-feedback onboarding, deterministic CLI demo, `gh-pages` first-tester walkthrough, PR #6 UI presentation merge, branch cleanup, and hosted CI.
 
-Current repository baseline: `origin/main` at `ebb7bba` (`docs: refresh readmes after main consolidation`).
+Current implementation baseline: `origin/main` at `ac0307c` (`Polish Avalonia sample host presentation and scrolling`).
 
-Public site branch: `origin/gh-pages` at `53d7aa4` (`docs: expand architecture guide`).
+Public site branch: `origin/gh-pages` at `32475f4` (`docs(site): add first tester getting started walkthrough`).
 
-Remote branch state after cleanup:
+Remote branch state:
 
 - `origin/main`
 - `origin/gh-pages`
 
-The older first-sweep package remains historical context. This folder is the current review package.
+The older reports in this folder remain useful historical audit records. The current state is this README plus `06-state-refresh-after-public-feedback-and-ui-polish.md`.
 
 ## Reports
 
-- `01-main-baseline-audit.md` - current `origin/main` baseline, strengths, findings, and validation.
-- `02-branch-cleanup-plan.md` - completed branch cleanup record and remaining branch state.
-- `03-public-readiness-and-feedback-plan.md` - what is ready to show publicly and what still blocks first testers.
-- `04-continuation-roadmap.md` - practical next path after consolidation.
-- `05-state-refresh-after-remote-cleanup.md` - exact post-push state snapshot.
+- `01-main-baseline-audit.md` - historical baseline audit from `ebb7bba`; superseded for current branch state by report 06.
+- `02-branch-cleanup-plan.md` - historical branch cleanup record from the earlier consolidation pass.
+- `03-public-readiness-and-feedback-plan.md` - current public-readiness and feedback plan after PF/CLI/WEB/UI progress.
+- `04-continuation-roadmap.md` - current practical next path after public-feedback onboarding.
+- `05-state-refresh-after-remote-cleanup.md` - historical post-cleanup state snapshot from `ebb7bba`.
+- `06-state-refresh-after-public-feedback-and-ui-polish.md` - current state after public-feedback onboarding, first-tester walkthrough, and UI polish.
 
 ## Current Verdict
 
-Nexus Scholar Core is now in a cleaner public baseline than the earlier review found. `main` contains the UI renderer/sample-host work and the local no-network Full Text implementation. Remote branch noise has been removed.
+Nexus Scholar Core is no longer just a scaffold. `main` contains a real local-first kernel, architecture guards, conformance fixtures, local no-network Full Text evidence, public feedback scaffolding, a deterministic CLI `demo`, UI contracts, an Avalonia renderer, and a polished sample host.
 
 The project is still not a researcher-usable systematic-review product. The honest public posture is:
 
-> Nexus Scholar Core is a verified research workflow kernel and public architecture foundation, with a sample UI-rendering harness and local no-network Full Text evidence slice. It is ready for architecture feedback, developer critique, and carefully framed first-tester conversations, not for real review execution by non-developers.
+> Nexus Scholar Core is a verified research workflow kernel and public architecture foundation, with a deterministic local CLI demo and sample-only UI inspection host. It is ready for architecture feedback, developer critique, methodology critique, and carefully framed first-tester conversations, not for real review execution by non-developers.
 
 ## Current Implementation Surface
 
@@ -42,36 +43,57 @@ The project is still not a researcher-usable systematic-review product. The hone
 - Deduplication;
 - Screening;
 - local no-network Full Text;
+- plugin capability contracts;
+- governed AI proposal contracts;
 - UiContracts;
 - Avalonia block renderer;
-- Avalonia sample host;
-- CLI doctor/sample commands.
+- Avalonia sample host with scrolling/presentation polish;
+- CLI `doctor`, `sample`, and deterministic local `demo`;
+- public-feedback issue templates and PR template;
+- public first-tester walkthrough on `gh-pages`.
 
-## Validation
+## Current Measurements
 
-Local consolidation verification:
+Measured from the current worktree:
+
+- 16 source projects under `src/`.
+- 2 sample folders under `samples/`.
+- 7 test projects under `tests/`.
+- 146 C# files under `src/`.
+- 71 C# files under `tests/`.
+- 168 fixture files under `fixtures/`.
+- 14 ADR files.
+- 324 `[TestMethod]` declarations.
+
+## Current Public Gaps
+
+- Add a fresh sample-host screenshot or GIF to the `gh-pages` first-tester walkthrough.
+- Add root `LICENSE`, `CONTRIBUTING.md`, and `SECURITY.md`.
+- Add CI or script smoke for the public CLI path: `doctor`, `sample`, and `demo`.
+- Plan APP-01 as a narrow read-only AppServices composition ADR before code.
+- Keep provider work planning-only until provider/network/legal boundaries are accepted.
+
+## Current Validation
+
+Latest hosted verification for current `main`:
+
+```text
+gate-01 run 28402404840
+Commit: ac0307c
+Result: passed on ubuntu-latest and windows-latest
+URL: https://github.com/nexus-scholar/core-csharp/actions/runs/28402404840
+```
+
+Latest known local post-merge verification for `main`:
 
 ```text
 dotnet build NexusScholar.Core.slnx -c Release
-Result: passed, 0 warnings, 0 errors
-
 dotnet test NexusScholar.Core.slnx -c Release --no-build
-Result: passed, 318 tests
-
-dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore
-Result: passed
-
-powershell -ExecutionPolicy Bypass -File ./scripts/verify.ps1
-Result: passed, 318 tests
+dotnet run --project samples/NexusScholar.Avalonia.Blocks.SampleHost
 ```
 
-Hosted verification after push:
+Result:
 
-```text
-gate-01 run 28380516236
-Commit: ebb7bba
-Result: passed on ubuntu-latest and windows-latest
-URL: https://github.com/nexus-scholar/core-csharp/actions/runs/28380516236
-```
-
-Static `gh-pages` internal link check from the earlier review remains passed, but the public tutorial is still a placeholder and should be refreshed before inviting broad testers.
+- build passed;
+- tests passed;
+- sample host launch smoke passed and closed cleanly.

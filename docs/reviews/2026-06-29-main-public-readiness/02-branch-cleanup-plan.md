@@ -1,8 +1,10 @@
 # Branch Cleanup Record
 
-Baseline before cleanup: `origin/main` at `16cabc3`.
+Historical status: this report records the earlier consolidation and cleanup pass. For the current branch state after public-feedback onboarding and UI polish, use `06-state-refresh-after-public-feedback-and-ui-polish.md`.
 
-Current baseline after cleanup: `origin/main` at `ebb7bba`.
+Historical baseline before cleanup: `origin/main` at `16cabc3`.
+
+Historical baseline after cleanup: `origin/main` at `ebb7bba`.
 
 ## Verdict
 
@@ -33,7 +35,7 @@ The original plan was correct:
 - Deleted local `cdx/*` branches.
 - Kept `gh-pages`.
 
-## Current Remote Branches
+## Historical Remote Branches At This Cleanup Point
 
 Verified with `git ls-remote --heads origin`:
 
@@ -42,7 +44,7 @@ Verified with `git ls-remote --heads origin`:
 ebb7bba6131c27a5608a63d302de555b26db849e refs/heads/main
 ```
 
-## Current Local Branches
+## Historical Local Branches At This Cleanup Point
 
 Verified with `git branch -a --verbose --no-abbrev`:
 

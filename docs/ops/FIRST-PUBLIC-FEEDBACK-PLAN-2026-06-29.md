@@ -1,8 +1,15 @@
 # First Public Feedback Plan - 2026-06-29
 
-Status: accepted working plan for the next public-readiness push. No code is implemented by this document.
+Status: accepted historical task trace for the first public-readiness push.
 
-Baseline:
+Current outcome:
+
+- PF-01, PF-02, CLI-01, CLI-02, CLI-03, WEB-01, and the UI presentation pass are complete on `main`/`gh-pages`.
+- `main` is now at `ac0307c` (`Polish Avalonia sample host presentation and scrolling`).
+- `gh-pages` is now at `32475f4` (`docs(site): add first tester getting started walkthrough`).
+- The remaining work from this plan is first-tester polish, CLI public-path smoke, APP-01 planning, and provider planning only.
+
+Historical baseline at plan acceptance:
 
 - `main` at `7cd63ae`
 - `gh-pages` at `53d7aa4`
@@ -82,9 +89,10 @@ Owner: repo operations.
 
 Purpose: keep `main` clean while the first public feedback work is built.
 
-Suggested branch:
+Historical suggested branch:
 
 ```powershell
+# historical branch used for the completed public-feedback packet
 git switch main
 git pull origin main
 git switch -c cdx/public-feedback-cli-onboarding
@@ -341,7 +349,7 @@ Allowed paths on `gh-pages`:
 
 Steps:
 
-1. Replace placeholder tutorial with exact commands:
+1. Historical WEB-01 action, now complete: replace the old placeholder tutorial with exact commands:
    - clone;
    - verify;
    - `doctor`;
