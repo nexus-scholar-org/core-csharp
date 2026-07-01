@@ -1,6 +1,6 @@
 # ADR 0015: Read-only AppServices Workspace Composition
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-07-01
 
@@ -149,6 +149,12 @@ Block ordering must be stable:
 Payload JSON must be deterministic. The implementation should use canonical JSON facilities from `NexusScholar.Kernel` where available instead of relying on runtime dictionary enumeration or ad hoc string concatenation.
 
 Payload JSON must have an object root because `UiContracts` rejects non-object payloads.
+
+## Implementation Note: Display Record Resolution
+
+If `SearchImportTrace` and `DeduplicationResult` do not contain all display fields needed for record-comparison payloads, the first composer may accept a deterministic read-only record lookup or imported-record projection as part of its input.
+
+That lookup must be caller-supplied, in-memory, deterministic, and local. It must not introduce persistence, provider calls, network calls, file system reads, UI state, or Core mutation.
 
 ## Block Mapping
 
