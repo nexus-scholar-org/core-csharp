@@ -1,0 +1,111 @@
+[
+  {
+    "bundleId": "FB01-clean-single-source",
+    "importedRecords": 4,
+    "skippedRecords": 0,
+    "sightings": 4,
+    "parserWarnings": 0,
+    "exactClusters": 0,
+    "reviewCandidates": 0,
+    "reviewReasons": []
+  },
+  {
+    "bundleId": "FB02-cross-source-exact-duplicates",
+    "importedRecords": 3,
+    "skippedRecords": 0,
+    "sightings": 3,
+    "parserWarnings": 0,
+    "exactClusters": 1,
+    "reviewCandidates": 0,
+    "reviewReasons": []
+  },
+  {
+    "bundleId": "FB03-source-specific-review-candidate",
+    "importedRecords": 2,
+    "skippedRecords": 0,
+    "sightings": 2,
+    "parserWarnings": 2,
+    "exactClusters": 0,
+    "reviewCandidates": 1,
+    "reviewReasons": [
+      [
+        "import:trace-fb03-scopus-review-a:1:2-s2.0-NEXUS-REVIEW-001",
+        "import:trace-fb03-wos-review-b:1:2-s2.0-NEXUS-REVIEW-001",
+        "source-specific",
+        0.9853
+      ]
+    ]
+  },
+  {
+    "bundleId": "FB04-warning-import",
+    "importedRecords": 4,
+    "skippedRecords": 2,
+    "sightings": 2,
+    "parserWarnings": 3,
+    "exactClusters": 0,
+    "reviewCandidates": 0,
+    "reviewReasons": []
+  },
+  {
+    "bundleId": "FB05-noid-title-fuzzy-review",
+    "importedRecords": 2,
+    "skippedRecords": 0,
+    "sightings": 2,
+    "parserWarnings": 0,
+    "exactClusters": 0,
+    "reviewCandidates": 1,
+    "reviewReasons": [
+      [
+        "import:trace-fb05-scholar-title-only-a:1:LivingWorkbench2026A",
+        "import:trace-fb05-openalex-title-only-b:1:OA-TITLE-ONLY-2026B",
+        "fuzzy-title",
+        1.0
+      ]
+    ]
+  },
+  {
+    "bundleId": "FB06-graph-identifier-preservation",
+    "importedRecords": 4,
+    "skippedRecords": 0,
+    "sightings": 4,
+    "parserWarnings": 2,
+    "exactClusters": 0,
+    "reviewCandidates": 0,
+    "reviewReasons": []
+  },
+  {
+    "bundleId": "FB07-combined-app01-demo",
+    "importedRecords": 14,
+    "skippedRecords": 2,
+    "sightings": 12,
+    "parserWarnings": 5,
+    "exactClusters": 1,
+    "reviewCandidates": 4,
+    "reviewReasons": [
+      [
+        "import:trace-fb07-combined-scopus:3:2-s2.0-NEXUS-REVIEW-001",
+        "import:trace-fb07-combined-wos:3:WOS-COMBINED-REVIEW-B",
+        "fuzzy-title",
+        0.9853
+      ],
+      [
+        "import:trace-fb07-combined-scopus:3:2-s2.0-NEXUS-REVIEW-001",
+        "import:trace-fb07-combined-wos-source-specific:1:2-s2.0-NEXUS-REVIEW-001",
+        "source-specific",
+        0.9853
+      ],
+      [
+        "import:trace-fb07-combined-scopus:4:row-4",
+        "import:trace-fb07-combined-scholar:2:ScholarCombinedLivingWorkbenchB",
+        "fuzzy-title",
+        1.0
+      ],
+      [
+        "import:trace-fb07-combined-wos:3:WOS-COMBINED-REVIEW-B",
+        "import:trace-fb07-combined-wos-source-specific:1:2-s2.0-NEXUS-REVIEW-001",
+        "fuzzy-title",
+        1.0
+      ]
+    ]
+  }
+]

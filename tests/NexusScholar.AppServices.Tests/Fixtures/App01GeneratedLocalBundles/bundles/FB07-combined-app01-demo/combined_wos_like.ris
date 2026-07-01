@@ -1,0 +1,59 @@
+TY  - JOUR
+ID  - WOS-COMBINED-RAYYAN
+AU  - Mourad Ouzzani
+AU  - Hossam Hammady
+AU  - Zbys Fedorowicz
+AU  - Ahmed Elmagarmid
+TI  - Rayyan—a web and mobile app for systematic reviews
+PY  - 2016
+JO  - Systematic Reviews
+DO  - 10.1186/s13643-016-0384-4
+AB  - A systematic-review screening application record used as a public metadata seed.
+KW  - systematic reviews
+KW  - screening
+KW  - software
+ER  -
+
+TY  - JOUR
+ID  - WOS-COMBINED-TEXTMINING
+AU  - Alison O’Mara-Eves
+AU  - James Thomas
+AU  - John McNaught
+AU  - Makoto Miwa
+AU  - Sophia Ananiadou
+TI  - Using text mining for study identification in systematic reviews: a systematic review of current approaches
+PY  - 2015
+JO  - Systematic Reviews
+DO  - 10.1186/2046-4053-4-5
+AB  - A systematic-review text-mining methods record used as a public metadata seed.
+KW  - text mining
+KW  - study identification
+KW  - systematic reviews
+ER  -
+
+TY  - JOUR
+ID  - WOS-COMBINED-REVIEW-B
+AU  - Nexus Fixture Author
+TI  - Bibliographic de-duplication workflows for systematic review imports
+PY  - 2026
+JO  - Nexus Synthetic Fixture Journal
+EID  - 2-s2.0-NEXUS-REVIEW-001
+AB  - Synthetic no-DOI source-specific duplicate candidate B.
+KW  - deduplication
+KW  - imports
+KW  - synthetic
+ER  -
+
+TY  - JOUR
+ID  - WOS-COMBINED-BADYEAR
+AU  - Nexus Fixture Author
+TI  - Combined warning record with non integer year
+PY  - 20XX
+JO  - Nexus Synthetic Fixture Journal
+ER  -
+
+TY  - JOUR
+ID  - WOS-COMBINED-MISSING-TITLE
+AU  - Nexus Fixture Author
+PY  - 2026
+ER  -

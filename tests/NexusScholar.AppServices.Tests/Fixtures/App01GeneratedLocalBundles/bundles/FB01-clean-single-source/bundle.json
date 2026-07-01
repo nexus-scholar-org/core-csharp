@@ -1,0 +1,35 @@
+{
+  "bundleId": "FB01-clean-single-source",
+  "title": "Clean single-source import",
+  "purpose": "Audit-mode baseline: import summary with no parser warnings and no duplicate review candidates.",
+  "files": [
+    {
+      "path": "bundles/FB01-clean-single-source/scopus_like_clean.csv",
+      "sourceDatabaseOrTool": "scopus-like-public-metadata",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb01-scopus-clean",
+      "originalQueryText": "systematic review software screening deduplication",
+      "sha256": "sha256:1295e22929052895ec637a719a8061e82b9da6a002b85820d664081457c58503",
+      "bytes": 1392,
+      "importRequest": {
+        "sourceDatabaseOrTool": "scopus-like-public-metadata",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "systematic review software screening deduplication",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 4,
+    "sightings": 4,
+    "parserWarnings": 0,
+    "dedupExactClusters": 0,
+    "dedupReviewCandidates": 0,
+    "suggestedBlockMode": "Audit"
+  },
+  "notes": []
+}

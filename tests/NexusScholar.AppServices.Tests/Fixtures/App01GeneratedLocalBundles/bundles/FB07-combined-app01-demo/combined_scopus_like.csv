@@ -1,0 +1,6 @@
+Title,Author names,Year,Source title,DOI,ArXiv ID,PubMed ID,PMCID,EID,WOS,Abstract,Keywords
+Rayyan - a web and mobile app for systematic reviews,Mourad Ouzzani; Hossam Hammady; Zbys Fedorowicz; Ahmed Elmagarmid,2016,Systematic Reviews,10.1186/s13643-016-0384-4,,,,,,A systematic-review screening application record used as a public metadata seed.,systematic reviews; screening; software
+An open source machine learning framework for efficient and transparent systematic reviews,Rens van de Schoot; Jonathan de Bruin; Raoul Schram; Parisa Zahedi,2021,Nature Machine Intelligence,10.1038/s42256-020-00287-7,,,,,,An active-learning systematic-review software record used as a public metadata seed.,active learning; systematic reviews; software
+Bibliographic deduplication workflows for systematic review imports,Nexus Fixture Author,2026,Nexus Synthetic Fixture Journal,,,,,2-s2.0-NEXUS-REVIEW-001,,Synthetic no-DOI source-specific duplicate candidate A.,deduplication; imports; synthetic
+Living evidence review workbench for auditable search and screening,Nexus Fixture Author,2026,Nexus Synthetic Preprints,,,,,,,Synthetic title-only no-identifier duplicate candidate A.,living review; screening; synthetic
+,Nexus Fixture Author,2026,Nexus Synthetic Fixture Journal,,,,,,,Missing title row should be skipped.,warning; synthetic

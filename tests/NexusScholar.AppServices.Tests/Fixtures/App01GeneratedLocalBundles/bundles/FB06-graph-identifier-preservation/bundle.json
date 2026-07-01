@@ -1,0 +1,77 @@
+{
+  "bundleId": "FB06-graph-identifier-preservation",
+  "title": "Graph and source-specific identifier preservation",
+  "purpose": "arXiv identifiers should become accepted WorkIds; SCI/WOS/ISBN-like fields should be preserved as source-specific evidence and warnings.",
+  "files": [
+    {
+      "path": "bundles/FB06-graph-identifier-preservation/openalex_like_graph_ids.ris",
+      "sourceDatabaseOrTool": "openalex-like-public-metadata",
+      "exportFormat": "ris",
+      "traceId": "trace-fb06-openalex-graph",
+      "originalQueryText": "OpenAlex scholarly works authors venues institutions concepts",
+      "sha256": "sha256:522b8cab85bda9ed6a691fa3e773911891f060650a9e077cf73d30b35dbe3e54",
+      "bytes": 401,
+      "importRequest": {
+        "sourceDatabaseOrTool": "openalex-like-public-metadata",
+        "exportFormat": "ris",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "OpenAlex scholarly works authors venues institutions concepts",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB06-graph-identifier-preservation/semantic_scholar_style_graph_ids.bib",
+      "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+      "exportFormat": "bibtex",
+      "traceId": "trace-fb06-s2-graph",
+      "originalQueryText": "Semantic Scholar literature graph construction",
+      "sha256": "sha256:3b9b5e484e76929d2136c5a2276a44472091637f8ed45b3d7a46b8c52dc10ef3",
+      "bytes": 450,
+      "importRequest": {
+        "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+        "exportFormat": "bibtex",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "Semantic Scholar literature graph construction",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB06-graph-identifier-preservation/scopus_like_record_linkage.csv",
+      "sourceDatabaseOrTool": "scopus-like-public-metadata",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb06-scopus-record-linkage",
+      "originalQueryText": "record linkage deduplication blocking filtering",
+      "sha256": "sha256:ec75e85000b8036cd9271a878255c7ca68554c86e55badd6376ef4f0053294f8",
+      "bytes": 654,
+      "importRequest": {
+        "sourceDatabaseOrTool": "scopus-like-public-metadata",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "record linkage deduplication blocking filtering",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 4,
+    "sightings": 4,
+    "acceptedWorkIdNamespacesExpected": [
+      "arxiv"
+    ],
+    "sourceSpecificWarningsExpected": true,
+    "dedupReviewCandidates": 0,
+    "suggestedBlockMode": "Review"
+  },
+  "notes": [
+    "Review mode is expected if parser warnings are treated as warning conditions by APP-01."
+  ]
+}

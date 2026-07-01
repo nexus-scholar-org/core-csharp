@@ -1,0 +1,456 @@
+{
+  "packId": "nexus-app01-generated-local-test-bundles",
+  "generatedAt": "2026-07-01T00:00:00Z",
+  "generator": "chatgpt-public-metadata-source-like-export-fixture-generator",
+  "scope": "APP-01 read-only AppServices import/dedup workspace projection testing",
+  "nonClaims": [
+    "not-scopus-export",
+    "not-web-of-science-export",
+    "not-google-scholar-scrape",
+    "not-scientific-authority",
+    "not-php-compatibility-fixture",
+    "no-live-provider-network",
+    "no-persistence",
+    "no-command-execution"
+  ],
+  "parserDefaults": {
+    "parserId": "local-slice-parser",
+    "parserVersion": "1.0.0",
+    "importedBy": "app01-fixture-generator",
+    "importedAt": "2026-07-01T00:00:00Z",
+    "exportedAt": "2026-07-01T00:00:00Z"
+  },
+  "bundles": [
+    {
+      "bundleId": "FB01-clean-single-source",
+      "title": "Clean single-source import",
+      "purpose": "Audit-mode baseline: import summary with no parser warnings and no duplicate review candidates.",
+      "files": [
+        {
+          "path": "bundles/FB01-clean-single-source/scopus_like_clean.csv",
+          "sourceDatabaseOrTool": "scopus-like-public-metadata",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb01-scopus-clean",
+          "originalQueryText": "systematic review software screening deduplication",
+          "sha256": "sha256:1295e22929052895ec637a719a8061e82b9da6a002b85820d664081457c58503",
+          "bytes": 1392,
+          "importRequest": {
+            "sourceDatabaseOrTool": "scopus-like-public-metadata",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "systematic review software screening deduplication",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 4,
+        "sightings": 4,
+        "parserWarnings": 0,
+        "dedupExactClusters": 0,
+        "dedupReviewCandidates": 0,
+        "suggestedBlockMode": "Audit"
+      },
+      "notes": []
+    },
+    {
+      "bundleId": "FB02-cross-source-exact-duplicates",
+      "title": "Cross-source exact duplicate cluster",
+      "purpose": "Same DOI represented in CSV, RIS and BibTeX, to force an exact-identifier dedup cluster.",
+      "files": [
+        {
+          "path": "bundles/FB02-cross-source-exact-duplicates/scopus_like_rayyan.csv",
+          "sourceDatabaseOrTool": "scopus-like-public-metadata",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb02-scopus-rayyan",
+          "originalQueryText": "rayyan systematic reviews web mobile app",
+          "sha256": "sha256:cbc3fa3afadc7e057c7f013a9109db6553f586f82a9b8bdd783a2bd9430b3e3a",
+          "bytes": 387,
+          "importRequest": {
+            "sourceDatabaseOrTool": "scopus-like-public-metadata",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "rayyan systematic reviews web mobile app",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB02-cross-source-exact-duplicates/wos_like_rayyan.ris",
+          "sourceDatabaseOrTool": "wos-like-public-metadata",
+          "exportFormat": "ris",
+          "traceId": "trace-fb02-wos-rayyan",
+          "originalQueryText": "rayyan systematic reviews web mobile app",
+          "sha256": "sha256:9f95da6d9a3324eb29b2c43aa492b87fb8f9c1c5e65e4034ca1831b339845ff2",
+          "bytes": 396,
+          "importRequest": {
+            "sourceDatabaseOrTool": "wos-like-public-metadata",
+            "exportFormat": "ris",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "rayyan systematic reviews web mobile app",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB02-cross-source-exact-duplicates/semantic_scholar_style_rayyan.bib",
+          "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+          "exportFormat": "bibtex",
+          "traceId": "trace-fb02-s2-rayyan",
+          "originalQueryText": "rayyan systematic reviews web mobile app",
+          "sha256": "sha256:09ebb5a5b82c0ccd2d4cf086d5e8f7c5a865c7d2396f8ee870a49fcefbdf3a9e",
+          "bytes": 420,
+          "importRequest": {
+            "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+            "exportFormat": "bibtex",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "rayyan systematic reviews web mobile app",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 3,
+        "sightings": 3,
+        "parserWarnings": 0,
+        "dedupExactClusters": 1,
+        "dedupReviewCandidates": 0,
+        "suggestedBlockMode": "Audit"
+      },
+      "notes": []
+    },
+    {
+      "bundleId": "FB03-source-specific-review-candidate",
+      "title": "Review-required source-specific candidate",
+      "purpose": "Same source-specific EID appears in two source-like exports without an accepted stable identifier, so Deduplication should require review.",
+      "files": [
+        {
+          "path": "bundles/FB03-source-specific-review-candidate/scopus_like_review_candidate_a.csv",
+          "sourceDatabaseOrTool": "scopus-like-public-metadata",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb03-scopus-review-a",
+          "originalQueryText": "deduplication record linkage systematic review imports",
+          "sha256": "sha256:cbd710b38354b8e483ba39027b044fefe5878a9a157355522bb4c5faafbf7441",
+          "bytes": 337,
+          "importRequest": {
+            "sourceDatabaseOrTool": "scopus-like-public-metadata",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "deduplication record linkage systematic review imports",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB03-source-specific-review-candidate/wos_like_source_specific_review_candidate_b.csv",
+          "sourceDatabaseOrTool": "wos-like-csv-fixture",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb03-wos-review-b",
+          "originalQueryText": "deduplication record linkage systematic review imports",
+          "sha256": "sha256:522e57cda70b922481a36ec3f1d070bf47f811ca8a2bfb5391d3c68ed9d5e7d1",
+          "bytes": 338,
+          "importRequest": {
+            "sourceDatabaseOrTool": "wos-like-csv-fixture",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "deduplication record linkage systematic review imports",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 2,
+        "sightings": 2,
+        "parserWarningsAtLeast": 2,
+        "dedupExactClusters": 0,
+        "dedupReviewCandidatesAtLeast": 1,
+        "suggestedBlockMode": "Review"
+      },
+      "notes": [
+        "Parser warnings are expected because source-specific EID evidence is preserved but is not an approved stable WorkId namespace."
+      ]
+    },
+    {
+      "bundleId": "FB04-warning-import",
+      "title": "Controlled parser-warning and skipped-record import",
+      "purpose": "Mutated RIS with bad year, missing title, and duplicate source record id to drive import warning summary blocks.",
+      "files": [
+        {
+          "path": "bundles/FB04-warning-import/wos_like_warning_mutated.ris",
+          "sourceDatabaseOrTool": "wos-like-mutated-public-metadata",
+          "exportFormat": "ris",
+          "traceId": "trace-fb04-warning-ris",
+          "originalQueryText": "controlled mutated warning fixture",
+          "sha256": "sha256:3a3e0ddf2665afb6051b4dae6d527107779acac4bd9decf5b89d090bbcbb6089",
+          "bytes": 603,
+          "importRequest": {
+            "sourceDatabaseOrTool": "wos-like-mutated-public-metadata",
+            "exportFormat": "ris",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "controlled mutated warning fixture",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 4,
+        "sightingsExpected": 2,
+        "parserWarningsAtLeast": 3,
+        "skippedRecordsAtLeast": 2,
+        "dedupReviewCandidates": 0,
+        "suggestedBlockMode": "Review"
+      },
+      "notes": [
+        "One valid record has a non-integer year and should remain imported with a parser warning. Missing-title and duplicate-ID records should be skipped."
+      ]
+    },
+    {
+      "bundleId": "FB05-noid-title-fuzzy-review",
+      "title": "No-identifier title-only fuzzy review pair",
+      "purpose": "Two title-only records with no DOI/arXiv/PMID/PMCID. They should remain unresolved and produce a review-required fuzzy-title candidate.",
+      "files": [
+        {
+          "path": "bundles/FB05-noid-title-fuzzy-review/google_scholar_style_title_only.bib",
+          "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+          "exportFormat": "bibtex",
+          "traceId": "trace-fb05-scholar-title-only-a",
+          "originalQueryText": "living evidence review workbench auditable search screening",
+          "sha256": "sha256:0cfd97ac8064b859a6835a03c4b41faf1456971e4c90339aa67b81947843f6a7",
+          "bytes": 333,
+          "importRequest": {
+            "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+            "exportFormat": "bibtex",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "living evidence review workbench auditable search screening",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB05-noid-title-fuzzy-review/openalex_like_title_only.ris",
+          "sourceDatabaseOrTool": "openalex-like-public-metadata",
+          "exportFormat": "ris",
+          "traceId": "trace-fb05-openalex-title-only-b",
+          "originalQueryText": "living evidence review workbench auditable search screening",
+          "sha256": "sha256:78e7190f7546ef79b4650fe1951bcef320e6d99afe0c1c1af078acd91abe1996",
+          "bytes": 303,
+          "importRequest": {
+            "sourceDatabaseOrTool": "openalex-like-public-metadata",
+            "exportFormat": "ris",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "living evidence review workbench auditable search screening",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 2,
+        "sightings": 2,
+        "parserWarnings": 0,
+        "unresolvedCandidates": 2,
+        "dedupExactClusters": 0,
+        "dedupReviewCandidatesAtLeast": 1,
+        "suggestedBlockMode": "Review"
+      },
+      "notes": [
+        "The BibTeX is Google-Scholar-style only; it is not scraped or exported from Google Scholar."
+      ]
+    },
+    {
+      "bundleId": "FB06-graph-identifier-preservation",
+      "title": "Graph and source-specific identifier preservation",
+      "purpose": "arXiv identifiers should become accepted WorkIds; SCI/WOS/ISBN-like fields should be preserved as source-specific evidence and warnings.",
+      "files": [
+        {
+          "path": "bundles/FB06-graph-identifier-preservation/openalex_like_graph_ids.ris",
+          "sourceDatabaseOrTool": "openalex-like-public-metadata",
+          "exportFormat": "ris",
+          "traceId": "trace-fb06-openalex-graph",
+          "originalQueryText": "OpenAlex scholarly works authors venues institutions concepts",
+          "sha256": "sha256:522b8cab85bda9ed6a691fa3e773911891f060650a9e077cf73d30b35dbe3e54",
+          "bytes": 401,
+          "importRequest": {
+            "sourceDatabaseOrTool": "openalex-like-public-metadata",
+            "exportFormat": "ris",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "OpenAlex scholarly works authors venues institutions concepts",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB06-graph-identifier-preservation/semantic_scholar_style_graph_ids.bib",
+          "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+          "exportFormat": "bibtex",
+          "traceId": "trace-fb06-s2-graph",
+          "originalQueryText": "Semantic Scholar literature graph construction",
+          "sha256": "sha256:3b9b5e484e76929d2136c5a2276a44472091637f8ed45b3d7a46b8c52dc10ef3",
+          "bytes": 450,
+          "importRequest": {
+            "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+            "exportFormat": "bibtex",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "Semantic Scholar literature graph construction",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB06-graph-identifier-preservation/scopus_like_record_linkage.csv",
+          "sourceDatabaseOrTool": "scopus-like-public-metadata",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb06-scopus-record-linkage",
+          "originalQueryText": "record linkage deduplication blocking filtering",
+          "sha256": "sha256:ec75e85000b8036cd9271a878255c7ca68554c86e55badd6376ef4f0053294f8",
+          "bytes": 654,
+          "importRequest": {
+            "sourceDatabaseOrTool": "scopus-like-public-metadata",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "record linkage deduplication blocking filtering",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecords": 4,
+        "sightings": 4,
+        "acceptedWorkIdNamespacesExpected": [
+          "arxiv"
+        ],
+        "sourceSpecificWarningsExpected": true,
+        "dedupReviewCandidates": 0,
+        "suggestedBlockMode": "Review"
+      },
+      "notes": [
+        "Review mode is expected if parser warnings are treated as warning conditions by APP-01."
+      ]
+    },
+    {
+      "bundleId": "FB07-combined-app01-demo",
+      "title": "Combined APP-01 demonstration",
+      "purpose": "One bundle combining clean records, exact DOI duplicates, parser warnings/skipped records, source-specific review candidates, and no-id fuzzy review candidates.",
+      "files": [
+        {
+          "path": "bundles/FB07-combined-app01-demo/combined_scopus_like.csv",
+          "sourceDatabaseOrTool": "scopus-like-public-metadata",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb07-combined-scopus",
+          "originalQueryText": "combined app01 local import dedup workspace plan demo",
+          "sha256": "sha256:d67d12dd2fb5142ca40db9d85c3bd67fafacdb75186946084822df21b5a0e19c",
+          "bytes": 1327,
+          "importRequest": {
+            "sourceDatabaseOrTool": "scopus-like-public-metadata",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "combined app01 local import dedup workspace plan demo",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB07-combined-app01-demo/combined_wos_like.ris",
+          "sourceDatabaseOrTool": "wos-like-public-metadata",
+          "exportFormat": "ris",
+          "traceId": "trace-fb07-combined-wos",
+          "originalQueryText": "combined app01 local import dedup workspace plan demo",
+          "sha256": "sha256:d07699ef7a119c83c378f0fcb35f48619955336cdb1cf146e10f9deeb6d69696",
+          "bytes": 1490,
+          "importRequest": {
+            "sourceDatabaseOrTool": "wos-like-public-metadata",
+            "exportFormat": "ris",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "combined app01 local import dedup workspace plan demo",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB07-combined-app01-demo/combined_scholar_style.bib",
+          "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+          "exportFormat": "bibtex",
+          "traceId": "trace-fb07-combined-scholar",
+          "originalQueryText": "combined app01 local import dedup workspace plan demo",
+          "sha256": "sha256:d5126670d7f979af61c691d1e1fca6f38f03b23923756c97cbf30c9156af10b9",
+          "bytes": 1189,
+          "importRequest": {
+            "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+            "exportFormat": "bibtex",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "combined app01 local import dedup workspace plan demo",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        },
+        {
+          "path": "bundles/FB07-combined-app01-demo/combined_wos_like_source_specific.csv",
+          "sourceDatabaseOrTool": "wos-like-csv-fixture",
+          "exportFormat": "scopus-csv",
+          "traceId": "trace-fb07-combined-wos-source-specific",
+          "originalQueryText": "combined app01 local import dedup workspace plan demo",
+          "sha256": "sha256:522e57cda70b922481a36ec3f1d070bf47f811ca8a2bfb5391d3c68ed9d5e7d1",
+          "bytes": 338,
+          "importRequest": {
+            "sourceDatabaseOrTool": "wos-like-csv-fixture",
+            "exportFormat": "scopus-csv",
+            "parserId": "local-slice-parser",
+            "parserVersion": "1.0.0",
+            "importedBy": "app01-fixture-generator",
+            "importedAt": "2026-07-01T00:00:00Z",
+            "originalQueryText": "combined app01 local import dedup workspace plan demo",
+            "exportedAt": "2026-07-01T00:00:00Z"
+          }
+        }
+      ],
+      "expected": {
+        "importedRecordsAtLeast": 14,
+        "skippedRecordsAtLeast": 2,
+        "parserWarningsExpected": true,
+        "dedupExactClustersAtLeast": 1,
+        "dedupReviewCandidatesAtLeast": 2,
+        "suggestedBlockMode": "Review"
+      },
+      "notes": [
+        "This is the recommended first APP-01 smoke fixture after the composer is implemented."
+      ]
+    }
+  ],
+  "sourceProvenancePath": "source_provenance.csv",
+  "queriesPath": "queries-used.md"
+}
