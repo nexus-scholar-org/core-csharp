@@ -9,7 +9,7 @@ namespace NexusScholar.Cli;
 
 public static class CliApplication
 {
-    public const string Usage = "Usage: dotnet run --project src/NexusScholar.Cli -- [doctor|sample|demo|init|status|import|verify]";
+    public const string Usage = "Usage: dotnet run --project src/NexusScholar.Cli -- [doctor|sample|demo|init|status|import|verify|analyze]";
 
     public static int Run(string[] args, TextWriter output, TextWriter error)
     {
@@ -40,6 +40,7 @@ public static class CliApplication
             "status" => ResearchWorkspaceStatusCommand.Run(output, error, workingDirectory),
             "import" => SearchImportWorkspaceCommand.Run(args.Skip(1).ToArray(), output, error, workingDirectory, utcNow),
             "verify" => ResearchWorkspaceVerifyCommand.Run(args.Skip(1).ToArray(), output, error, workingDirectory),
+            "analyze" => ResearchWorkspaceAnalyzeCommand.Run(args.Skip(1).ToArray(), output, error, workingDirectory),
             _ => ShowHelp(error)
         };
     }

@@ -39,4 +39,15 @@ internal static class ResearchWorkspaceJson
         var json = JsonSerializer.Serialize(value, TraceSerializerOptions).ReplaceLineEndings("\n");
         File.WriteAllText(path, json + "\n", Utf8NoBom);
     }
+
+    public static void WriteJsonFile<T>(string path, T value, JsonSerializerOptions options)
+    {
+        var json = JsonSerializer.Serialize(value, options).ReplaceLineEndings("\n");
+        File.WriteAllText(path, json + "\n", Utf8NoBom);
+    }
+
+    public static void WriteTextFile(string path, string value)
+    {
+        File.WriteAllText(path, value.ReplaceLineEndings("\n"), Utf8NoBom);
+    }
 }

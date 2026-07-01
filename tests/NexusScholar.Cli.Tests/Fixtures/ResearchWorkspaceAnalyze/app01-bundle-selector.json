@@ -1,0 +1,23 @@
+{
+  "schema": "nexus.test-fixture-selector.v0",
+  "purpose": "Use the combined generated local APP-01 demo bundle as the integration input for nexus analyze.",
+  "preferredFixtureRoot": "tests/NexusScholar.AppServices.Tests/Fixtures/App01GeneratedLocalBundles",
+  "bundleId": "FB07-combined-app01-demo",
+  "expected": {
+    "mode": "Review",
+    "blockKinds": [
+      "nexus.block.import.summary",
+      "nexus.block.import.warning-summary",
+      "nexus.block.dedup.candidate-cluster",
+      "nexus.block.dedup.record-comparison",
+      "nexus.block.human-gate.merge-decision"
+    ],
+    "allBlocksSourceKind": "AppProjection",
+    "mergeActionsHaveCommandKind": false
+  },
+  "nonClaims": [
+    "not-conformance",
+    "not-scientific-analysis",
+    "not-php-compatibility"
+  ]
+}

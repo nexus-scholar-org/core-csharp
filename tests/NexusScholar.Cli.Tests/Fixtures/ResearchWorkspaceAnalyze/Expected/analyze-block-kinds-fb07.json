@@ -1,0 +1,19 @@
+{
+  "requiredBlockKinds": [
+    "nexus.block.import.summary",
+    "nexus.block.import.warning-summary",
+    "nexus.block.dedup.candidate-cluster",
+    "nexus.block.dedup.record-comparison",
+    "nexus.block.human-gate.merge-decision"
+  ],
+  "sourceKind": "AppProjection",
+  "forbiddenSourceKinds": [
+    "Sample",
+    "CoreValidated"
+  ],
+  "forbiddenText": [
+    "C:\\\\",
+    "nexus.command.dedup.accept-merge",
+    "nexus.command.dedup.reject-merge"
+  ]
+}

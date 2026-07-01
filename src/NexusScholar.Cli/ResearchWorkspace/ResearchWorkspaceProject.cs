@@ -45,6 +45,12 @@ internal sealed record ResearchWorkspaceProject(
         return this with { Inputs = Inputs.Concat(new[] { input }).ToArray() };
     }
 
+    public ResearchWorkspaceProject WithOutputs(IReadOnlyDictionary<string, string> outputs)
+    {
+        ArgumentNullException.ThrowIfNull(outputs);
+        return this with { Outputs = new Dictionary<string, string>(outputs, StringComparer.Ordinal) };
+    }
+
     private static string CreateWorkspaceId(string title)
     {
         var lowercase = title.ToLowerInvariant();

@@ -1,0 +1,11 @@
+Workspace analysis complete
+Mode: Review
+Import traces: at least 1
+Imported records: at least 1
+Parser warnings: at least 1
+Exact duplicate clusters: at least 1
+Review-required duplicate candidates: at least 1
+WorkspacePlan: nexus-output/workspace/current.workspace-plan.json
+Deduplication result: nexus-output/dedup/current.deduplication-result.json
+Review report: nexus-output/reports/review.md
+Next: nexus review
