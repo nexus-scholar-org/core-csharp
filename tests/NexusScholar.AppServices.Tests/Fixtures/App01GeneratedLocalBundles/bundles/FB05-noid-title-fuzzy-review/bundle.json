@@ -1,0 +1,57 @@
+{
+  "bundleId": "FB05-noid-title-fuzzy-review",
+  "title": "No-identifier title-only fuzzy review pair",
+  "purpose": "Two title-only records with no DOI/arXiv/PMID/PMCID. They should remain unresolved and produce a review-required fuzzy-title candidate.",
+  "files": [
+    {
+      "path": "bundles/FB05-noid-title-fuzzy-review/google_scholar_style_title_only.bib",
+      "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+      "exportFormat": "bibtex",
+      "traceId": "trace-fb05-scholar-title-only-a",
+      "originalQueryText": "living evidence review workbench auditable search screening",
+      "sha256": "sha256:0cfd97ac8064b859a6835a03c4b41faf1456971e4c90339aa67b81947843f6a7",
+      "bytes": 333,
+      "importRequest": {
+        "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+        "exportFormat": "bibtex",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "living evidence review workbench auditable search screening",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB05-noid-title-fuzzy-review/openalex_like_title_only.ris",
+      "sourceDatabaseOrTool": "openalex-like-public-metadata",
+      "exportFormat": "ris",
+      "traceId": "trace-fb05-openalex-title-only-b",
+      "originalQueryText": "living evidence review workbench auditable search screening",
+      "sha256": "sha256:78e7190f7546ef79b4650fe1951bcef320e6d99afe0c1c1af078acd91abe1996",
+      "bytes": 303,
+      "importRequest": {
+        "sourceDatabaseOrTool": "openalex-like-public-metadata",
+        "exportFormat": "ris",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "living evidence review workbench auditable search screening",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 2,
+    "sightings": 2,
+    "parserWarnings": 0,
+    "unresolvedCandidates": 2,
+    "dedupExactClusters": 0,
+    "dedupReviewCandidatesAtLeast": 1,
+    "suggestedBlockMode": "Review"
+  },
+  "notes": [
+    "The BibTeX is Google-Scholar-style only; it is not scraped or exported from Google Scholar."
+  ]
+}

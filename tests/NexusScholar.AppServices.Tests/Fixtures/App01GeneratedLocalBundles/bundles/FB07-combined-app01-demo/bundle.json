@@ -1,0 +1,94 @@
+{
+  "bundleId": "FB07-combined-app01-demo",
+  "title": "Combined APP-01 demonstration",
+  "purpose": "One bundle combining clean records, exact DOI duplicates, parser warnings/skipped records, source-specific review candidates, and no-id fuzzy review candidates.",
+  "files": [
+    {
+      "path": "bundles/FB07-combined-app01-demo/combined_scopus_like.csv",
+      "sourceDatabaseOrTool": "scopus-like-public-metadata",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb07-combined-scopus",
+      "originalQueryText": "combined app01 local import dedup workspace plan demo",
+      "sha256": "sha256:d67d12dd2fb5142ca40db9d85c3bd67fafacdb75186946084822df21b5a0e19c",
+      "bytes": 1327,
+      "importRequest": {
+        "sourceDatabaseOrTool": "scopus-like-public-metadata",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "combined app01 local import dedup workspace plan demo",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB07-combined-app01-demo/combined_wos_like.ris",
+      "sourceDatabaseOrTool": "wos-like-public-metadata",
+      "exportFormat": "ris",
+      "traceId": "trace-fb07-combined-wos",
+      "originalQueryText": "combined app01 local import dedup workspace plan demo",
+      "sha256": "sha256:d07699ef7a119c83c378f0fcb35f48619955336cdb1cf146e10f9deeb6d69696",
+      "bytes": 1490,
+      "importRequest": {
+        "sourceDatabaseOrTool": "wos-like-public-metadata",
+        "exportFormat": "ris",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "combined app01 local import dedup workspace plan demo",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB07-combined-app01-demo/combined_scholar_style.bib",
+      "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+      "exportFormat": "bibtex",
+      "traceId": "trace-fb07-combined-scholar",
+      "originalQueryText": "combined app01 local import dedup workspace plan demo",
+      "sha256": "sha256:d5126670d7f979af61c691d1e1fca6f38f03b23923756c97cbf30c9156af10b9",
+      "bytes": 1189,
+      "importRequest": {
+        "sourceDatabaseOrTool": "google-scholar-style-manual-bibtex",
+        "exportFormat": "bibtex",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "combined app01 local import dedup workspace plan demo",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB07-combined-app01-demo/combined_wos_like_source_specific.csv",
+      "sourceDatabaseOrTool": "wos-like-csv-fixture",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb07-combined-wos-source-specific",
+      "originalQueryText": "combined app01 local import dedup workspace plan demo",
+      "sha256": "sha256:522e57cda70b922481a36ec3f1d070bf47f811ca8a2bfb5391d3c68ed9d5e7d1",
+      "bytes": 338,
+      "importRequest": {
+        "sourceDatabaseOrTool": "wos-like-csv-fixture",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "combined app01 local import dedup workspace plan demo",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecordsAtLeast": 14,
+    "skippedRecordsAtLeast": 2,
+    "parserWarningsExpected": true,
+    "dedupExactClustersAtLeast": 1,
+    "dedupReviewCandidatesAtLeast": 2,
+    "suggestedBlockMode": "Review"
+  },
+  "notes": [
+    "This is the recommended first APP-01 smoke fixture after the composer is implemented."
+  ]
+}

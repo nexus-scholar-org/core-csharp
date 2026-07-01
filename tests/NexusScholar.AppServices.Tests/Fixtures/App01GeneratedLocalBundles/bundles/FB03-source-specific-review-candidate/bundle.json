@@ -1,0 +1,56 @@
+{
+  "bundleId": "FB03-source-specific-review-candidate",
+  "title": "Review-required source-specific candidate",
+  "purpose": "Same source-specific EID appears in two source-like exports without an accepted stable identifier, so Deduplication should require review.",
+  "files": [
+    {
+      "path": "bundles/FB03-source-specific-review-candidate/scopus_like_review_candidate_a.csv",
+      "sourceDatabaseOrTool": "scopus-like-public-metadata",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb03-scopus-review-a",
+      "originalQueryText": "deduplication record linkage systematic review imports",
+      "sha256": "sha256:cbd710b38354b8e483ba39027b044fefe5878a9a157355522bb4c5faafbf7441",
+      "bytes": 337,
+      "importRequest": {
+        "sourceDatabaseOrTool": "scopus-like-public-metadata",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "deduplication record linkage systematic review imports",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB03-source-specific-review-candidate/wos_like_source_specific_review_candidate_b.csv",
+      "sourceDatabaseOrTool": "wos-like-csv-fixture",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb03-wos-review-b",
+      "originalQueryText": "deduplication record linkage systematic review imports",
+      "sha256": "sha256:522e57cda70b922481a36ec3f1d070bf47f811ca8a2bfb5391d3c68ed9d5e7d1",
+      "bytes": 338,
+      "importRequest": {
+        "sourceDatabaseOrTool": "wos-like-csv-fixture",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "deduplication record linkage systematic review imports",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 2,
+    "sightings": 2,
+    "parserWarningsAtLeast": 2,
+    "dedupExactClusters": 0,
+    "dedupReviewCandidatesAtLeast": 1,
+    "suggestedBlockMode": "Review"
+  },
+  "notes": [
+    "Parser warnings are expected because source-specific EID evidence is preserved but is not an approved stable WorkId namespace."
+  ]
+}

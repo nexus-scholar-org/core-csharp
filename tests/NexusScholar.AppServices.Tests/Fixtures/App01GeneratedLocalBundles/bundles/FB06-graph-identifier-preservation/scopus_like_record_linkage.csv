@@ -1,0 +1,3 @@
+Title,Author names,Year,Source title,DOI,ArXiv ID,PubMed ID,PMCID,EID,WOS,Abstract,Keywords
+"Probabilistic Record Linkage and Deduplication after Indexing, Blocking, and Filtering",Jared S. Murray,2016,arXiv,,1603.07816,,,,WOS:RECORDLINK-2016-SEED,A record-linkage and deduplication methods record used as a public metadata seed.,record linkage; deduplication; blocking
+SMERED: A Bayesian Approach to Graphical Record Linkage and De-duplication,Rebecca C. Steorts; Rob Hall; Stephen E. Fienberg,2014,arXiv,,1403.0211,,,,,A graphical record-linkage and de-duplication methods record used as a public metadata seed.,record linkage; deduplication; bayesian

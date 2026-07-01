@@ -1,0 +1,73 @@
+{
+  "bundleId": "FB02-cross-source-exact-duplicates",
+  "title": "Cross-source exact duplicate cluster",
+  "purpose": "Same DOI represented in CSV, RIS and BibTeX, to force an exact-identifier dedup cluster.",
+  "files": [
+    {
+      "path": "bundles/FB02-cross-source-exact-duplicates/scopus_like_rayyan.csv",
+      "sourceDatabaseOrTool": "scopus-like-public-metadata",
+      "exportFormat": "scopus-csv",
+      "traceId": "trace-fb02-scopus-rayyan",
+      "originalQueryText": "rayyan systematic reviews web mobile app",
+      "sha256": "sha256:cbc3fa3afadc7e057c7f013a9109db6553f586f82a9b8bdd783a2bd9430b3e3a",
+      "bytes": 387,
+      "importRequest": {
+        "sourceDatabaseOrTool": "scopus-like-public-metadata",
+        "exportFormat": "scopus-csv",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "rayyan systematic reviews web mobile app",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB02-cross-source-exact-duplicates/wos_like_rayyan.ris",
+      "sourceDatabaseOrTool": "wos-like-public-metadata",
+      "exportFormat": "ris",
+      "traceId": "trace-fb02-wos-rayyan",
+      "originalQueryText": "rayyan systematic reviews web mobile app",
+      "sha256": "sha256:9f95da6d9a3324eb29b2c43aa492b87fb8f9c1c5e65e4034ca1831b339845ff2",
+      "bytes": 396,
+      "importRequest": {
+        "sourceDatabaseOrTool": "wos-like-public-metadata",
+        "exportFormat": "ris",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "rayyan systematic reviews web mobile app",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    },
+    {
+      "path": "bundles/FB02-cross-source-exact-duplicates/semantic_scholar_style_rayyan.bib",
+      "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+      "exportFormat": "bibtex",
+      "traceId": "trace-fb02-s2-rayyan",
+      "originalQueryText": "rayyan systematic reviews web mobile app",
+      "sha256": "sha256:09ebb5a5b82c0ccd2d4cf086d5e8f7c5a865c7d2396f8ee870a49fcefbdf3a9e",
+      "bytes": 420,
+      "importRequest": {
+        "sourceDatabaseOrTool": "semantic-scholar-style-public-metadata",
+        "exportFormat": "bibtex",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "rayyan systematic reviews web mobile app",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 3,
+    "sightings": 3,
+    "parserWarnings": 0,
+    "dedupExactClusters": 1,
+    "dedupReviewCandidates": 0,
+    "suggestedBlockMode": "Audit"
+  },
+  "notes": []
+}

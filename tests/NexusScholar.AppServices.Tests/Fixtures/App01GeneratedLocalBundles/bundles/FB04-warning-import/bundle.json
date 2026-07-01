@@ -1,0 +1,37 @@
+{
+  "bundleId": "FB04-warning-import",
+  "title": "Controlled parser-warning and skipped-record import",
+  "purpose": "Mutated RIS with bad year, missing title, and duplicate source record id to drive import warning summary blocks.",
+  "files": [
+    {
+      "path": "bundles/FB04-warning-import/wos_like_warning_mutated.ris",
+      "sourceDatabaseOrTool": "wos-like-mutated-public-metadata",
+      "exportFormat": "ris",
+      "traceId": "trace-fb04-warning-ris",
+      "originalQueryText": "controlled mutated warning fixture",
+      "sha256": "sha256:3a3e0ddf2665afb6051b4dae6d527107779acac4bd9decf5b89d090bbcbb6089",
+      "bytes": 603,
+      "importRequest": {
+        "sourceDatabaseOrTool": "wos-like-mutated-public-metadata",
+        "exportFormat": "ris",
+        "parserId": "local-slice-parser",
+        "parserVersion": "1.0.0",
+        "importedBy": "app01-fixture-generator",
+        "importedAt": "2026-07-01T00:00:00Z",
+        "originalQueryText": "controlled mutated warning fixture",
+        "exportedAt": "2026-07-01T00:00:00Z"
+      }
+    }
+  ],
+  "expected": {
+    "importedRecords": 4,
+    "sightingsExpected": 2,
+    "parserWarningsAtLeast": 3,
+    "skippedRecordsAtLeast": 2,
+    "dedupReviewCandidates": 0,
+    "suggestedBlockMode": "Review"
+  },
+  "notes": [
+    "One valid record has a non-integer year and should remain imported with a parser warning. Missing-title and duplicate-ID records should be skipped."
+  ]
+}

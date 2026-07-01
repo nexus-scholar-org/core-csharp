@@ -1,0 +1,14 @@
+record_key,title,authors,year,venue,doi,arxiv,source_url,synthetic,fixture_role
+rayyan,Rayyan—a web and mobile app for systematic reviews,Mourad Ouzzani; Hossam Hammady; Zbys Fedorowicz; Ahmed Elmagarmid,2016,Systematic Reviews,10.1186/s13643-016-0384-4,,https://doi.org/10.1186/s13643-016-0384-4,false,public metadata seed
+asreview,An open source machine learning framework for efficient and transparent systematic reviews,Rens van de Schoot; Jonathan de Bruin; Raoul Schram; Parisa Zahedi,2021,Nature Machine Intelligence,10.1038/s42256-020-00287-7,,https://doi.org/10.1038/s42256-020-00287-7,false,public metadata seed
+textmining,Using text mining for study identification in systematic reviews: a systematic review of current approaches,Alison O’Mara-Eves; James Thomas; John McNaught; Makoto Miwa; Sophia Ananiadou,2015,Systematic Reviews,10.1186/2046-4053-4-5,,https://doi.org/10.1186/2046-4053-4-5,false,public metadata seed
+openalex,"OpenAlex: A fully-open index of scholarly works, authors, venues, institutions, and concepts",Jason Priem; Heather Piwowar; Richard Orr,2022,arXiv,,2205.01833,https://arxiv.org/abs/2205.01833,false,public metadata seed
+s2graph,Construction of the Literature Graph in Semantic Scholar,Waleed Ammar; Dirk Groeneveld; Chandra Bhagavatula; Iz Beltagy; Miles Crawford,2018,arXiv,,1805.02262,https://arxiv.org/abs/1805.02262,false,public metadata seed
+webscholars,Web of Scholars: A Scholar Knowledge Graph,Jiaying Liu; Jing Ren; Wenqing Zheng; Lianhua Chi; Ivan Lee; Feng Xia,2022,arXiv,,2202.11311,https://arxiv.org/abs/2202.11311,false,public metadata seed
+recordlink,"Probabilistic Record Linkage and Deduplication after Indexing, Blocking, and Filtering",Jared S. Murray,2016,arXiv,,1603.07816,https://arxiv.org/abs/1603.07816,false,public metadata seed
+smered,SMERED: A Bayesian Approach to Graphical Record Linkage and De-duplication,Rebecca C. Steorts; Rob Hall; Stephen E. Fienberg,2014,arXiv,,1403.0211,https://arxiv.org/abs/1403.0211,false,public metadata seed
+scholia,Scholia and scientometrics with Wikidata,Finn Årup Nielsen; Daniel Mietchen; Egon Willighagen,2017,arXiv,,1703.04222,https://arxiv.org/abs/1703.04222,false,public metadata seed
+review_a,Bibliographic deduplication workflows for systematic review imports,Nexus Fixture Author,2026,Nexus Synthetic Fixture Journal,,,,true,controlled stress record
+review_b,Bibliographic de-duplication workflows for systematic review imports,Nexus Fixture Author,2026,Nexus Synthetic Fixture Journal,,,,true,controlled stress record
+preprint_a,Living evidence review workbench for auditable search and screening,Nexus Fixture Author,2026,Nexus Synthetic Preprints,,,,true,controlled stress record
+preprint_b,Living evidence review workbench for auditable search and screening,Nexus Fixture Author,2026,Nexus Synthetic Preprints,,,,true,controlled stress record

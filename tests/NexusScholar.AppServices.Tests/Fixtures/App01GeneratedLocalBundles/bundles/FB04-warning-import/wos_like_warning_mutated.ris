@@ -1,0 +1,30 @@
+TY  - JOUR
+ID  - WARN-BAD-YEAR-1
+AU  - Nexus Fixture Author
+TI  - Parser warning record with non integer year
+PY  - 20XX
+JO  - Nexus Synthetic Fixture Journal
+ER  -
+
+TY  - JOUR
+ID  - WARN-MISSING-TITLE-1
+AU  - Nexus Fixture Author
+PY  - 2026
+JO  - Nexus Synthetic Fixture Journal
+ER  -
+
+TY  - JOUR
+ID  - WARN-DUP-ID-1
+AU  - Nexus Fixture Author
+TI  - Duplicate source record id first copy
+PY  - 2026
+JO  - Nexus Synthetic Fixture Journal
+ER  -
+
+TY  - JOUR
+ID  - WARN-DUP-ID-1
+AU  - Nexus Fixture Author
+TI  - Duplicate source record id second copy
+PY  - 2026
+JO  - Nexus Synthetic Fixture Journal
+ER  -
