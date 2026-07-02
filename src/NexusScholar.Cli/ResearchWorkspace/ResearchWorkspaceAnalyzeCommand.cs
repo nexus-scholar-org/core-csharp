@@ -47,7 +47,19 @@ internal static class ResearchWorkspaceAnalyzeCommand
         catch (SearchRuleException exception)
         {
             error.WriteLine($"Analyze failed while parsing imported search evidence: {exception.Message}");
-            return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+            return IsUnsupportedSearchRule(exception)
+                ? ResearchWorkspaceExitCodes.UnsupportedSchemaOrFormat
+                : ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+        }
+        catch (ResearchWorkspaceMissingInputException exception)
+        {
+            error.WriteLine(exception.Message);
+            return ResearchWorkspaceExitCodes.MissingProjectOrInput;
+        }
+        catch (ResearchWorkspaceDigestMismatchException exception)
+        {
+            error.WriteLine(exception.Message);
+            return ResearchWorkspaceExitCodes.DigestMismatch;
         }
         catch (InvalidOperationException exception)
         {
@@ -104,4 +116,8 @@ internal static class ResearchWorkspaceAnalyzeCommand
         output.WriteLine($"Review report: {ResearchWorkspaceAnalyzer.ReviewReportPath}");
         output.WriteLine("Next: nexus review");
     }
+
+    private static bool IsUnsupportedSearchRule(SearchRuleException exception) =>
+        exception.Message.Contains("Unsupported", StringComparison.OrdinalIgnoreCase) ||
+        exception.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase);
 }

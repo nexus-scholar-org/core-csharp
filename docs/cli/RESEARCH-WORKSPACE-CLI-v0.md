@@ -114,12 +114,16 @@ Expected behavior:
 
 ### `nexus status`
 
-Reports whether the current folder is a Nexus project and lists known local inputs/outputs.
+Reports the nearest Nexus project from the current folder or a child folder and summarizes local workflow state.
 
 Expected behavior:
 
-- exits `0` for an initialized project;
-- exits non-zero when no `nexus.project.json` exists;
+- exits `0` for initialized, imported, analyzed, and review-ready workspaces;
+- exits `2` when no `nexus.project.json` exists in the current folder or its parents;
+- exits `3` when an imported input digest no longer matches the project index;
+- reports one of `initialized`, `imported`, `imported-with-warnings`, `analyzed`, `review-ready`, or `needs-attention`;
+- lists local Search exports, parser warnings, skipped records, generated output presence, and review-block counts;
+- reports `Project location: current folder` or `Project location: parent workspace` without printing machine-local absolute paths;
 - does not mutate project state.
 
 ### `nexus import search`

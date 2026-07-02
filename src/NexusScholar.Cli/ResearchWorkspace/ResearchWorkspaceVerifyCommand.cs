@@ -12,7 +12,7 @@ internal static class ResearchWorkspaceVerifyCommand
         if (args.Length > 0)
         {
             error.WriteLine(Usage);
-            return ResearchWorkspaceExitCodes.MissingProjectOrInput;
+            return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
         }
 
         try
@@ -24,7 +24,7 @@ internal static class ResearchWorkspaceVerifyCommand
                 output.WriteLine("Status: invalid");
                 output.WriteLine("No Nexus research workspace found in the current folder or its parents.");
                 output.WriteLine("Next: nexus init --title \"<research title>\"");
-                return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+                return ResearchWorkspaceExitCodes.MissingProjectOrInput;
             }
 
             var project = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
@@ -33,28 +33,28 @@ internal static class ResearchWorkspaceVerifyCommand
                 output.WriteLine("Workspace verification");
                 output.WriteLine("Status: invalid");
                 output.WriteLine($"Unsupported Nexus project schema: {project.Schema}");
-                return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+                return ResearchWorkspaceExitCodes.UnsupportedSchemaOrFormat;
             }
 
             var report = ResearchWorkspaceVerifier.Verify(location, project);
             WriteReport(output, report);
-            return report.IsValid
-                ? ResearchWorkspaceExitCodes.Success
-                : ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+            return ExitCodeFor(report);
         }
         catch (JsonException exception)
         {
             output.WriteLine("Workspace verification");
             output.WriteLine("Status: invalid");
             output.WriteLine($"Malformed Nexus project file: {exception.Message}");
-            return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+            return ResearchWorkspaceExitCodes.UnsupportedSchemaOrFormat;
         }
         catch (SearchRuleException exception)
         {
             output.WriteLine("Workspace verification");
             output.WriteLine("Status: invalid");
             output.WriteLine($"Search import parse failed: {exception.Message}");
-            return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+            return IsUnsupportedSearchRule(exception)
+                ? ResearchWorkspaceExitCodes.UnsupportedSchemaOrFormat
+                : ResearchWorkspaceExitCodes.UsageOrValidationFailure;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -138,4 +138,28 @@ internal static class ResearchWorkspaceVerifyCommand
         output.WriteLine($"Skipped records: {report.SkippedRecordCount}");
         output.WriteLine("Next: review parser warnings before analyze.");
     }
+
+    private static int ExitCodeFor(ResearchWorkspaceVerificationReport report)
+    {
+        if (report.IsValid)
+        {
+            return ResearchWorkspaceExitCodes.Success;
+        }
+
+        if (report.DigestMismatches.Count > 0)
+        {
+            return ResearchWorkspaceExitCodes.DigestMismatch;
+        }
+
+        if (report.MissingFiles.Count > 0 || report.MissingImportTraces.Count > 0)
+        {
+            return ResearchWorkspaceExitCodes.MissingProjectOrInput;
+        }
+
+        return ResearchWorkspaceExitCodes.UsageOrValidationFailure;
+    }
+
+    private static bool IsUnsupportedSearchRule(SearchRuleException exception) =>
+        exception.Message.Contains("Unsupported", StringComparison.OrdinalIgnoreCase) ||
+        exception.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase);
 }

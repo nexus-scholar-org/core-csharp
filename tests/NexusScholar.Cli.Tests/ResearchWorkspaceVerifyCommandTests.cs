@@ -31,7 +31,7 @@ public sealed class ResearchWorkspaceVerifyCommandTests
 
         var exitCode = RunCli(workspace.Root, new[] { "verify" }, out var output, out var error);
 
-        Assert.AreEqual(1, exitCode);
+        Assert.AreEqual(2, exitCode);
         AssertTextEqual(ExpectedPath("verify-missing-input.txt"), output);
         Assert.AreEqual(string.Empty, error);
     }
@@ -45,7 +45,7 @@ public sealed class ResearchWorkspaceVerifyCommandTests
 
         var exitCode = RunCli(workspace.Root, new[] { "verify" }, out var output, out var error);
 
-        Assert.AreEqual(1, exitCode);
+        Assert.AreEqual(3, exitCode);
         AssertTextEqual(ExpectedPath("verify-digest-mismatch.txt"), output);
         Assert.AreEqual(string.Empty, error);
     }
@@ -148,7 +148,7 @@ public sealed class ResearchWorkspaceVerifyCommandTests
 
         var exitCode = RunCli(workspace.Root, new[] { "verify" }, out var output, out var error);
 
-        Assert.AreEqual(1, exitCode);
+        Assert.AreEqual(2, exitCode);
         StringAssert.Contains(output, "Import traces missing: 1");
         StringAssert.Contains(output, "Missing trace: nexus-output/imports/search-001.import-trace.json");
         Assert.AreEqual(string.Empty, error);

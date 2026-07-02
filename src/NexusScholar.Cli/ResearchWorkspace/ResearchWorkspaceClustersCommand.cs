@@ -16,7 +16,7 @@ internal static class ResearchWorkspaceClustersCommand
 
         try
         {
-            var loaded = WorkspacePlanReader.Read(workingDirectory);
+            var loaded = WorkspacePlanReader.Read(workingDirectory, requireDeduplicationResult: true);
             var rendered = args.Length switch
             {
                 0 => WorkspacePlanTextRenderer.RenderClustersSummary(loaded.Plan),
