@@ -5,7 +5,7 @@ namespace NexusScholar.Cli.ResearchWorkspace;
 
 internal static class WorkspacePlanReader
 {
-    public static LoadedWorkspacePlan Read(string workingDirectory)
+    public static LoadedWorkspacePlan Read(string workingDirectory, bool requireDeduplicationResult = false)
     {
         var location = ResearchWorkspaceStore.FindFrom(workingDirectory);
         if (location is null)
@@ -29,6 +29,17 @@ internal static class WorkspacePlanReader
             throw new WorkspacePlanReadException(
                 $"Generated workspace plan not found: {ResearchWorkspacePaths.CurrentWorkspacePlan}",
                 ResearchWorkspaceExitCodes.MissingProjectOrInput);
+        }
+
+        if (requireDeduplicationResult)
+        {
+            var deduplicationResultPath = ResearchWorkspacePaths.InProject(location.RootDirectory, ResearchWorkspacePaths.CurrentDeduplicationResult);
+            if (!File.Exists(deduplicationResultPath))
+            {
+                throw new WorkspacePlanReadException(
+                    $"Generated deduplication result not found: {ResearchWorkspacePaths.CurrentDeduplicationResult}",
+                    ResearchWorkspaceExitCodes.MissingProjectOrInput);
+            }
         }
 
         var plan = JsonSerializer.Deserialize<WorkspacePlan>(

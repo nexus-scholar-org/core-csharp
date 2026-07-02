@@ -5,7 +5,8 @@
   "createdAt": "2026-07-01T00:00:00Z",
   "inputs": [],
   "outputs": {
-    "latestWorkspacePlan": "nexus-output/workspace/current.workspace-plan.json"
+    "deduplicationResult": "nexus-output/dedup/current.deduplication-result.json",
+    "workspacePlan": "nexus-output/workspace/current.workspace-plan.json"
   },
   "nonClaims": [
     "local-folder-project",

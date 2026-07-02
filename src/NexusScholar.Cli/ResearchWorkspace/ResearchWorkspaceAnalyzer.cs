@@ -28,7 +28,7 @@ internal static class ResearchWorkspaceAnalyzer
             .ToArray();
         if (inputs.Length == 0)
         {
-            throw new InvalidOperationException("Analyze requires at least one imported search export.");
+            throw new ResearchWorkspaceMissingInputException("Analyze requires at least one imported search export.");
         }
 
         var traces = inputs.Select(input => RegenerateTrace(location, project, input)).ToArray();
@@ -55,19 +55,19 @@ internal static class ResearchWorkspaceAnalyzer
     {
         if (!ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(location.RootDirectory, input.EffectiveRelativePath, out var sourcePath))
         {
-            throw new InvalidOperationException($"Input path is not a valid workspace-relative path: {input.EffectiveInputId}");
+            throw new ResearchWorkspaceMissingInputException($"Input path is not a valid workspace-relative path: {input.EffectiveInputId}");
         }
 
         if (!File.Exists(sourcePath))
         {
-            throw new InvalidOperationException($"Input file is missing: {input.EffectiveRelativePath}");
+            throw new ResearchWorkspaceMissingInputException($"Input file is missing: {input.EffectiveRelativePath}");
         }
 
         var sourceBytes = File.ReadAllBytes(sourcePath);
         var digest = ContentDigest.Sha256(sourceBytes).ToString();
         if (!string.Equals(digest, input.Sha256, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException($"Input digest mismatch: {input.EffectiveRelativePath}");
+            throw new ResearchWorkspaceDigestMismatchException($"Input digest mismatch: {input.EffectiveRelativePath}");
         }
 
         var source = SearchImportAliases.NormalizeSource(input.Source);

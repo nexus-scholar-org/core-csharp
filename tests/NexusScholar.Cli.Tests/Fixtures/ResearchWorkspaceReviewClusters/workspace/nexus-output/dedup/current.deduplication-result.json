@@ -1,0 +1,9 @@
+{
+  "fixture": "pr06-read-only-deduplication-result",
+  "deduplicationId": "dedup-pr06-demo",
+  "nonClaims": [
+    "test-fixture-only",
+    "not-core-authority",
+    "not-php-compatibility"
+  ]
+}

@@ -125,6 +125,8 @@ The review and cluster commands are read-only. They display APP-01 merge gates b
 
 The combined demo bundle intentionally includes parser warnings and skipped records. `verify` surfaces those issues before `analyze`; the workflow continues so first testers can inspect warning, deduplication, and human-gate blocks.
 
+`status` is state-aware and can be run from the workspace root or a child folder. It reports local state such as `initialized`, `imported-with-warnings`, `analyzed`, `review-ready`, or `needs-attention` without printing machine-local absolute paths.
+
 Launch the UI sample host:
 
 ```powershell

@@ -30,7 +30,7 @@ public sealed class ResearchWorkspaceAnalyzeCommandTests
 
         var exitCode = RunCli(workspace.Root, new[] { "analyze" }, out var output, out var error);
 
-        Assert.AreEqual(1, exitCode);
+        Assert.AreEqual(2, exitCode);
         Assert.AreEqual(string.Empty, output);
         StringAssert.Contains(error, "requires at least one imported search export");
     }

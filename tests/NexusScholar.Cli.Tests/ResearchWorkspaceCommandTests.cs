@@ -123,7 +123,7 @@ public sealed class ResearchWorkspaceCommandTests
         Assert.AreEqual(2, exitCode);
         Assert.AreEqual(string.Empty, output);
         Assert.AreEqual(
-            "No Nexus research workspace found in the current folder." + Environment.NewLine +
+            "No Nexus research workspace found in the current folder or its parents." + Environment.NewLine +
             "Run: nexus init --title \"<research title>\"" + Environment.NewLine,
             error);
     }
@@ -242,16 +242,27 @@ public sealed class ResearchWorkspaceCommandTests
 
     private static readonly string ExpectedStatusOutput = JoinLines(
         "Nexus research workspace",
-        "Status: initialized",
+        "State: initialized",
         "Project: AI screening tools review",
         "Workspace: workspace-ai-screening-tools-review",
+        "Project location: current folder",
+        "",
         "Inputs:",
         "  search exports: 0",
+        "  parser warnings: 0",
+        "  skipped records: 0",
+        "",
         "Outputs:",
         "  import traces: 0",
         "  dedup analysis: missing",
         "  workspace plan: missing",
-        "  reports: 0",
+        "  review report: missing",
+        "",
+        "Review:",
+        "  exact duplicate clusters: 0",
+        "  review-required candidates: 0",
+        "  blocking merge gates: 0",
+        "",
         "Next: nexus import search <file> --source <source> --format <format>");
 
     private static readonly string ExpectedProjectJson = """
