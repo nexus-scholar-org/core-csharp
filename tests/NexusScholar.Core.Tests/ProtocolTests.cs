@@ -1163,6 +1163,232 @@ public sealed class ProtocolTests
         });
     }
 
+    [TestMethod]
+    public void Supplemental_waiver_authority_rehydrates_exact_digest_bound_human_approval()
+    {
+        var state = CreateSupplementalWaiverState();
+
+        var verified = ProtocolSupplementalAuthorityRehydrator.RehydrateWaiver(
+            new UnverifiedProtocolWaiver(state.Waiver),
+            state.Resolver);
+
+        Assert.AreEqual(state.Waiver.WaiverId, verified.Waiver.WaiverId);
+        Assert.AreEqual(ContentDigest.Sha256CanonicalJson(state.Waiver.ToCanonicalJson()), verified.WaiverDigest);
+        Assert.AreEqual(1, verified.Approvals.Count);
+        Assert.AreEqual(state.Waiver.ApprovalIds[0], verified.Approvals[0].Approval.ApprovalId);
+    }
+
+    [TestMethod]
+    [DataRow("none")]
+    [DataRow("stale-digest")]
+    [DataRow("wrong-policy")]
+    [DataRow("non-human")]
+    public void Supplemental_approval_rehydration_verifies_record_digest_policy_and_human_actor(string mutation)
+    {
+        var state = CreateSupplementalWaiverState();
+        var input = ToUnverified(state.Approval.Approval);
+        input = mutation switch
+        {
+            "stale-digest" => input with { Rationale = "tampered" },
+            "wrong-policy" => input with { PolicyId = "other-policy" },
+            _ => input
+        };
+        var resolver = mutation == "non-human"
+            ? state.Resolver.WithHumanActors(Array.Empty<ActorId>())
+            : state.Resolver;
+
+        if (mutation == "none")
+        {
+            var verified = ProtocolSupplementalAuthorityRehydrator.RehydrateApproval(
+                input, ProtocolSupplementalTargetTypes.Waiver, state.Waiver.WaiverId,
+                ContentDigest.Sha256CanonicalJson(state.Waiver.ToCanonicalJson()), state.Resolver.Policy, resolver);
+            Assert.AreEqual(state.Approval.Approval.ApprovalRecordDigest, verified.Approval.ApprovalRecordDigest);
+        }
+        else
+        {
+            Assert.ThrowsExactly<ProtocolRuleException>(() =>
+                ProtocolSupplementalAuthorityRehydrator.RehydrateApproval(
+                    input, ProtocolSupplementalTargetTypes.Waiver, state.Waiver.WaiverId,
+                    ContentDigest.Sha256CanonicalJson(state.Waiver.ToCanonicalJson()), state.Resolver.Policy, resolver));
+        }
+    }
+
+    [TestMethod]
+    [DataRow("missing")]
+    [DataRow("duplicate")]
+    [DataRow("wrong-target")]
+    [DataRow("rejected")]
+    [DataRow("non-human")]
+    [DataRow("wrong-policy")]
+    public void Supplemental_waiver_authority_rejects_unverified_approval_sets(string mutation)
+    {
+        var state = CreateSupplementalWaiverState();
+        var waiver = mutation switch
+        {
+            "missing" => CloneWaiverForTest(state.Waiver, Array.Empty<string>()),
+            "duplicate" => CloneWaiverForTest(state.Waiver, new[] { state.Waiver.ApprovalIds[0], state.Waiver.ApprovalIds[0] }),
+            "wrong-policy" => CloneWaiverForTest(state.Waiver, state.Waiver.ApprovalIds, "other-policy"),
+            _ => state.Waiver
+        };
+        var resolver = mutation switch
+        {
+            "wrong-target" => state.Resolver.WithApproval(CloneSupplementalApproval(state.Approval, targetId: "other-waiver")),
+            "rejected" => state.Resolver.WithApproval(CloneSupplementalApproval(state.Approval, decision: ProtocolApprovalDecision.Rejected)),
+            "non-human" => state.Resolver.WithHumanActors(Array.Empty<ActorId>()),
+            _ => state.Resolver
+        };
+
+        Assert.ThrowsExactly<ProtocolRuleException>(() =>
+            ProtocolSupplementalAuthorityRehydrator.RehydrateWaiver(new UnverifiedProtocolWaiver(waiver), resolver));
+    }
+
+    [TestMethod]
+    public void Supplemental_amendment_authority_binds_verified_lineage_and_immutable_notices()
+    {
+        var state = CreateSupplementalAmendmentState();
+
+        var verified = ProtocolSupplementalAuthorityRehydrator.RehydrateAmendment(
+            new UnverifiedProtocolAmendment(state.Amendment),
+            state.Resolver);
+
+        Assert.AreEqual(state.Previous.Version.Id, verified.PreviousVersion.Version.Id);
+        Assert.AreEqual(state.Produced.Version.Id, verified.ProducedVersion.Version.Id);
+        Assert.AreEqual(1, verified.InvalidationNotices.Count);
+        Assert.AreEqual(state.Amendment.InvalidationNotices[0].NoticeId, verified.InvalidationNotices[0].NoticeId);
+        Assert.ThrowsExactly<NotSupportedException>(() =>
+            ((IList<ProtocolInvalidationNotice>)verified.InvalidationNotices).Add(state.Amendment.InvalidationNotices[0]));
+    }
+
+    [TestMethod]
+    [DataRow("previous-digest")]
+    [DataRow("produced-version")]
+    [DataRow("foreign-notice")]
+    [DataRow("duplicate-notice")]
+    [DataRow("missing-notice")]
+    [DataRow("wrong-policy")]
+    [DataRow("requester")]
+    public void Supplemental_amendment_authority_rejects_invalid_lineage_and_notice_membership(string mutation)
+    {
+        var state = CreateSupplementalAmendmentState();
+        var amendment = mutation switch
+        {
+            "previous-digest" => state.Amendment with { PreviousContentDigest = ContentDigest.Sha256Utf8("other") },
+            "produced-version" => state.Amendment with { ProducesVersionId = "other-version" },
+            "foreign-notice" => CloneAmendmentForTest(state.Amendment,
+                notices: new[] { state.Amendment.InvalidationNotices[0] with { SourceAmendmentId = "other-amendment" } }),
+            "duplicate-notice" => CloneAmendmentForTest(state.Amendment,
+                notices: new[] { state.Amendment.InvalidationNotices[0], state.Amendment.InvalidationNotices[0] }),
+            "missing-notice" => CloneAmendmentForTest(state.Amendment, notices: Array.Empty<ProtocolInvalidationNotice>()),
+            "wrong-policy" => CloneAmendmentForTest(state.Amendment, state.Amendment.InvalidationNotices, "other-policy"),
+            "requester" => state.Amendment with { RequestedBy = ActorId.From("unknown") },
+            _ => state.Amendment
+        };
+
+        Assert.ThrowsExactly<ProtocolRuleException>(() =>
+            ProtocolSupplementalAuthorityRehydrator.RehydrateAmendment(new UnverifiedProtocolAmendment(amendment), state.Resolver));
+    }
+
+    private static SupplementalWaiverState CreateSupplementalWaiverState()
+    {
+        var policy = ApprovalPolicy.ExplicitCustomSingleResearcher("waiver-policy");
+        var approvalId = "waiver-approval-1";
+        var waiver = CloneWaiverForTest(SampleWaiver(NewIds()), new[] { approvalId }, policy.PolicyId);
+        var digest = ContentDigest.Sha256CanonicalJson(waiver.ToCanonicalJson());
+        var resolver = new TestSupplementalAuthorityResolver(policy, new[] { Researcher.Id });
+        var approval = CreateSupplementalApproval(approvalId, ProtocolSupplementalTargetTypes.Waiver, waiver.WaiverId, digest, policy, Researcher.Id);
+        return new SupplementalWaiverState(waiver, approval, resolver.WithApproval(approval));
+    }
+
+    private static SupplementalAmendmentState CreateSupplementalAmendmentState()
+    {
+        var protocol = CreateRehydrationState(ApprovalPolicy.ExplicitCustomSingleResearcher());
+        var previous = ProtocolRehydrator.RehydrateVersion(ToUnverified(protocol.Version, protocol.Policy), protocol.Resolver);
+        const string amendmentId = "amendment-1";
+        const string producedId = "protocol-version-2";
+        var producedSeed = new ProtocolVersion(
+            producedId, protocol.Version.ProtocolId, protocol.Version.ProjectId, 2, ProtocolStatus.Approved,
+            protocol.Version.Template, protocol.Version.Intent, protocol.Version.Values, protocol.Version.RequiredDecisions,
+            protocol.Version.Decisions, protocol.Version.Waivers, ContentDigest.Sha256Utf8("placeholder"),
+            protocol.Policy.PolicyId, protocol.Version.ApprovalIds, Clock.UtcNow, protocol.Version.Id, amendmentId: amendmentId);
+        var produced = new ProtocolVersion(
+            producedSeed.Id, producedSeed.ProtocolId, producedSeed.ProjectId, producedSeed.VersionNumber, producedSeed.Status,
+            producedSeed.Template, producedSeed.Intent, producedSeed.Values, producedSeed.RequiredDecisions, producedSeed.Decisions,
+            producedSeed.Waivers, producedSeed.ToProtocolContentDigestEnvelope().ComputeDigest(), producedSeed.ApprovalPolicyId,
+            producedSeed.ApprovalIds, producedSeed.ApprovedAt, producedSeed.SupersedesVersionId,
+            producedSeed.SupersededByVersionId, producedSeed.AmendmentId, producedSeed.UnresolvedDecisions);
+        var verifiedProduced = new VerifiedProtocolVersion(produced, protocol.Policy, previous.Approvals);
+        var policy = ApprovalPolicy.ExplicitCustomSingleResearcher("amendment-policy");
+        var notice = new ProtocolInvalidationNotice(
+            "notice-1", amendmentId, "scope", ContentDigest.Sha256Utf8("artifact"), "workflow-node-1",
+            "invalidate", "recompile", Clock.UtcNow);
+        var amendment = new ProtocolAmendment(
+            amendmentId, protocol.Version.ProtocolId, protocol.Version.Id, producedId, protocol.Version.ContentDigest,
+            Researcher.Id, Clock.UtcNow, "Change scope.", new[] { "scope" }, new[] { notice }, null,
+            policy.PolicyId, new[] { "amendment-approval-1" });
+        var resolver = new TestSupplementalAuthorityResolver(policy, new[] { Researcher.Id }, versions: new[] { previous, verifiedProduced });
+        var approval = CreateSupplementalApproval(
+            amendment.ApprovalIds[0], ProtocolSupplementalTargetTypes.Amendment, amendment.AmendmentId,
+            ContentDigest.Sha256CanonicalJson(amendment.ToCanonicalJson()), policy, Researcher.Id);
+        return new SupplementalAmendmentState(amendment, previous, verifiedProduced, resolver.WithApproval(approval));
+    }
+
+    private static VerifiedProtocolSupplementalApproval CreateSupplementalApproval(
+        string approvalId, string targetType, string targetId, ContentDigest targetDigest, ApprovalPolicy policy, ActorId actor)
+    {
+        var seed = new ProtocolSupplementalApproval(
+            approvalId, targetType, targetId, targetDigest, policy.PolicyId, policy.PolicyVersion, policy.Mode,
+            ProtocolApprovalDecision.Approved, actor, Clock.UtcNow, null, "Approved.", null, ContentDigest.Sha256Utf8("placeholder"));
+        var approval = new ProtocolSupplementalApproval(
+            approvalId, targetType, targetId, targetDigest, policy.PolicyId, policy.PolicyVersion, policy.Mode,
+            ProtocolApprovalDecision.Approved, actor, Clock.UtcNow, null, "Approved.", null, seed.ToDigestEnvelope().ComputeDigest());
+        return new VerifiedProtocolSupplementalApproval(approval);
+    }
+
+    private static VerifiedProtocolSupplementalApproval CloneSupplementalApproval(
+        VerifiedProtocolSupplementalApproval source,
+        string? targetId = null,
+        ProtocolApprovalDecision? decision = null)
+    {
+        var value = source.Approval;
+        var selected = decision ?? value.Decision;
+        if (selected == ProtocolApprovalDecision.Approved)
+        {
+            return CreateSupplementalApproval(
+                value.ApprovalId, value.TargetType, targetId ?? value.TargetId, value.TargetDigest,
+                new ApprovalPolicy(value.PolicyId, value.PolicyVersion, value.PolicyMode, Array.Empty<string>(), 1, false, false),
+                value.ApprovedBy);
+        }
+        var seed = new ProtocolSupplementalApproval(
+            value.ApprovalId, value.TargetType, targetId ?? value.TargetId, value.TargetDigest,
+            value.PolicyId, value.PolicyVersion, value.PolicyMode, selected, value.ApprovedBy, value.ApprovedAt,
+            value.Role, value.Rationale, value.SupersedesApprovalId, ContentDigest.Sha256Utf8("placeholder"));
+        return new VerifiedProtocolSupplementalApproval(new ProtocolSupplementalApproval(
+            seed.ApprovalId, seed.TargetType, seed.TargetId, seed.TargetDigest, seed.PolicyId, seed.PolicyVersion,
+            seed.PolicyMode, seed.Decision, seed.ApprovedBy, seed.ApprovedAt, seed.Role, seed.Rationale,
+            seed.SupersedesApprovalId, seed.ToDigestEnvelope().ComputeDigest()));
+    }
+
+    private static UnverifiedProtocolSupplementalApproval ToUnverified(ProtocolSupplementalApproval approval) => new(
+        approval.ApprovalId, approval.TargetType, approval.TargetId, approval.TargetDigest, approval.PolicyId,
+        approval.PolicyVersion, approval.PolicyMode, approval.Decision, approval.ApprovedBy, approval.ApprovedAt,
+        approval.Role, approval.Rationale, approval.SupersedesApprovalId, approval.ApprovalRecordDigest);
+
+    private static ProtocolWaiver CloneWaiverForTest(
+        ProtocolWaiver source,
+        IReadOnlyList<string> approvalIds,
+        string? policyId = null) => new(
+        source.WaiverId, source.AffectedRequirementId, source.Condition, source.ExpiresAt, source.Rationale,
+        source.ConsequenceWarning, source.DisclosureMapping, source.RequestedBy, source.RequestedAt,
+        policyId ?? source.ApprovalPolicyId, approvalIds);
+
+    private static ProtocolAmendment CloneAmendmentForTest(
+        ProtocolAmendment source,
+        IReadOnlyList<ProtocolInvalidationNotice> notices,
+        string? policyId = null) => new(
+        source.AmendmentId, source.ProtocolId, source.AmendsVersionId, source.ProducesVersionId,
+        source.PreviousContentDigest, source.RequestedBy, source.RequestedAt, source.Rationale,
+        source.ChangedDecisionKeys, notices, source.InvalidationPlanDigest, policyId ?? source.ApprovalPolicyId, source.ApprovalIds);
+
     private static JsonDocument LoadProtocolFixture(string filename)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "protocol", filename);
@@ -1246,6 +1472,56 @@ public sealed class ProtocolTests
         ProtocolVersion Version,
         ApprovalPolicy Policy,
         TestProtocolAuthorityResolver Resolver);
+
+    private sealed record SupplementalWaiverState(
+        ProtocolWaiver Waiver,
+        VerifiedProtocolSupplementalApproval Approval,
+        TestSupplementalAuthorityResolver Resolver);
+
+    private sealed record SupplementalAmendmentState(
+        ProtocolAmendment Amendment,
+        VerifiedProtocolVersion Previous,
+        VerifiedProtocolVersion Produced,
+        TestSupplementalAuthorityResolver Resolver);
+
+    private sealed class TestSupplementalAuthorityResolver : IProtocolSupplementalAuthorityResolver
+    {
+        private readonly HashSet<ActorId> _humanActors;
+        private readonly IReadOnlyDictionary<string, VerifiedProtocolSupplementalApproval> _approvals;
+        private readonly IReadOnlyDictionary<string, VerifiedProtocolVersion> _versions;
+
+        public TestSupplementalAuthorityResolver(
+            ApprovalPolicy policy,
+            IEnumerable<ActorId> humanActors,
+            IEnumerable<VerifiedProtocolSupplementalApproval>? approvals = null,
+            IEnumerable<VerifiedProtocolVersion>? versions = null)
+        {
+            Policy = policy;
+            _humanActors = humanActors.ToHashSet();
+            _approvals = (approvals ?? Array.Empty<VerifiedProtocolSupplementalApproval>())
+                .ToDictionary(item => item.Approval.ApprovalId, StringComparer.Ordinal);
+            _versions = (versions ?? Array.Empty<VerifiedProtocolVersion>())
+                .ToDictionary(item => item.Version.Id, StringComparer.Ordinal);
+        }
+
+        public ApprovalPolicy Policy { get; }
+
+        public ApprovalPolicy ResolvePolicy(string targetType, string targetId) => Policy;
+
+        public bool IsHumanActor(ActorId actorId) => _humanActors.Contains(actorId);
+
+        public VerifiedProtocolSupplementalApproval ResolveApproval(string approvalId) =>
+            _approvals.TryGetValue(approvalId, out var approval) ? approval : null!;
+
+        public VerifiedProtocolVersion ResolveProtocolVersion(string protocolVersionId) =>
+            _versions.TryGetValue(protocolVersionId, out var version) ? version : null!;
+
+        public TestSupplementalAuthorityResolver WithApproval(VerifiedProtocolSupplementalApproval approval) =>
+            new(Policy, _humanActors, new[] { approval }, _versions.Values);
+
+        public TestSupplementalAuthorityResolver WithHumanActors(IEnumerable<ActorId> actors) =>
+            new(Policy, actors, _approvals.Values, _versions.Values);
+    }
 
     private sealed class TestProtocolAuthorityResolver : IProtocolAuthorityResolver
     {

@@ -61,6 +61,16 @@ public sealed class ProtocolFixtureTests
         "protocol-rehydration-blocking-unresolved-state-v1.json"
     };
 
+    private static readonly string[] SupplementalAuthorityFixtures =
+    {
+        "protocol-supplemental-waiver-valid-v1.json",
+        "protocol-supplemental-amendment-valid-v1.json",
+        "protocol-supplemental-invalid-wrong-target-v1.json",
+        "protocol-supplemental-invalid-non-human-v1.json",
+        "protocol-supplemental-invalid-lineage-v1.json",
+        "protocol-supplemental-invalid-foreign-notice-v1.json"
+    };
+
     [TestMethod]
     public void Minimal_protocol_fixture_remains_discovery_only()
     {
@@ -79,6 +89,10 @@ public sealed class ProtocolFixtureTests
     {
         foreach (var path in ProtocolFixturePaths())
         {
+            if (Path.GetFileName(path).StartsWith("protocol-supplemental-", StringComparison.Ordinal))
+            {
+                continue;
+            }
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var root = document.RootElement;
 
@@ -114,6 +128,10 @@ public sealed class ProtocolFixtureTests
     {
         foreach (var path in ProtocolFixturePaths())
         {
+            if (Path.GetFileName(path).StartsWith("protocol-supplemental-", StringComparison.Ordinal))
+            {
+                continue;
+            }
             using var document = JsonDocument.Parse(File.ReadAllText(path));
             var root = document.RootElement;
             var serializedCase = JsonSerializer.Serialize(
@@ -199,6 +217,40 @@ public sealed class ProtocolFixtureTests
                     verified.Version.ToProtocolContentDigestEnvelope().ComputeDigest(),
                     fixture);
             }
+        }
+    }
+
+    [TestMethod]
+    public void Supplemental_authority_recipes_are_complete_and_digest_replayable()
+    {
+        var names = ProtocolFixturePaths().Select(Path.GetFileName).ToHashSet(StringComparer.Ordinal);
+        var operations = new HashSet<string>(StringComparer.Ordinal);
+        var mutations = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var fixture in SupplementalAuthorityFixtures)
+        {
+            Assert.IsTrue(names.Contains(fixture), $"Missing supplemental authority recipe '{fixture}'.");
+            var root = LoadProtocolFixture(fixture);
+            Assert.AreEqual("local-hardening-contract", root.GetProperty("sourceKind").GetString(), fixture);
+            Assert.AreEqual("hardening-05-v1", root.GetProperty("generatorVersion").GetString(), fixture);
+            Assert.IsTrue(root.GetProperty("sourceRefs").EnumerateArray().Any(value =>
+                string.Equals(value.GetString(), "docs/adr/0019-protocol-supplemental-authority-records.md", StringComparison.Ordinal)), fixture);
+            Assert.IsTrue(root.GetProperty("comparisonRules").EnumerateArray().Any(value =>
+                string.Equals(value.GetString(), "no-php-compatibility-claim", StringComparison.Ordinal)), fixture);
+
+            var @case = root.GetProperty("case");
+            var compact = JsonSerializer.Serialize(@case, new JsonSerializerOptions { WriteIndented = false });
+            var digest = ContentDigest.Sha256Utf8(compact).ToString();
+            Assert.AreEqual(root.GetProperty("inputDigest").GetString(), digest, fixture);
+            Assert.AreEqual(root.GetProperty("outputDigest").GetString(), digest, fixture);
+            operations.Add(@case.GetProperty("operation").GetString()!);
+            mutations.Add(@case.GetProperty("mutation").GetString()!);
+        }
+
+        CollectionAssert.AreEquivalent(new[] { "rehydrate-waiver", "rehydrate-amendment" }, operations.ToArray());
+        foreach (var mutation in new[] { "none", "wrong-target", "non-human", "wrong-lineage", "foreign-notice" })
+        {
+            Assert.IsTrue(mutations.Contains(mutation), $"Missing supplemental authority mutation recipe '{mutation}'.");
         }
     }
 
