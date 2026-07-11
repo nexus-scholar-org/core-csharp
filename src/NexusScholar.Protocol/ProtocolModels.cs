@@ -1027,14 +1027,45 @@ public sealed record ProtocolAmendment(
             Array.Empty<string>());
     }
 
-    public IReadOnlyList<string> ChangedDecisionKeys { get; } = (ChangedDecisionKeys ?? Array.Empty<string>())
-        .OrderBy(key => key, StringComparer.Ordinal)
-        .ToArray();
+    public IReadOnlyList<string> ChangedDecisionKeys { get; } = Array.AsReadOnly(
+        (ChangedDecisionKeys ?? Array.Empty<string>())
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray());
 
     public IReadOnlyList<ProtocolInvalidationNotice> InvalidationNotices { get; } =
-        (InvalidationNotices ?? Array.Empty<ProtocolInvalidationNotice>()).ToArray();
+        Array.AsReadOnly((InvalidationNotices ?? Array.Empty<ProtocolInvalidationNotice>()).ToArray());
 
-    public IReadOnlyList<string> ApprovalIds { get; } = (ApprovalIds ?? Array.Empty<string>()).ToArray();
+    public IReadOnlyList<string> ApprovalIds { get; } =
+        Array.AsReadOnly((ApprovalIds ?? Array.Empty<string>()).ToArray());
+
+    public CanonicalJsonObject ToCanonicalJson()
+    {
+        var result = new CanonicalJsonObject()
+            .Add("amendment_id", Guard.NotBlank(AmendmentId, nameof(AmendmentId)))
+            .Add("protocol_id", Guard.NotBlank(ProtocolId, nameof(ProtocolId)))
+            .Add("amends_version_id", Guard.NotBlank(AmendsVersionId, nameof(AmendsVersionId)))
+            .Add("produces_version_id", Guard.NotBlank(ProducesVersionId, nameof(ProducesVersionId)))
+            .Add("previous_content_digest", PreviousContentDigest.ToString())
+            .Add("requested_by", RequestedBy.ToString())
+            .AddTimestamp("requested_at", RequestedAt)
+            .Add("rationale", Guard.NotBlank(Rationale, nameof(Rationale)))
+            .Add("changed_decision_keys", CanonicalJsonValue.Array(
+                ChangedDecisionKeys.OrderBy(key => key, StringComparer.Ordinal).Select(CanonicalJsonValue.From).ToArray()))
+            .Add("invalidation_notices", CanonicalJsonValue.Array(
+                InvalidationNotices.OrderBy(notice => notice.AffectedRequirementId, StringComparer.Ordinal)
+                    .ThenBy(notice => notice.NoticeId, StringComparer.Ordinal)
+                    .Select(notice => notice.ToCanonicalJson()).ToArray()))
+            .Add("approval_policy_id", Guard.NotBlank(ApprovalPolicyId, nameof(ApprovalPolicyId)))
+            .Add("approval_ids", CanonicalJsonValue.Array(
+                ApprovalIds.OrderBy(id => id, StringComparer.Ordinal).Select(CanonicalJsonValue.From).ToArray()));
+
+        if (InvalidationPlanDigest is not null)
+        {
+            result.Add("invalidation_plan_digest", InvalidationPlanDigest.Value.ToString());
+        }
+
+        return result;
+    }
 }
 
 internal static class ProtocolDigestMaterial
