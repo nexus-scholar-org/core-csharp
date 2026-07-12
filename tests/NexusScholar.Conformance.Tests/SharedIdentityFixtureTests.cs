@@ -20,6 +20,7 @@ public sealed class SharedIdentityFixtureTests
         "shared-identity-scholarlywork-merge",
         "shared-identity-no-id-candidate",
         "shared-identity-corpus-slice-dedupe",
+        "shared-identity-corpus-slice-transitive-bridge",
         "shared-identity-unvalidated-candidates",
         "shared-identity-title-lookup-helper",
         "shared-identity-bad-workid-string",
@@ -104,6 +105,7 @@ public sealed class SharedIdentityFixtureTests
 
         AssertScholarlyWorkMergeFixture();
         AssertCorpusSliceDedupeFixture();
+        AssertCorpusSliceTransitiveBridgeFixture();
         AssertNoIdCandidateFixture();
         AssertUnvalidatedCandidatesFixture();
         AssertTitleLookupHelperFixture();
@@ -196,6 +198,26 @@ public sealed class SharedIdentityFixtureTests
         CollectionAssert.AreEqual(
             fixtureCase.GetProperty("membershipIds").EnumerateArray().Select(value => value.GetString()).ToArray(),
             slice.StableMembershipIds().ToArray());
+    }
+
+    private static void AssertCorpusSliceTransitiveBridgeFixture()
+    {
+        using var document = LoadJsonFixture("shared-identity-corpus-slice-transitive-bridge.json");
+        var fixtureCase = document.RootElement.GetProperty("case");
+        var slice = CorpusSlice.Empty
+            .WithWork(ScholarlyWork.Identified("DOI", WorkIdSet.From(WorkId.From("doi", "10.1000/bridge"))))
+            .WithWork(ScholarlyWork.Identified("OpenAlex", WorkIdSet.From(WorkId.From("openalex", "W-BRIDGE"))))
+            .WithWork(ScholarlyWork.Identified(
+                "Bridge",
+                WorkIdSet.From(
+                    WorkId.From("doi", "10.1000/bridge"),
+                    WorkId.From("openalex", "W-BRIDGE"),
+                    WorkId.From("s2", "S2-BRIDGE"))));
+
+        Assert.AreEqual(fixtureCase.GetProperty("dedupedCount").GetInt32(), slice.Works.Count);
+        CollectionAssert.AreEqual(
+            fixtureCase.GetProperty("mergedIds").EnumerateArray().Select(value => value.GetString()).ToArray(),
+            slice.Works.Single().WorkIds.Ids.Select(id => id.ToString()).ToArray());
     }
 
     private static void AssertNoIdCandidateFixture()

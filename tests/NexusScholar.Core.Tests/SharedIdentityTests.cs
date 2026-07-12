@@ -157,6 +157,68 @@ public sealed class SharedIdentityTests
     }
 
     [TestMethod]
+    public void Corpus_slice_bridge_record_merges_the_full_overlap_connected_component()
+    {
+        var doiWork = Identified("DOI work", ("doi", "10.1000/bridge"));
+        var openAlexWork = Identified("OpenAlex work", ("openalex", "W-BRIDGE"));
+        var bridge = Identified(
+            "Bridge evidence",
+            ("doi", "10.1000/bridge"),
+            ("openalex", "W-BRIDGE"),
+            ("s2", "S2-BRIDGE"));
+
+        var slice = CorpusSlice.Empty.WithWork(doiWork).WithWork(openAlexWork).WithWork(bridge);
+
+        Assert.AreEqual(1, slice.Works.Count);
+        Assert.AreEqual("DOI work", slice.Works[0].Title);
+        Assert.AreEqual(3, slice.Works[0].WorkIds.Ids.Count);
+        Assert.AreSame(slice.Works[0], slice.FindById(WorkId.From("openalex", "W-BRIDGE")));
+    }
+
+    [TestMethod]
+    public void Validated_corpus_rehydration_rejects_overlapping_members()
+    {
+        var first = Identified("First", ("doi", "10.1000/duplicate"));
+        var duplicate = Identified(
+            "Duplicate",
+            ("doi", "10.1000/duplicate"),
+            ("openalex", "W-DUPLICATE"));
+
+        var error = Assert.ThrowsExactly<SharedIdentityRuleException>(() =>
+            CorpusSlice.RehydrateValidated([first, duplicate]));
+
+        Assert.AreEqual(SharedIdentityErrorCodes.DuplicateStableIdentity, error.Category);
+    }
+
+    [TestMethod]
+    public void Bridge_merge_is_permutation_safe_and_repeated_additions_are_idempotent()
+    {
+        var works = new[]
+        {
+            Identified("DOI", ("doi", "10.1000/permutation")),
+            Identified("OpenAlex", ("openalex", "W-PERMUTATION")),
+            Identified("Bridge", ("doi", "10.1000/permutation"), ("openalex", "W-PERMUTATION"), ("s2", "S2-PERMUTATION"))
+        };
+        int[][] permutations =
+        [
+            [0, 1, 2], [0, 2, 1], [1, 0, 2],
+            [1, 2, 0], [2, 0, 1], [2, 1, 0]
+        ];
+
+        foreach (var permutation in permutations)
+        {
+            var slice = permutation.Aggregate(CorpusSlice.Empty, (current, index) => current.WithWork(works[index]));
+            slice = slice.WithWork(works[0]).WithWork(works[1]).WithWork(works[2]);
+
+            Assert.AreEqual(1, slice.Works.Count, string.Join(",", permutation));
+            CollectionAssert.AreEqual(
+                new[] { "doi:10.1000/permutation", "openalex:w-permutation", "s2:s2-permutation" },
+                slice.Works[0].WorkIds.Ids.Select(id => id.ToString()).ToArray(),
+                string.Join(",", permutation));
+        }
+    }
+
+    [TestMethod]
     public void Corpus_slice_preserves_no_id_candidates_even_with_matching_titles()
     {
         var first = ScholarlyWork.UnresolvedCandidate("Same title", "import:row-1");
@@ -218,4 +280,9 @@ public sealed class SharedIdentityTests
         var error = Assert.ThrowsExactly<SharedIdentityRuleException>(() => WorkId.Parse(value));
         Assert.AreEqual(SharedIdentityErrorCodes.InvalidWorkId, error.Category);
     }
+
+    private static ScholarlyWork Identified(string title, params (string Namespace, string Value)[] identifiers) =>
+        ScholarlyWork.Identified(
+            title,
+            WorkIdSet.From(identifiers.Select(identifier => WorkId.From(identifier.Namespace, identifier.Value)).ToArray()));
 }
