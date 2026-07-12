@@ -12,6 +12,7 @@ public static class SharedIdentityErrorCodes
     public const string MissingSourceContext = "missing-source-context";
     public const string NoStableIdentity = "no-stable-identity";
     public const string NoIdentifierOverlap = "no-identifier-overlap";
+    public const string DuplicateStableIdentity = "duplicate-stable-identity";
 }
 
 public sealed class SharedIdentityRuleException : DomainRuleException
@@ -362,6 +363,31 @@ public sealed class CorpusSlice
         return new CorpusSlice(works);
     }
 
+    public static CorpusSlice RehydrateValidated(IEnumerable<ScholarlyWork> works)
+    {
+        var snapshot = (works ?? throw new ArgumentNullException(nameof(works))).ToArray();
+        if (snapshot.Any(work => work is null))
+        {
+            throw new ArgumentException("Corpus members must not be null.", nameof(works));
+        }
+
+        var stableIds = new HashSet<WorkId>();
+        foreach (var work in snapshot)
+        {
+            foreach (var id in work.WorkIds.Ids)
+            {
+                if (!stableIds.Add(id))
+                {
+                    throw new SharedIdentityRuleException(
+                        SharedIdentityErrorCodes.DuplicateStableIdentity,
+                        "Validated corpus members must not share a stable identifier.");
+                }
+            }
+        }
+
+        return new CorpusSlice(snapshot);
+    }
+
     public CorpusSlice WithWork(ScholarlyWork work)
     {
         ArgumentNullException.ThrowIfNull(work);
@@ -369,17 +395,43 @@ public sealed class CorpusSlice
 
         if (work.HasStableIdentifier)
         {
-            for (var index = 0; index < next.Length; index++)
+            var mergedIdentity = work;
+            var overlappingIndexes = new HashSet<int>();
+            var changed = true;
+            while (changed)
             {
-                if (next[index].IsSameWorkAs(work))
+                changed = false;
+                for (var index = 0; index < next.Length; index++)
                 {
-                    next[index] = next[index].MergeWith(work);
-                    return new CorpusSlice(next);
+                    if (overlappingIndexes.Contains(index) || !next[index].IsSameWorkAs(mergedIdentity))
+                    {
+                        continue;
+                    }
+
+                    overlappingIndexes.Add(index);
+                    mergedIdentity = mergedIdentity.MergeWith(next[index]);
+                    changed = true;
                 }
+            }
+
+            if (overlappingIndexes.Count > 0)
+            {
+                var orderedIndexes = overlappingIndexes.OrderBy(index => index).ToArray();
+                var merged = next[orderedIndexes[0]].MergeWith(work);
+                foreach (var index in orderedIndexes.Skip(1))
+                {
+                    merged = merged.MergeWith(next[index]);
+                }
+
+                var result = next
+                    .Where((_, index) => !overlappingIndexes.Contains(index))
+                    .ToList();
+                result.Insert(orderedIndexes[0], merged);
+                return RehydrateValidated(result);
             }
         }
 
-        return new CorpusSlice(next.Append(work));
+        return RehydrateValidated(next.Append(work));
     }
 
     public CorpusSlice Merge(CorpusSlice other)

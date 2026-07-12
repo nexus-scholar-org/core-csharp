@@ -1,0 +1,27 @@
+{
+  "fixtureId": "shared-identity-corpus-slice-transitive-bridge",
+  "sourceKind": "local-gate-9-contract",
+  "sourceCommit": "local-gate-9-implementation",
+  "generatorCommand": "hand-authored local Gate 9 shared identity fixture",
+  "generatorVersion": "gate-9-v1",
+  "sourceRefs": [
+    "docs/adr/0007-shared-scientific-identity.md"
+  ],
+  "comparisonRules": [
+    "no-php-compatibility-claim",
+    "no-generated-php-fixture",
+    "transitive-stable-identifier-closure"
+  ],
+  "inputDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "outputDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "case": {
+    "negative": false,
+    "inputCount": 3,
+    "dedupedCount": 1,
+    "mergedIds": [
+      "doi:10.1000/bridge",
+      "openalex:w-bridge",
+      "s2:s2-bridge"
+    ]
+  }
+}
