@@ -1,0 +1,32 @@
+{
+  "schema": "nexus.package-topology.v1",
+  "version": "0.1.0-alpha.1",
+  "packages": [
+    "NexusScholar.Artifacts",
+    "NexusScholar.Bundles",
+    "NexusScholar.Deduplication",
+    "NexusScholar.Extensibility",
+    "NexusScholar.FullText",
+    "NexusScholar.Kernel",
+    "NexusScholar.Protocol",
+    "NexusScholar.Provenance",
+    "NexusScholar.Screening",
+    "NexusScholar.Search",
+    "NexusScholar.Shared",
+    "NexusScholar.Workflow"
+  ],
+  "smokeRoots": [
+    "NexusScholar.Bundles",
+    "NexusScholar.Extensibility",
+    "NexusScholar.FullText",
+    "NexusScholar.Screening"
+  ],
+  "excluded": [
+    "NexusScholar.AI",
+    "NexusScholar.AppServices",
+    "NexusScholar.Avalonia.Blocks",
+    "NexusScholar.Cli",
+    "NexusScholar.ResearchWorkspace",
+    "NexusScholar.UiContracts"
+  ]
+}

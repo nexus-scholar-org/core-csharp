@@ -33,6 +33,10 @@ jobs:
       - name: Build
         run: dotnet build NexusScholar.Core.slnx -c Release --no-restore
 
+      - name: Package smoke
+        shell: pwsh
+        run: ./scripts/verify-packages.ps1
+
       - name: Test
         run: dotnet test NexusScholar.Core.slnx -c Release --no-build
 
