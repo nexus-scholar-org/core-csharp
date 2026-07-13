@@ -10,8 +10,7 @@ Implementation progress:
 - Phase 4 transactional workspace integrity: complete through Hardening 17.
 - Phase 5 test strategy upgrade: complete through Hardening 18.
 - Phase 6 release engineering: complete through Hardening 24 live governance and tagged release rehearsal.
-- Phase 7 compatibility evidence: in progress through Hardening 28 Screening and Full Text compatibility evidence.
-- Remaining Phase 7 job: H29 graph/export closeout.
+- Phase 7 compatibility evidence: complete through Hardening 29.
 
 Source review: [full-technical-review.md](full-technical-review.md)
 
@@ -66,6 +65,7 @@ This plan supersedes the 2026-06-29 public-readiness plan as the current operati
 - Screening now resolves Protocol and Deduplication authority, and Full Text verifies its complete input/acquisition/attempt/artifact chain.
 - ResearchWorkspace imports and analysis now use staged atomic promotion, locking/CAS, revision-bound generation manifests, digest verification, and safe path resolution.
 - Validation delivery is release-managed: protected `main`, private vulnerability reporting, dependency and secret scanning, tag-only release environment, workflow Pages, and a clean attested tagged rehearsal are verified. NuGet publication and package signing remain disabled.
+- Phase 7 compatibility evidence is closed through H29 with generated `citation-export` evidence and no C# Network/Reporting compatibility claim.
 
 ## Rules For Follow-Up Work
 

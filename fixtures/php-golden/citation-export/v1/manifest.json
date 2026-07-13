@@ -1,0 +1,56 @@
+{
+    "fixtureSetId": "php-citation-export-observations-v1",
+    "schemaVersion": "1.0.0",
+    "sourceKind": "pinned-php-observable-behavior",
+    "sourceRepository": "nexus-scholar/core",
+    "sourceCommit": "b24d0d71ec7b64003465182477e7edb7f49994f4",
+    "sourceRefs": [
+        "src/CitationNetwork/Application/Builder/CitationGraphBuilder.php",
+        "src/CitationNetwork/Domain/CitationGraph.php",
+        "src/CitationNetwork/Domain/CitationGraphType.php",
+        "src/CitationNetwork/Domain/CitationLink.php",
+        "src/Dissemination/Application/Support/ValidatesExportFilename.php",
+        "src/Dissemination/Domain/BibliographyFormat.php",
+        "src/Dissemination/Domain/NetworkExportFormat.php",
+        "src/Dissemination/Infrastructure/Serializer/BibTexSerializer.php",
+        "src/Dissemination/Infrastructure/Serializer/GraphMlSerializer.php",
+        "src/Shared/Domain/CorpusSlice.php",
+        "src/Shared/Domain/ScholarlyWork.php",
+        "src/Shared/ValueObject/Author.php",
+        "src/Shared/ValueObject/AuthorList.php",
+        "src/Shared/ValueObject/Venue.php",
+        "src/Shared/ValueObject/WorkId.php",
+        "src/Shared/ValueObject/WorkIdNamespace.php",
+        "src/Shared/ValueObject/WorkIdSet.php",
+        "tests/Unit/CitationNetwork/Application/Builder/CitationGraphBuilderTest.php",
+        "tests/Unit/CitationNetwork/Domain/CitationGraphTest.php",
+        "tests/Unit/Dissemination/Infrastructure/BibTexSerializerTest.php",
+        "tests/Unit/Dissemination/Infrastructure/GraphMlSerializerTest.php"
+    ],
+    "generatorCommand": "php scripts/php-golden/citation-export-observations.php --php-reference \"$PHP_REFERENCE\" --source-lock specs/SOURCE.lock.json --input fixtures/php-golden/citation-export/v1/input.json --comparison fixtures/php-golden/citation-export/v1/comparison.json --output fixtures/php-golden/citation-export/v1/expected.json --manifest fixtures/php-golden/citation-export/v1/manifest.json",
+    "generatorVersion": "citation-export-observations-v1",
+    "environmentAssumptions": [
+        "PHP 8.3 or later",
+        "git is available",
+        "PHP reference tracked files are clean",
+        "no network access or Composer dependencies are required",
+        "no Mbsoft graph dependencies are required for fixture generation",
+        "no Laravel persistence path is exercised",
+        "runtime IDs, timestamps, object hashes, and persistence state are excluded from generated outputs",
+        "UTF-8 JSON with LF line endings"
+    ],
+    "inputDigest": "sha256:9552ff694914c1cb633d04b37478fd5387b1eae091122d3444762214b08f49f5",
+    "outputDigest": "sha256:15dfb049f8e4cf50814e0c87a2a4f19d07ba496af43486111ab31884ce138161",
+    "sourceLockDigest": "sha256:325ba2e579e6fdb9b3379912fdc8f245eb28bd04881a4587b8ed26757c6261ea",
+    "classificationDigest": "sha256:0693de8c6c2554f6eb6fe926781d4907c3359f9d39c2679bec52f0ef0e8552fe",
+    "ignoredNondeterminism": [
+        "generated citation graph ids",
+        "generated corpus slice ids",
+        "retrieved timestamps in ScholarlyWork"
+    ],
+    "comparisonRules": [
+        "compare PHP observable behavior only, not any C# replay targets",
+        "compare normalized outputs derived from deterministic fixed-case inputs",
+        "ignore runtime object identity, storage paths, and internal IDs"
+    ]
+}

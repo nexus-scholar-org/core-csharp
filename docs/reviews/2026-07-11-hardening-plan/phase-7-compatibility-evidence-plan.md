@@ -1,6 +1,6 @@
 # Phase 7 Compatibility Evidence Plan
 
-Status: in progress.
+Status: complete.
 
 ## Objective
 
@@ -22,11 +22,11 @@ Generation must fail when the PHP checkout is not at the pinned commit or has tr
 
 | Job | Scope | State | Exit evidence |
 | --- | --- | --- | --- |
-| H25 | Fixture harness and Shared Identity | implemented on `cdx/hardening-phase-7-shared-identity` | deterministic PHP exporter, 12 cases, manifest digests, reviewed classifications, C# comparator |
-| H26 | Search query, cache, provider selection, and local import boundary | implemented on `cdx/hardening-phase-7-search-evidence` | 18 generated PHP cases, four corrected C# defects, semantic comparators, and explicit imported-export non-claim |
-| H27 | Deduplication plus corpus lock/snapshot behavior | implemented on `cdx/hardening-phase-7-dedup-evidence` | 16 generated PHP cases, semantic comparators, runtime identity and threshold differences classified, lock/snapshot non-adoption governed by ADR 0026 |
-| H28 | Screening and local Full Text overlap | implemented on `cdx/hardening-phase-7-screening-fulltext-evidence` | 26 cases (16 equivalent, 9 intentional, 1 `php_defect`), `php-golden/screening-fulltext/v1`, and typed comparator test coverage |
-| H29 | Citation network, dissemination exports, and Phase 7 closeout | pending | generated graph/export fixtures, compatibility claim inventory, full validation, and final phase report |
+| H25 | Fixture harness and Shared Identity | complete | deterministic PHP exporter, 12 total cases (`9 equivalent`, `3 intentional_change`) in `php-golden/shared-identity/v1`, manifest digests, reviewed classifications, C# comparator |
+| H26 | Search query, cache, provider selection, and local import boundary | complete | 18 total cases (`15 equivalent`, `3 intentional_change`) in `php-golden/search/v1`, semantic comparators, and explicit imported-export non-claim |
+| H27 | Deduplication plus corpus lock/snapshot behavior | complete | 16 total cases (`8 equivalent`, `8 intentional_change`) in `php-golden/deduplication/v1`, runtime identity and threshold differences classified, lock/snapshot non-adoption governed by ADR 0026 |
+| H28 | Screening and local Full Text overlap | complete | 26 total cases (`16 equivalent`, `9 intentional_change`, `1 php_defect`) in `php-golden/screening-fulltext/v1`, typed comparator test coverage |
+| H29 | Citation network and dissemination exports closeout | complete | 14 total cases (all `intentional_change`), generated evidence-only set in `php-golden/citation-export/v1`, no C# replay target, no Network/Reporting implementation, and no broad PHP compatibility claim |
 
 ## H25 Evidence
 
@@ -57,3 +57,9 @@ Generation must fail when the PHP checkout is not at the pinned commit or has tr
 ## Exit Condition
 
 Phase 7 is complete only when H25-H29 are complete and every retained compatibility statement names its fixture set and comparison result. Uncovered behavior remains explicitly unclaimed.
+
+H29 status:
+
+- H29 generated fixtures are evidence-only and are explicitly scoped as non-implementation.
+- `PhpCompatibilityEvidenceClosureTests` validates H29 provenance and PHP observations plus the aggregate Phase 7 inventory; it does not fabricate a C# semantic replay target.
+- Retained H29 statements are constrained to: "evidence generated for citation network and dissemination-export behavior under ADR 0027", and all broader PHP compatibility claims remain unasserted.
