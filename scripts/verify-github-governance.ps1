@@ -5,7 +5,11 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Get-GitHubJson([string]$Path) {
-    $output = gh api "repos/$Repository/$Path"
+    $endpoint = "repos/$Repository"
+    if (-not [string]::IsNullOrWhiteSpace($Path)) {
+        $endpoint = "$endpoint/$Path"
+    }
+    $output = gh api $endpoint
     if ($LASTEXITCODE -ne 0) {
         throw "GitHub API request failed for '$Path'."
     }
@@ -53,4 +57,4 @@ if ($pages.build_type -ne 'workflow' -or $pages.status -ne 'built' -or -not $pag
     throw 'GitHub Pages is not built through the HTTPS workflow pipeline.'
 }
 
-Write-Host "GitHub governance verified for $Repository: protected main, private reporting, security analysis, tag-only release environment, and workflow Pages."
+Write-Host "GitHub governance verified for ${Repository}: protected main, private reporting, security analysis, tag-only release environment, and workflow Pages."
