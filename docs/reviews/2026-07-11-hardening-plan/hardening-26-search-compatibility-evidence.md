@@ -1,6 +1,6 @@
 # Hardening 26 - Search Compatibility Evidence
 
-Status: implemented; pending protected-branch merge verification.
+Status: complete; protected-branch merge verified by PR #50 at merge `24f302d`.
 
 ## Behavior Implemented
 

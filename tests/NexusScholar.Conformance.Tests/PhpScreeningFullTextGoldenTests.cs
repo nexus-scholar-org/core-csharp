@@ -164,7 +164,7 @@ public sealed class PhpScreeningFullTextGoldenTests
             var caseId = item.GetProperty("caseId").GetString()!;
             var classification = item.GetProperty("classification").GetString()!;
             CollectionAssert.Contains(AllowedClassifications, classification, $"Unexpected classification for '{caseId}'");
-            CollectionAssert.AllItemsAreUnique(item.GetProperty("authorityRefs").EnumerateArray().Select(x => x.GetString()!).ToArray(), $"No authorities for '{caseId}'");
+            AssertClassificationAuthorityRefs(item, caseId);
             Assert.IsTrue(item.GetProperty("comparisonRule").GetString()!.Length > 0, $"Missing comparisonRule for '{caseId}'");
 
             if (classification == "equivalent_serialization" || classification == "php_defect")
@@ -187,6 +187,20 @@ public sealed class PhpScreeningFullTextGoldenTests
         }
 
         Assert.AreEqual("screening-nonfinite-confidence-accepted", phpDefects.Single().GetProperty("caseId").GetString());
+    }
+
+    [TestMethod]
+    public void Screening_fulltext_classification_guard_rejects_empty_authority_refs()
+    {
+        using var classification = JsonDocument.Parse("""
+            {
+              "caseId": "missing-authority",
+              "authorityRefs": []
+            }
+            """);
+
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            AssertClassificationAuthorityRefs(classification.RootElement, "missing-authority"));
     }
 
     [TestMethod]
@@ -703,6 +717,13 @@ public sealed class PhpScreeningFullTextGoldenTests
     {
         var actual = ReadStrings(classification.GetProperty("authorityRefs"));
         CollectionAssert.AreEquivalent(expectedAuthorities, actual);
+    }
+
+    private static void AssertClassificationAuthorityRefs(JsonElement classification, string caseId)
+    {
+        var authorityRefs = classification.GetProperty("authorityRefs").EnumerateArray().Select(x => x.GetString()!).ToArray();
+        Assert.IsTrue(authorityRefs.Length > 0, $"No authorities for '{caseId}'");
+        CollectionAssert.AllItemsAreUnique(authorityRefs, $"Duplicate authorities for '{caseId}'");
     }
 
     private static ScreeningService BuildScreeningService(IReadOnlyList<string> candidateIds)

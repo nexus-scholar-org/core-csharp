@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.AI;
 using NexusScholar.Bundles;
@@ -18,6 +19,68 @@ public sealed class GovernanceTests
             humanApprovalRequired: false,
             evidenceRequired: true,
             externalDataTransferAllowed: false));
+    }
+
+    [TestMethod]
+    public void Ai_proposals_are_immutable_evidence_and_expose_no_authority_transition()
+    {
+        var evidence = new List<ContentDigest> { ContentDigest.Sha256Utf8("source-evidence") };
+        var policy = AiTaskPolicy.Create(
+            "screen-title-abstract",
+            AiAuthority.ScientificDecisionProposal,
+            humanApprovalRequired: true,
+            evidenceRequired: true,
+            externalDataTransferAllowed: false);
+        var proposal = new AiProposal<string>(
+            policy,
+            "include suggestion",
+            evidence,
+            new FixedClock().UtcNow);
+
+        evidence.Clear();
+
+        Assert.AreEqual(1, proposal.Evidence.Count);
+        Assert.IsNull(typeof(AiProposal<string>).GetMethod("Accept", BindingFlags.Public | BindingFlags.Instance));
+        Assert.IsNull(typeof(AiProposal<>).Assembly.GetType("NexusScholar.AI.AcceptedAiProposal`1"));
+    }
+
+    [TestMethod]
+    public void Ai_proposals_reject_invalid_evidence_digests()
+    {
+        var policy = AiTaskPolicy.Create(
+            "screen-title-abstract",
+            AiAuthority.ScientificDecisionProposal,
+            humanApprovalRequired: true,
+            evidenceRequired: true,
+            externalDataTransferAllowed: false);
+        Assert.ThrowsExactly<DomainRuleException>(() => new AiProposal<string>(
+            policy,
+            "include suggestion",
+            [default],
+            new FixedClock().UtcNow));
+    }
+
+    [TestMethod]
+    public void Ai_proposals_bind_policy_evidence_and_utc_timestamp_requirements()
+    {
+        var policy = AiTaskPolicy.Create(
+            "screen-title-abstract",
+            AiAuthority.ScientificDecisionProposal,
+            humanApprovalRequired: true,
+            evidenceRequired: true,
+            externalDataTransferAllowed: false);
+
+        Assert.ThrowsExactly<DomainRuleException>(() => new AiProposal<string>(
+            policy,
+            "include suggestion",
+            [],
+            new FixedClock().UtcNow));
+        Assert.ThrowsExactly<DomainRuleException>(() => new AiProposal<string>(
+            policy,
+            "include suggestion",
+            [ContentDigest.Sha256Utf8("source-evidence")],
+            default));
+        Assert.AreEqual(0, typeof(AiTaskPolicy).GetConstructors(BindingFlags.Public | BindingFlags.Instance).Length);
     }
 
     [TestMethod]

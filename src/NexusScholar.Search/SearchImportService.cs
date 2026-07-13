@@ -398,7 +398,7 @@ public sealed class SearchImportService
 
             AddSourceSpecificIdentifier("isbn", GetSingle(fields, "isbn"), sourceIdentifiers, notices, sourceRecordId, recordIndex, parserWarnings);
 
-            var authors = ParseAuthorList(GetSingle(fields, "author"));
+            var authors = ParseBibtexAuthorList(GetSingle(fields, "author"));
             var year = ParseYear(GetSingle(fields, "year"), sourceRecordId, recordIndex, parserWarnings);
             var venue = GetSingle(fields, "journal");
             if (string.IsNullOrWhiteSpace(venue))
@@ -545,10 +545,10 @@ public sealed class SearchImportService
             AddSourceSpecificIdentifier("eid", GetValue(values, "eid"), sourceIdentifiers, notices, sourceRecordId, row, parserWarnings);
             AddSourceSpecificIdentifier("wos", GetValue(values, "wos", false), sourceIdentifiers, notices, sourceRecordId, row, parserWarnings);
 
-            var authors = ParseAuthorList(GetValue(values, "author names"));
+            var authors = ParseDelimitedAuthorList(GetValue(values, "author names"));
             if (authors.Count == 0)
             {
-                authors = ParseAuthorList(GetValue(values, "authors"));
+                authors = ParseDelimitedAuthorList(GetValue(values, "authors"));
             }
 
             var venue = GetValue(values, "source title");
@@ -1056,16 +1056,58 @@ public sealed class SearchImportService
             ? Array.Empty<string>()
             : value.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    private static IReadOnlyList<string> ParseAuthorList(string? value)
+    private static IReadOnlyList<string> ParseBibtexAuthorList(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             return Array.Empty<string>();
         }
 
-        if (value.Contains(" and ", StringComparison.OrdinalIgnoreCase))
+        var authors = new List<string>();
+        var start = 0;
+        var braceDepth = 0;
+        for (var index = 0; index < value.Length; index++)
         {
-            return value.Split(" and ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            braceDepth += value[index] switch
+            {
+                '{' => 1,
+                '}' => -1,
+                _ => 0
+            };
+
+            if (braceDepth == 0 && IsBibtexAndSeparator(value, index))
+            {
+                AddBibtexAuthor(authors, value[start..index]);
+                index += 2;
+                start = index + 1;
+            }
+        }
+
+        AddBibtexAuthor(authors, value[start..]);
+        return authors;
+    }
+
+    private static bool IsBibtexAndSeparator(string value, int index) =>
+        index > 0 &&
+        index + 3 < value.Length &&
+        char.IsWhiteSpace(value[index - 1]) &&
+        value.AsSpan(index, 3).Equals("and", StringComparison.OrdinalIgnoreCase) &&
+        char.IsWhiteSpace(value[index + 3]);
+
+    private static void AddBibtexAuthor(List<string> authors, string value)
+    {
+        var author = value.Trim();
+        if (author.Length > 0)
+        {
+            authors.Add(author);
+        }
+    }
+
+    private static IReadOnlyList<string> ParseDelimitedAuthorList(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Array.Empty<string>();
         }
 
         if (value.Contains(',', StringComparison.Ordinal))

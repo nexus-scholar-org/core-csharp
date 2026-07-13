@@ -10,13 +10,32 @@ public enum AiAuthority
     ExternalActionProposal
 }
 
-public sealed record AiTaskPolicy(
-    string TaskType,
-    AiAuthority Authority,
-    bool HumanApprovalRequired,
-    bool EvidenceRequired,
-    bool ExternalDataTransferAllowed)
+public sealed record AiTaskPolicy
 {
+    private AiTaskPolicy(
+        string taskType,
+        AiAuthority authority,
+        bool humanApprovalRequired,
+        bool evidenceRequired,
+        bool externalDataTransferAllowed)
+    {
+        TaskType = taskType;
+        Authority = authority;
+        HumanApprovalRequired = humanApprovalRequired;
+        EvidenceRequired = evidenceRequired;
+        ExternalDataTransferAllowed = externalDataTransferAllowed;
+    }
+
+    public string TaskType { get; }
+
+    public AiAuthority Authority { get; }
+
+    public bool HumanApprovalRequired { get; }
+
+    public bool EvidenceRequired { get; }
+
+    public bool ExternalDataTransferAllowed { get; }
+
     public static AiTaskPolicy Create(
         string taskType,
         AiAuthority authority,

@@ -1,6 +1,6 @@
 # Hardening 28 - Screening and Full Text Compatibility Evidence
 
-Status: implemented; pending protected-branch merge verification.
+Status: complete; protected-branch merge verified by PR #52 at merge `8216e6a`.
 
 ## Behavior Implemented
 
@@ -45,6 +45,7 @@ Status: implemented; pending protected-branch merge verification.
 ## Invariants
 
 - Every generated case is replayed from immutable PHP input and comparator-classified output.
+- Every classification carries at least one unique authority reference; an empty authority list fails conformance.
 - All fixture files are SHA-bound by manifest metadata and checked against pinned commit/lock.
 - Generation is pinned to a clean PHP revision matching `specs/SOURCE.lock.json`; mismatched commit or dirty worktree refuses.
 - H28 demonstrates no C# defect and no unresolved specification conflict.

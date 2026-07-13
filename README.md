@@ -16,7 +16,7 @@ The current operating plan is integrity hardening, not feature expansion. See `d
 - artifact and review-bundle contracts with immutable digest-bound entries;
 - append-only provenance events and local in-memory ledger behavior;
 - shared scientific identity, Search traces, imported Search evidence, Deduplication, Screening, and Full Text;
-- plugin capability and governed-AI proposal contracts;
+- plugin capability and governed-AI policy/proposal contracts;
 - UI contracts, sample block plans, an Avalonia block renderer, and a sample visual host;
 - a local CLI with `doctor`, `sample`, deterministic `demo`, and the first Research Workspace commands: `init`, `status`, `import search`, `verify`, `analyze`, `review`, and `clusters`.
 
@@ -151,7 +151,7 @@ The sample host renders non-authoritative sample `WorkspacePlan` JSON through `N
 - `src/NexusScholar.Screening`: human-authorized Screening decisions, AI suggestions as proposals, conflicts, and adjudication.
 - `src/NexusScholar.FullText`: local no-network acquisition, artifact evidence, source attempts, validation, duplicate artifact detection, and extraction records.
 - `src/NexusScholar.Extensibility`: extension manifests and scoped capability selections.
-- `src/NexusScholar.AI`: governed AI task policies and proposal acceptance contracts.
+- `src/NexusScholar.AI`: governed AI task policies and immutable proposals; proposal acceptance remains unavailable pending a dedicated AI-governance ADR.
 - `src/NexusScholar.UiContracts`: renderer-neutral workspace and research block contracts.
 - `src/NexusScholar.Avalonia.Blocks`: Avalonia renderer controls for UI contract blocks.
 - `src/NexusScholar.Cli`: local CLI entry point.

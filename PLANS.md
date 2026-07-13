@@ -36,19 +36,12 @@ The CLI verifies local files, analyzes imported Search/Deduplication evidence, a
 
 ## Current Plan
 
-Feature expansion is frozen. The current operating plan is integrity hardening from the 2026-07-11 full technical review:
+Feature expansion is frozen. Hardening Phases 1-7 from the 2026-07-11 full technical review are complete on protected `main`; the current operating work is the Hardening 30 corrective closeout:
 
 - `docs/reviews/2026-07-11-hardening-plan/README.md`
 - `docs/reviews/2026-07-11-hardening-plan/full-technical-review.md`
 
-Hardening starts with Phase 0:
-
-1. open one issue per confirmed blocker;
-2. correct public maturity claims;
-3. protect `main`;
-4. assign each blocker an owner, test case, and dependency order.
-
-The dependency order is:
+The completed dependency order was:
 
 1. canonical foundation;
 2. authority-safe rehydration;
@@ -57,6 +50,8 @@ The dependency order is:
 5. test strategy upgrade;
 6. release engineering;
 7. PHP compatibility evidence only after local correctness.
+
+Hardening 30 retains the feature freeze while correcting the post-phase review findings in AI proposal authority, Full Text rehydration, Search import parsing, compatibility-evidence guards, package version identity, and operating documentation.
 
 ## Explicitly Deferred
 
@@ -69,6 +64,7 @@ The dependency order is:
 - UI product shell;
 - PDF/OCR;
 - AI/model calls;
+- AI proposal acceptance or any AI-derived scientific authority without a dedicated accepted governance ADR;
 - AppServices expansion beyond current APP-01 read-only projection.
 
 APP-01 merge-gate actions are placeholders only. They must not mutate Core records, execute commands, write files, call services, or imply that the CLI/UI can finalize a scientific decision.
@@ -127,7 +123,7 @@ Future gate. Implement a Rapid Review pack with explicit shortcuts, consequences
 
 Port scholarly identity, normalization, deduplication, snapshots, screening, search, retrieval, graphs, and exports through differential fixtures.
 
-Current Gate 9 local state includes Search, Search Import, Deduplication, Screening, and local no-network Full Text. PHP compatibility remains unclaimed without generated fixtures and comparators.
+Current Gate 9 local state includes Search, Search Import, Deduplication, Screening, and local no-network Full Text. Phase 7 generated pinned fixtures and semantic comparators for explicitly inventoried cases only; broad PHP compatibility remains unclaimed.
 
 ### Gate 10: plugins
 

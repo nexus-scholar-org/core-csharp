@@ -344,6 +344,16 @@ public sealed record FullTextActor(string ActorId, string ActorKind)
     public string ActorKind { get; } = Guard.NotBlank(ActorKind, nameof(ActorKind));
 }
 
+public static class FullTextActorKinds
+{
+    public const string Human = "human";
+    public const string Import = "import";
+
+    public static bool IsHumanOrImport(string actorKind) =>
+        string.Equals(actorKind, Human, StringComparison.Ordinal) ||
+        string.Equals(actorKind, Import, StringComparison.Ordinal);
+}
+
 public sealed class FullTextSourceAttempt
 {
     public FullTextSourceAttempt(
@@ -518,11 +528,13 @@ public sealed class FullTextAcquisitionRecord
         }
 
         if (FullTextAcquisitionKinds.RequiresActor(AcquisitionKind) &&
-            (AcquiredBy is null || AcquiredAt == default))
+            (AcquiredBy is null ||
+                !FullTextActorKinds.IsHumanOrImport(AcquiredBy.ActorKind) ||
+                AcquiredAt == default))
         {
             throw new FullTextRuleException(
                 FullTextErrorCodes.MissingHumanOrImportActor,
-                "User-supplied and manual Full Text acquisition requires an actor and timestamp.");
+                "User-supplied and manual Full Text acquisition requires a human or import actor and timestamp.");
         }
 
         if (SourceAttempts.Count > 0)
@@ -571,10 +583,10 @@ public sealed class FullTextArtifactEvidence
         SchemaVersion = FullTextSchemas.SchemaVersion;
         InputRef = inputRef ?? throw new ArgumentNullException(nameof(inputRef));
         CandidateId = Guard.NotBlank(candidateId, nameof(candidateId));
-        CandidateSetId = string.IsNullOrWhiteSpace(candidateSetId) ? inputRef.CandidateSetId : candidateSetId.Trim();
-        ScreeningDecisionId = string.IsNullOrWhiteSpace(screeningDecisionId) ? inputRef.ScreeningDecisionId : screeningDecisionId.Trim();
-        WorkId = string.IsNullOrWhiteSpace(workId) ? inputRef.WorkId : workId.Trim();
-        DedupClusterId = string.IsNullOrWhiteSpace(dedupClusterId) ? inputRef.DedupClusterId : dedupClusterId.Trim();
+        CandidateSetId = string.IsNullOrWhiteSpace(candidateSetId) ? null : candidateSetId.Trim();
+        ScreeningDecisionId = string.IsNullOrWhiteSpace(screeningDecisionId) ? null : screeningDecisionId.Trim();
+        WorkId = string.IsNullOrWhiteSpace(workId) ? null : workId.Trim();
+        DedupClusterId = string.IsNullOrWhiteSpace(dedupClusterId) ? null : dedupClusterId.Trim();
         AcquisitionId = Guard.NotBlank(acquisitionId, nameof(acquisitionId));
         AcquisitionKind = Guard.NotBlank(acquisitionKind, nameof(acquisitionKind));
         SourceAlias = Guard.NotBlank(sourceAlias, nameof(sourceAlias));
@@ -691,6 +703,10 @@ public sealed class FullTextArtifactEvidence
             DigestScope.RawArtifactBytes.ToString(),
             FullTextAttemptStatuses.Success,
             acceptedBytes,
+            candidateSetId: inputRef.CandidateSetId,
+            screeningDecisionId: inputRef.ScreeningDecisionId,
+            workId: inputRef.WorkId,
+            dedupClusterId: inputRef.DedupClusterId,
             logicalPath: logicalPath,
             originalFileName: originalFileName);
     }

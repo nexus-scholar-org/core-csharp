@@ -53,6 +53,94 @@ public sealed class FullTextTests
     }
 
     [TestMethod]
+    public void Full_text_authority_rejects_every_mutated_input_linkage_field()
+    {
+        var input = BuildInput("candidate-input-linkage");
+        var acquisition = BuildAcquisition(input, FullTextAcquisitionKinds.ManualAcquisition);
+        var bytes = Encoding.UTF8.GetBytes("input linkage evidence");
+        var artifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-input-linkage", input, acquisition, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+        foreach (var mutation in new[]
+        {
+            "input-id", "source-kind", "candidate-set-id", "candidate-id", "eligibility",
+            "screening-decision-id", "screening-stage", "dedup-result-id", "dedup-cluster-id",
+            "work-id", "source-refs", "non-claims"
+        })
+        {
+            var mutatedInput = MutateInput(input, mutation);
+            var acquisitionError = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+                new UnverifiedFullTextChain(input, CloneAcquisition(acquisition, mutatedInput), artifact, bytes, 1024)), mutation);
+            var artifactError = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+                new UnverifiedFullTextChain(input, acquisition, CloneArtifact(artifact, bytes, inputRef: mutatedInput), bytes, 1024)), mutation);
+
+            Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, acquisitionError.Category, mutation);
+            Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, artifactError.Category, mutation);
+        }
+    }
+
+    [TestMethod]
+    public void Full_text_authority_rejects_mutated_artifact_level_linkage()
+    {
+        var input = BuildInput("candidate-artifact-linkage");
+        var acquisition = BuildAcquisition(input, FullTextAcquisitionKinds.ManualAcquisition);
+        var bytes = Encoding.UTF8.GetBytes("artifact linkage evidence");
+        var artifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-linkage", input, acquisition, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+        foreach (var mutation in new[]
+        {
+            "candidate-id", "candidate-set-id", "screening-decision-id", "work-id", "dedup-cluster-id",
+            "acquisition-id", "acquisition-kind", "source-alias"
+        })
+        {
+            var error = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+                new UnverifiedFullTextChain(input, acquisition, CloneArtifact(artifact, bytes, mutation), bytes, 1024)), mutation);
+
+            Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, error.Category, mutation);
+        }
+
+        var acquisitionLinkError = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(
+                input,
+                CloneAcquisition(acquisition, input, "different-artifact"),
+                artifact,
+                bytes,
+                1024)));
+        Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, acquisitionLinkError.Category);
+    }
+
+    [TestMethod]
+    public void Full_text_authority_preserves_and_rejects_omitted_artifact_linkage()
+    {
+        var input = BuildInput("candidate-omitted-artifact-linkage");
+        var acquisition = BuildAcquisition(input, FullTextAcquisitionKinds.ManualAcquisition);
+        var bytes = Encoding.UTF8.GetBytes("omitted artifact linkage");
+        var artifact = new FullTextArtifactEvidence(
+            "artifact-omitted-linkage",
+            input,
+            input.CandidateId,
+            acquisition.AcquisitionId,
+            acquisition.AcquisitionKind,
+            acquisition.SourceAlias,
+            FullTextArtifactKinds.Text,
+            "text/plain",
+            bytes.LongLength,
+            ContentDigest.Sha256(bytes).ToString(),
+            DigestScope.RawArtifactBytes.ToString(),
+            FullTextAttemptStatuses.Success,
+            bytes);
+
+        Assert.IsNull(artifact.CandidateSetId);
+        Assert.IsNull(artifact.ScreeningDecisionId);
+        Assert.IsNull(artifact.WorkId);
+        Assert.IsNull(artifact.DedupClusterId);
+        var error = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(input, acquisition, artifact, bytes, 1024)));
+        Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, error.Category);
+    }
+
+    [TestMethod]
     public void Raw_authority_constructors_are_not_public_and_input_values_are_allowlisted()
     {
         Assert.AreEqual(0, typeof(FullTextInput).GetConstructors(BindingFlags.Public | BindingFlags.Instance).Length);
@@ -232,7 +320,7 @@ public sealed class FullTextTests
     }
 
     [TestMethod]
-    public void Source_attempts_preserve_failures_skips_and_later_success()
+    public void Source_attempts_preserve_failures_skips_and_rehydrate_first_later_success()
     {
         var input = BuildInput("candidate-attempts");
         var acquisition = new FullTextAcquisitionRecord(
@@ -254,6 +342,161 @@ public sealed class FullTextTests
         CollectionAssert.AreEqual(
             new[] { FullTextAttemptStatuses.Failure, FullTextAttemptStatuses.Skipped, FullTextAttemptStatuses.Success },
             acquisition.SourceAttempts.Select(attempt => attempt.Status).ToArray());
+
+        var bytes = Encoding.UTF8.GetBytes("mixed source success");
+        var artifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-attempts", input, acquisition, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+        var verified = FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(input, acquisition, artifact, bytes, 1024));
+
+        Assert.AreSame(acquisition, verified.Acquisition);
+    }
+
+    [TestMethod]
+    public void Source_attempts_accept_first_success_with_later_skip_and_reject_a_second_success()
+    {
+        var input = BuildInput("candidate-invalid-attempts");
+        var bytes = Encoding.UTF8.GetBytes("invalid attempt evidence");
+        var firstSuccess = new FullTextAcquisitionRecord(
+            "acquisition-first-success",
+            input,
+            FullTextAcquisitionKinds.ManualAcquisition,
+            "manual",
+            "operator-notes",
+            FullTextActor(),
+            FixedTime,
+            FullTextAttemptStatuses.Success,
+            [
+                new FullTextSourceAttempt("attempt-1", "open-access", 1, FullTextAcquisitionKinds.OpenAccessSourceReference, FullTextAttemptStatuses.Failure),
+                new FullTextSourceAttempt("attempt-2", "manual", 2, FullTextAcquisitionKinds.ManualAcquisition, FullTextAttemptStatuses.Success),
+                new FullTextSourceAttempt("attempt-3", "later-source", 3, FullTextAcquisitionKinds.OpenAccessSourceReference, FullTextAttemptStatuses.Skipped)
+            ]);
+        var firstArtifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-first-success", input, firstSuccess, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+        var verified = FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(input, firstSuccess, firstArtifact, bytes, 1024));
+        Assert.AreSame(firstSuccess, verified.Acquisition);
+
+        var secondSuccess = new FullTextAcquisitionRecord(
+            "acquisition-second-success",
+            input,
+            FullTextAcquisitionKinds.ManualAcquisition,
+            "manual",
+            "operator-notes",
+            FullTextActor(),
+            FixedTime,
+            FullTextAttemptStatuses.Success,
+            [
+                new FullTextSourceAttempt("attempt-1", "manual", 1, FullTextAcquisitionKinds.ManualAcquisition, FullTextAttemptStatuses.Success),
+                new FullTextSourceAttempt("attempt-2", "manual", 2, FullTextAcquisitionKinds.ManualAcquisition, FullTextAttemptStatuses.Success)
+            ]);
+        var secondArtifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-second-success", input, secondSuccess, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+        var secondError = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(input, secondSuccess, secondArtifact, bytes, 1024)));
+        Assert.AreEqual(FullTextErrorCodes.InvalidAcquisitionState, secondError.Category);
+    }
+
+    [TestMethod]
+    public void Source_attempts_reject_mismatched_accepted_attempt_bindings()
+    {
+        var input = BuildInput("candidate-attempt-binding");
+        var bytes = Encoding.UTF8.GetBytes("attempt binding evidence");
+        foreach (var mutation in new[]
+        {
+            "source-alias", "acquisition-kind", "artifact-evidence-id", "non-success-artifact-id",
+            "artifact-kind", "media-type"
+        })
+        {
+            FullTextSourceAttempt[] attempts = mutation switch
+            {
+                "non-success-artifact-id" =>
+                [
+                    new FullTextSourceAttempt("attempt-1", "open-access", 1, FullTextAcquisitionKinds.OpenAccessSourceReference, FullTextAttemptStatuses.Failure, artifactEvidenceId: "failed-artifact"),
+                    new FullTextSourceAttempt("attempt-2", "manual", 2, FullTextAcquisitionKinds.ManualAcquisition, FullTextAttemptStatuses.Success)
+                ],
+                _ => new[]
+                {
+                    new FullTextSourceAttempt(
+                        "attempt-1",
+                        mutation == "source-alias" ? "different-source" : "manual",
+                        1,
+                        mutation == "acquisition-kind" ? FullTextAcquisitionKinds.OpenAccessSourceReference : FullTextAcquisitionKinds.ManualAcquisition,
+                        FullTextAttemptStatuses.Success,
+                        artifactKind: mutation == "artifact-kind" ? FullTextArtifactKinds.Pdf : null,
+                        mediaType: mutation == "media-type" ? "application/pdf" : null,
+                        artifactEvidenceId: mutation == "artifact-evidence-id" ? "different-artifact" : null)
+                }
+            };
+            var acquisition = new FullTextAcquisitionRecord(
+                $"acquisition-{mutation}", input, FullTextAcquisitionKinds.ManualAcquisition, "manual", "operator-notes",
+                FullTextActor(), FixedTime, FullTextAttemptStatuses.Success, attempts);
+            var artifact = FullTextArtifactEvidence.FromBytes(
+                $"artifact-{mutation}", input, acquisition, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+            var error = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+                new UnverifiedFullTextChain(input, acquisition, artifact, bytes, 1024)), mutation);
+            Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, error.Category, mutation);
+        }
+    }
+
+    [TestMethod]
+    public void Source_attempts_reject_mismatched_accepted_source()
+    {
+        var input = BuildInput("candidate-invalid-source");
+        var bytes = Encoding.UTF8.GetBytes("invalid source evidence");
+
+        var wrongFinalSource = new FullTextAcquisitionRecord(
+            "acquisition-wrong-final-source",
+            input,
+            FullTextAcquisitionKinds.ManualAcquisition,
+            "manual",
+            "operator-notes",
+            FullTextActor(),
+            FixedTime,
+            FullTextAttemptStatuses.Success,
+            [new FullTextSourceAttempt("attempt-1", "different-source", 1, FullTextAcquisitionKinds.ManualAcquisition, FullTextAttemptStatuses.Success)]);
+        var wrongSourceArtifact = FullTextArtifactEvidence.FromBytes(
+            "artifact-wrong-final-source", input, wrongFinalSource, FullTextArtifactKinds.Text, "text/plain", bytes, 1024);
+
+        var sourceError = Assert.ThrowsExactly<FullTextRuleException>(() => FullTextRehydrator.Rehydrate(
+            new UnverifiedFullTextChain(input, wrongFinalSource, wrongSourceArtifact, bytes, 1024)));
+        Assert.AreEqual(FullTextErrorCodes.InvalidAuthorityChain, sourceError.Category);
+    }
+
+    [TestMethod]
+    public void Manual_and_user_supplied_acquisitions_require_human_or_import_actor_kind()
+    {
+        var input = BuildInput("candidate-actor-kind");
+        var actorRequiredKinds = new[]
+        {
+            FullTextAcquisitionKinds.UserUploadedFile,
+            FullTextAcquisitionKinds.UserSuppliedLocalFile,
+            FullTextAcquisitionKinds.ManualAcquisition
+        };
+        foreach (var acquisitionKind in actorRequiredKinds)
+        {
+            foreach (var actorKind in new[] { "automation", "plugin", "system", "unknown" })
+            {
+                var error = Assert.ThrowsExactly<FullTextRuleException>(() => new FullTextAcquisitionRecord(
+                    $"acquisition-{acquisitionKind}-{actorKind}", input, acquisitionKind, "manual", "operator-notes",
+                    new FullTextActor("actor-1", actorKind), FixedTime, FullTextAttemptStatuses.Success,
+                    [new FullTextSourceAttempt("attempt-1", "manual", 1, acquisitionKind, FullTextAttemptStatuses.Success)]));
+
+                Assert.AreEqual(FullTextErrorCodes.MissingHumanOrImportActor, error.Category, $"{acquisitionKind}:{actorKind}");
+            }
+            foreach (var actorKind in new[] { FullTextActorKinds.Human, FullTextActorKinds.Import })
+            {
+                var acquisition = new FullTextAcquisitionRecord(
+                    $"acquisition-{acquisitionKind}-{actorKind}", input, acquisitionKind, "manual", "operator-notes",
+                    new FullTextActor("actor-1", actorKind), FixedTime, FullTextAttemptStatuses.Success,
+                    [new FullTextSourceAttempt("attempt-1", "manual", 1, acquisitionKind, FullTextAttemptStatuses.Success)]);
+
+                Assert.AreEqual(actorKind, acquisition.AcquiredBy!.ActorKind);
+            }
+        }
     }
 
     [TestMethod]
@@ -420,6 +663,71 @@ public sealed class FullTextTests
     }
 
     private static FullTextActor FullTextActor() => new("human-fulltext-1", "human");
+
+    private static FullTextInput MutateInput(FullTextInput input, string mutation) => new(
+        mutation == "input-id" ? "mutated-input" : input.InputId,
+        mutation == "source-kind" ? FullTextSourceKinds.LockedReviewableCandidateSet : input.SourceKind,
+        mutation == "candidate-set-id" ? "mutated-candidate-set" : input.CandidateSetId,
+        mutation == "candidate-id" ? "mutated-candidate" : input.CandidateId,
+        mutation == "eligibility" ? FullTextEligibility.ReviewableRetrievable : input.Eligibility,
+        mutation == "source-refs" ? [new FullTextSourceRef("screening", "mutated-ref")] : input.SourceRefs,
+        mutation == "screening-decision-id" ? "mutated-screening-decision" : input.ScreeningDecisionId,
+        mutation == "screening-stage" ? "mutated-screening-stage" : input.ScreeningStage,
+        mutation == "dedup-result-id" ? "mutated-dedup-result" : input.DedupResultId,
+        mutation == "dedup-cluster-id" ? "mutated-dedup-cluster" : input.DedupClusterId,
+        mutation == "work-id" ? "doi:mutated" : input.WorkId,
+        mutation == "non-claims" ? ["mutated-non-claim"] : input.NonClaims);
+
+    private static FullTextAcquisitionRecord CloneAcquisition(
+        FullTextAcquisitionRecord source,
+        FullTextInput inputRef,
+        string? artifactEvidenceId = null) => new(
+            source.AcquisitionId,
+            inputRef,
+            source.AcquisitionKind,
+            source.SourceAlias,
+            source.SourceReference,
+            source.AcquiredBy,
+            source.AcquiredAt,
+            source.Status,
+            source.SourceAttempts,
+            source.SourceUrl,
+            source.DoiOrLandingPage,
+            source.SourceMetadata,
+            artifactEvidenceId ?? source.ArtifactEvidenceId,
+            source.Warnings,
+            source.Errors,
+            source.NonClaims);
+
+    private static FullTextArtifactEvidence CloneArtifact(
+        FullTextArtifactEvidence source,
+        byte[] bytes,
+        string? mutation = null,
+        FullTextInput? inputRef = null) => new(
+            source.ArtifactId,
+            inputRef ?? source.InputRef,
+            mutation == "candidate-id" ? "mutated-candidate" : source.CandidateId,
+            mutation == "acquisition-id" ? "mutated-acquisition" : source.AcquisitionId,
+            mutation == "acquisition-kind" ? FullTextAcquisitionKinds.OpenAccessSourceReference : source.AcquisitionKind,
+            mutation == "source-alias" ? "mutated-source" : source.SourceAlias,
+            source.ArtifactKind,
+            source.MediaType,
+            source.SizeBytes,
+            source.RawByteDigest,
+            source.RawByteDigestScope,
+            source.ValidationStatus,
+            bytes,
+            mutation == "candidate-set-id" ? "mutated-candidate-set" : source.CandidateSetId,
+            mutation == "screening-decision-id" ? "mutated-screening-decision" : source.ScreeningDecisionId,
+            mutation == "work-id" ? "doi:mutated" : source.WorkId,
+            mutation == "dedup-cluster-id" ? "mutated-dedup-cluster" : source.DedupClusterId,
+            source.SourceReference,
+            source.SourceMetadata,
+            source.LogicalPath,
+            source.OriginalFileName,
+            source.Warnings,
+            source.Errors,
+            source.NonClaims);
 
     private static FullTextArtifactEvidence BuildArtifact(
         FullTextInput input,

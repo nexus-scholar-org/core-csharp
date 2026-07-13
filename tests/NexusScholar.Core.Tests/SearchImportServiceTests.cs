@@ -259,6 +259,19 @@ public sealed class SearchImportServiceTests
     }
 
     [TestMethod]
+    public void Bibtex_preserves_a_single_comma_formatted_author_name()
+    {
+        const string sourceText = "@article{single-author,title={Author fidelity},author={Smith, John},year={2026}}";
+
+        var trace = new SearchImportService().Parse(
+            "trace-bibtex-single-author",
+            NewRequest("bibtex"),
+            Encoding.UTF8.GetBytes(sourceText));
+
+        CollectionAssert.AreEqual(new[] { "Smith, John" }, trace.ImportedRecords.Single().Authors.ToArray());
+    }
+
+    [TestMethod]
     public void Scopus_csv_preserves_unterminated_quoted_rows_as_skipped_evidence()
     {
         var sourceText = "title,abstract\nBroken,\"unterminated\n";

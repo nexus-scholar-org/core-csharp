@@ -58,6 +58,9 @@ public static class FullTextRehydrator
             !FullTextAuthorityValidator.SameInput(chain.Input, artifact.InputRef) ||
             !string.Equals(artifact.CandidateId, chain.Input.CandidateId, StringComparison.Ordinal) ||
             !string.Equals(artifact.CandidateSetId, chain.Input.CandidateSetId, StringComparison.Ordinal) ||
+            !string.Equals(artifact.ScreeningDecisionId, chain.Input.ScreeningDecisionId, StringComparison.Ordinal) ||
+            !string.Equals(artifact.WorkId, chain.Input.WorkId, StringComparison.Ordinal) ||
+            !string.Equals(artifact.DedupClusterId, chain.Input.DedupClusterId, StringComparison.Ordinal) ||
             !string.Equals(artifact.AcquisitionId, acquisition.AcquisitionId, StringComparison.Ordinal) ||
             !string.Equals(artifact.AcquisitionKind, acquisition.AcquisitionKind, StringComparison.Ordinal) ||
             !string.Equals(artifact.SourceAlias, acquisition.SourceAlias, StringComparison.Ordinal) ||
@@ -90,24 +93,31 @@ public static class FullTextRehydrator
         FullTextArtifactEvidence artifact)
     {
         var attempts = acquisition.SourceAttempts.OrderBy(item => item.AttemptOrder).ToArray();
+        var successfulAttempts = attempts
+            .Where(item => string.Equals(item.Status, FullTextAttemptStatuses.Success, StringComparison.Ordinal))
+            .ToArray();
         if (attempts.Length == 0 ||
             !attempts.Select(item => item.AttemptId).AllDistinct() ||
             !attempts.Select(item => item.AttemptOrder).SequenceEqual(Enumerable.Range(1, attempts.Length)) ||
-            attempts.Any(item => !string.Equals(item.AcquisitionKind, acquisition.AcquisitionKind, StringComparison.Ordinal)) ||
-            !string.Equals(attempts[^1].Status, acquisition.Status, StringComparison.Ordinal) ||
+            successfulAttempts.Length != 1 ||
             !string.Equals(acquisition.Status, FullTextAttemptStatuses.Success, StringComparison.Ordinal) ||
             !string.Equals(artifact.ValidationStatus, FullTextAttemptStatuses.Success, StringComparison.Ordinal))
         {
             throw new FullTextRuleException(
                 FullTextErrorCodes.InvalidAcquisitionState,
-                "Successful Full Text artifact authority requires a contiguous attempt history ending in success.");
+                "Successful Full Text artifact authority requires a contiguous attempt history with exactly one accepted success.");
         }
 
-        var linkedAttemptIds = attempts
-            .Where(item => item.ArtifactEvidenceId is not null)
-            .Select(item => item.ArtifactEvidenceId!)
-            .ToArray();
-        if (linkedAttemptIds.Length > 0 && linkedAttemptIds.Any(id => !string.Equals(id, artifact.ArtifactId, StringComparison.Ordinal)))
+        var acceptedAttempt = successfulAttempts[0];
+        if (!string.Equals(acceptedAttempt.AcquisitionKind, acquisition.AcquisitionKind, StringComparison.Ordinal) ||
+            !string.Equals(acceptedAttempt.SourceAlias, acquisition.SourceAlias, StringComparison.Ordinal) ||
+            attempts.Any(item => !ReferenceEquals(item, acceptedAttempt) && item.ArtifactEvidenceId is not null) ||
+            (acceptedAttempt.ArtifactEvidenceId is not null &&
+                !string.Equals(acceptedAttempt.ArtifactEvidenceId, artifact.ArtifactId, StringComparison.Ordinal)) ||
+            (acceptedAttempt.ArtifactKind is not null &&
+                !string.Equals(acceptedAttempt.ArtifactKind, artifact.ArtifactKind, StringComparison.Ordinal)) ||
+            (acceptedAttempt.MediaType is not null &&
+                !string.Equals(acceptedAttempt.MediaType, artifact.MediaType, StringComparison.Ordinal)))
         {
             throw Invalid("Full Text attempt artifact binding does not match artifact evidence.");
         }
@@ -127,9 +137,17 @@ internal static class FullTextAuthorityValidator
 {
     internal static bool SameInput(FullTextInput left, FullTextInput right) =>
         string.Equals(left.InputId, right.InputId, StringComparison.Ordinal) &&
+        string.Equals(left.SourceKind, right.SourceKind, StringComparison.Ordinal) &&
         string.Equals(left.CandidateSetId, right.CandidateSetId, StringComparison.Ordinal) &&
         string.Equals(left.CandidateId, right.CandidateId, StringComparison.Ordinal) &&
-        string.Equals(left.ScreeningDecisionId, right.ScreeningDecisionId, StringComparison.Ordinal);
+        string.Equals(left.Eligibility, right.Eligibility, StringComparison.Ordinal) &&
+        string.Equals(left.ScreeningDecisionId, right.ScreeningDecisionId, StringComparison.Ordinal) &&
+        string.Equals(left.ScreeningStage, right.ScreeningStage, StringComparison.Ordinal) &&
+        string.Equals(left.DedupResultId, right.DedupResultId, StringComparison.Ordinal) &&
+        string.Equals(left.DedupClusterId, right.DedupClusterId, StringComparison.Ordinal) &&
+        string.Equals(left.WorkId, right.WorkId, StringComparison.Ordinal) &&
+        left.SourceRefs.SequenceEqual(right.SourceRefs) &&
+        left.NonClaims.SequenceEqual(right.NonClaims, StringComparer.Ordinal);
 }
 
 public static class FullTextExtractionRehydrator
