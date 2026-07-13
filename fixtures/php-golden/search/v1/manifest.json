@@ -1,0 +1,47 @@
+{
+    "fixtureSetId": "php-search-v1",
+    "schemaVersion": "1.0.0",
+    "sourceKind": "pinned-php-observable-behavior",
+    "sourceRepository": "nexus-scholar/core",
+    "sourceCommit": "b24d0d71ec7b64003465182477e7edb7f49994f4",
+    "sourceRefs": [
+        "src/Search/Domain/SearchTerm.php",
+        "src/Search/Domain/YearRange.php",
+        "src/Search/Domain/SearchQuery.php",
+        "src/Search/Domain/Port/AdapterCollection.php",
+        "src/Search/Application/ProviderExecution/SequentialProviderSearchExecutor.php",
+        "src/Search/Application/Aggregator/SearchAggregator.php",
+        "src/Search/Infrastructure/Plan/YamlSearchPlanParser.php",
+        "tests/Unit/Search/SearchQueryTest.php",
+        "tests/Unit/Search/Application/Aggregator/SearchAggregatorTest.php",
+        "tests/Unit/Search/Application/ProviderExecution/SequentialProviderSearchExecutorTest.php",
+        "tests/Unit/Search/Application/Plan/SearchPlanParserTest.php"
+    ],
+    "generatorCommand": "php scripts/php-golden/search-export.php --php-reference \"$PHP_REFERENCE\" --source-lock specs/SOURCE.lock.json --input fixtures/php-golden/search/v1/input.json --comparison fixtures/php-golden/search/v1/comparison.json --output fixtures/php-golden/search/v1/expected.json --manifest fixtures/php-golden/search/v1/manifest.json",
+    "generatorVersion": "search-v1",
+    "environmentAssumptions": [
+        "PHP 8.3 or later",
+        "git is available",
+        "PHP reference tracked files are clean",
+        "no network access or Composer dependencies are required",
+        "future-year rejection uses a far-future value independent of wall-clock year",
+        "runtime ids and durations are excluded from generated output",
+        "UTF-8 JSON with LF line endings"
+    ],
+    "inputDigest": "sha256:d53a12cc1129d1da5cd59214a676ee7b99a89c96afcfbb1edec78672a8159c38",
+    "outputDigest": "sha256:5a61405d925d71f72c3d9e400c024fc1fa41e6600ed09bd03c97b74ed6ff46e9",
+    "sourceLockDigest": "sha256:325ba2e579e6fdb9b3379912fdc8f245eb28bd04881a4587b8ed26757c6261ea",
+    "classificationDigest": "sha256:bae7fd2737baeff12e024c3d8d32b65bb9cf64cb16718b3af378fe902b5a9a2b",
+    "ignoredNondeterminism": [
+        "generated query ids",
+        "provider durations",
+        "wall-clock max-year message text"
+    ],
+    "comparisonRules": [
+        "compare normalized validation categories rather than language-specific exception classes",
+        "compare cache field sensitivity and equality relations rather than cache-key byte equality",
+        "compare provider registration and result order exactly",
+        "exclude runtime durations and generated query ids",
+        "require every case to have a reviewed semantic classification"
+    ]
+}

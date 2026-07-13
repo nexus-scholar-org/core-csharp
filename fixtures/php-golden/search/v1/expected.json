@@ -1,0 +1,213 @@
+{
+    "fixtureSetId": "php-search-v1",
+    "schemaVersion": "1.0.0",
+    "sourceKind": "pinned-php-observable-behavior",
+    "sourceCommit": "b24d0d71ec7b64003465182477e7edb7f49994f4",
+    "cases": [
+        {
+            "id": "query-term-valid",
+            "operation": "query-term",
+            "result": {
+                "accepted": true,
+                "value": "AI"
+            }
+        },
+        {
+            "id": "query-term-short-rejected",
+            "operation": "query-term",
+            "result": {
+                "accepted": false,
+                "errorCategory": "query-length-below-minimum"
+            }
+        },
+        {
+            "id": "year-range-valid",
+            "operation": "year-range",
+            "result": {
+                "accepted": true,
+                "from": 2020,
+                "to": 2025
+            }
+        },
+        {
+            "id": "year-range-inverted",
+            "operation": "year-range",
+            "result": {
+                "accepted": false,
+                "errorCategory": "year-range-inverted"
+            }
+        },
+        {
+            "id": "year-from-exceeds-validation-year",
+            "operation": "year-range",
+            "result": {
+                "accepted": false,
+                "errorCategory": "year-from-exceeds-validation-year"
+            }
+        },
+        {
+            "id": "year-to-below-minimum",
+            "operation": "year-range",
+            "result": {
+                "accepted": false,
+                "errorCategory": "year-to-below-minimum"
+            }
+        },
+        {
+            "id": "provider-alias-normalization",
+            "operation": "provider-alias-normalization",
+            "result": {
+                "aliases": [
+                    "openalex",
+                    "crossref"
+                ]
+            }
+        },
+        {
+            "id": "cache-provider-order",
+            "operation": "cache-provider-order",
+            "result": {
+                "firstKey": "5c4119efc7a5e0d79c87a50a75444918336994bb9a87949d580729d391389fb6",
+                "secondKey": "5c4119efc7a5e0d79c87a50a75444918336994bb9a87949d580729d391389fb6",
+                "equal": true
+            }
+        },
+        {
+            "id": "cache-field-sensitivity",
+            "operation": "cache-field-sensitivity",
+            "result": {
+                "baseKey": "5faaeb5fc0023f1e28be1b9536e3916c9991545e9a59d1a2df56406f09c73b2c",
+                "languageChangesKey": true,
+                "maxResultsChangesKey": true,
+                "offsetChangesKey": true,
+                "providersChangeKey": true
+            }
+        },
+        {
+            "id": "cache-include-raw-data",
+            "operation": "cache-include-raw-data",
+            "result": {
+                "withoutRawKey": "5faaeb5fc0023f1e28be1b9536e3916c9991545e9a59d1a2df56406f09c73b2c",
+                "withRawKey": "5faaeb5fc0023f1e28be1b9536e3916c9991545e9a59d1a2df56406f09c73b2c",
+                "equal": true
+            }
+        },
+        {
+            "id": "legacy-plan-import",
+            "operation": "legacy-plan-import",
+            "result": {
+                "projectId": "legacy-project",
+                "items": [
+                    {
+                        "id": "Q1",
+                        "query": "machine learning",
+                        "projectId": "legacy-project",
+                        "maxResults": 25,
+                        "yearFrom": 2020,
+                        "yearTo": 2024,
+                        "providerAliases": [
+                            "openalex",
+                            "arxiv"
+                        ],
+                        "includeRawData": true,
+                        "sourceIndex": 0
+                    }
+                ]
+            }
+        },
+        {
+            "id": "schema-closed-plan-unknown-field",
+            "operation": "authoritative-plan-unknown-field",
+            "result": {
+                "accepted": true,
+                "itemCount": 1
+            }
+        },
+        {
+            "id": "provider-selection-all",
+            "operation": "provider-selection",
+            "result": {
+                "accepted": true,
+                "aliases": [
+                    "first",
+                    "second",
+                    "third"
+                ]
+            }
+        },
+        {
+            "id": "provider-selection-subset",
+            "operation": "provider-selection",
+            "result": {
+                "accepted": true,
+                "aliases": [
+                    "first",
+                    "third"
+                ]
+            }
+        },
+        {
+            "id": "provider-selection-unknown",
+            "operation": "provider-selection",
+            "result": {
+                "accepted": false,
+                "errorCategory": "unknown-provider-alias"
+            }
+        },
+        {
+            "id": "provider-partial-failure",
+            "operation": "provider-execution",
+            "result": {
+                "stats": [
+                    {
+                        "alias": "broken",
+                        "status": "failure",
+                        "resultCount": 0,
+                        "skipReason": "temporary failure"
+                    },
+                    {
+                        "alias": "healthy",
+                        "status": "success",
+                        "resultCount": 1,
+                        "skipReason": null
+                    }
+                ],
+                "workIds": [
+                    "doi:10.1000/survives"
+                ],
+                "allFailed": false
+            }
+        },
+        {
+            "id": "provider-all-failed",
+            "operation": "provider-execution",
+            "result": {
+                "stats": [
+                    {
+                        "alias": "first",
+                        "status": "failure",
+                        "resultCount": 0,
+                        "skipReason": "first unavailable"
+                    },
+                    {
+                        "alias": "second",
+                        "status": "failure",
+                        "resultCount": 0,
+                        "skipReason": "second unavailable"
+                    }
+                ],
+                "workIds": [],
+                "allFailed": true
+            }
+        },
+        {
+            "id": "search-time-deduplication",
+            "operation": "search-time-deduplication",
+            "result": {
+                "totalRaw": 2,
+                "outputCount": 1,
+                "outputKind": "deduplicated-corpus"
+            }
+        }
+    ]
+}

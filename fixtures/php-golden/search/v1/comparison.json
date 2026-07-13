@@ -1,0 +1,24 @@
+{
+  "fixtureSetId": "php-search-v1",
+  "schemaVersion": "1.0.0",
+  "classifications": [
+    { "caseId": "query-term-valid", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "query-term-short-rejected", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "year-range-valid", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "year-range-inverted", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "year-from-exceeds-validation-year", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "year-to-below-minimum", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "provider-alias-normalization", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "cache-provider-order", "classification": "equivalent_serialization", "comparisonRule": "cache_relation", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"], "rationale": "PHP and C# use different cache material serialization but both are provider-order-insensitive." },
+    { "caseId": "cache-field-sensitivity", "classification": "equivalent_serialization", "comparisonRule": "cache_relation", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"], "rationale": "Compare field sensitivity, not language-specific cache-key rendering." },
+    { "caseId": "cache-include-raw-data", "classification": "intentional_change", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"], "rationale": "C# includes include_raw_data in cache identity; PHP excludes it." },
+    { "caseId": "legacy-plan-import", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "schema-closed-plan-unknown-field", "classification": "intentional_change", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"], "rationale": "PHP permissively ignores unknown plan fields; authoritative C# plans are schema-closed." },
+    { "caseId": "provider-selection-all", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "provider-selection-subset", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "provider-selection-unknown", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "provider-partial-failure", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "provider-all-failed", "classification": "equivalent_serialization", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"] },
+    { "caseId": "search-time-deduplication", "classification": "intentional_change", "authorityRefs": ["docs/adr/0010-search-trace-and-plan-contract.md"], "rationale": "PHP collapses overlapping works during Search; C# preserves raw sightings for later Deduplication." }
+  ]
+}

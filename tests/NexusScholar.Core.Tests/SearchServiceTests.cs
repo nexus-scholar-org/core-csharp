@@ -26,8 +26,16 @@ public sealed class SearchServiceTests
         Assert.ThrowsExactly<SearchRuleException>(() =>
             service.Execute("trace-1", new SearchQueryInput("alpha", 999, 2000, null, 10, 0, false, Array.Empty<string>()), ValidationYear));
 
+        var belowMinimumTo = Assert.ThrowsExactly<SearchRuleException>(() =>
+            service.Execute("trace-1", new SearchQueryInput("alpha", null, 999, null, 10, 0, false, Array.Empty<string>()), ValidationYear));
+        Assert.AreEqual(SearchErrorCodes.YearToBelowMinimum, belowMinimumTo.Category);
+
         Assert.ThrowsExactly<SearchRuleException>(() =>
             service.Execute("trace-1", new SearchQueryInput("alpha", null, 2035, null, 10, 0, false, Array.Empty<string>()), ValidationYear));
+
+        var futureFrom = Assert.ThrowsExactly<SearchRuleException>(() =>
+            service.Execute("trace-1", new SearchQueryInput("alpha", 2035, null, null, 10, 0, false, Array.Empty<string>()), ValidationYear));
+        Assert.AreEqual(SearchErrorCodes.YearFromExceedsValidationYear, futureFrom.Category);
 
         Assert.ThrowsExactly<SearchRuleException>(() =>
             service.Execute("trace-1", new SearchQueryInput("alpha", 2020, 2019, null, 10, 0, false, Array.Empty<string>()), ValidationYear));
@@ -180,6 +188,39 @@ public sealed class SearchServiceTests
         var allFailed = service.Execute("trace-2", new SearchQueryInput("alpha", null, null, null, 10, 0, false, new[] { "ieee", "doaj" }), ValidationYear);
         Assert.IsTrue(allFailed.Summary.AllFailed);
         Assert.AreEqual(0, allFailed.Sightings.Count);
+    }
+
+    [TestMethod]
+    public void Search_execution_normalizes_unexpected_provider_exceptions_as_failures()
+    {
+        var service = new SearchService(new ISearchProvider[]
+        {
+            new DataProvider("broken", _ => throw new InvalidOperationException("unexpected provider failure")),
+            new DataProvider("healthy", _ => Array.Empty<NexusScholar.Shared.ScholarlyWork>())
+        });
+
+        var trace = service.Execute(
+            "trace-provider-error",
+            new SearchQueryInput("alpha", null, null, null, 10, 0, false, Array.Empty<string>()),
+            ValidationYear);
+
+        Assert.AreEqual("failure", trace.ProviderAttempts[0].Status);
+        Assert.AreEqual("unexpected provider failure", trace.ProviderAttempts[0].SkipReason);
+        Assert.AreEqual("success", trace.ProviderAttempts[1].Status);
+    }
+
+    [TestMethod]
+    public void Search_execution_does_not_normalize_post_provider_processing_defects()
+    {
+        var service = new SearchService(new ISearchProvider[]
+        {
+            new DataProvider("broken-result", _ => null!)
+        });
+
+        Assert.ThrowsExactly<ArgumentNullException>(() => service.Execute(
+            "trace-processing-error",
+            new SearchQueryInput("alpha", null, null, null, 10, 0, false, Array.Empty<string>()),
+            ValidationYear));
     }
 
     [TestMethod]

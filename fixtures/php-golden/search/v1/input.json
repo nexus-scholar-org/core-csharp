@@ -1,0 +1,101 @@
+{
+  "fixtureSetId": "php-search-v1",
+  "schemaVersion": "1.0.0",
+  "validationYear": 2026,
+  "cases": [
+    { "id": "query-term-valid", "operation": "query-term", "value": "AI" },
+    { "id": "query-term-short-rejected", "operation": "query-term", "value": " a " },
+    { "id": "year-range-valid", "operation": "year-range", "from": 2020, "to": 2025 },
+    { "id": "year-range-inverted", "operation": "year-range", "from": 2025, "to": 2020 },
+    { "id": "year-from-exceeds-validation-year", "operation": "year-range", "from": 9999, "to": null },
+    { "id": "year-to-below-minimum", "operation": "year-range", "from": null, "to": 999 },
+    {
+      "id": "provider-alias-normalization",
+      "operation": "provider-alias-normalization",
+      "aliases": [" OpenAlex ", "", "openalex", "CROSSREF", "crossref ", "  "]
+    },
+    {
+      "id": "cache-provider-order",
+      "operation": "cache-provider-order",
+      "request": { "query": "AI", "yearFrom": 2020, "yearTo": 2025, "language": "en", "maxResults": 50, "offset": 0, "includeRawData": false },
+      "providersA": ["crossref", "openalex"],
+      "providersB": ["openalex", "crossref"]
+    },
+    {
+      "id": "cache-field-sensitivity",
+      "operation": "cache-field-sensitivity",
+      "request": { "query": "AI", "yearFrom": 2020, "yearTo": 2025, "language": "en", "maxResults": 50, "offset": 0, "includeRawData": false },
+      "providers": ["openalex"]
+    },
+    {
+      "id": "cache-include-raw-data",
+      "operation": "cache-include-raw-data",
+      "request": { "query": "AI", "yearFrom": 2020, "yearTo": 2025, "language": "en", "maxResults": 50, "offset": 0, "includeRawData": false },
+      "providers": ["openalex"]
+    },
+    {
+      "id": "legacy-plan-import",
+      "operation": "legacy-plan-import",
+      "plan": {
+        "project": "legacy-project",
+        "providers": " OpenAlex, arxiv,openalex ",
+        "include_raw_data": true,
+        "queries": [
+          { "id": "Q1", "text": "machine learning", "limit": 25, "year_min": 2020, "year_max": 2024 }
+        ]
+      }
+    },
+    {
+      "id": "schema-closed-plan-unknown-field",
+      "operation": "authoritative-plan-unknown-field",
+      "plan": {
+        "schema_id": "nexus.search.plan",
+        "schema_version": "1.0.0",
+        "bad_unknown": true,
+        "searches": [{ "id": "Q1", "query": "machine learning" }]
+      }
+    },
+    {
+      "id": "provider-selection-all",
+      "operation": "provider-selection",
+      "registered": ["first", "second", "third"],
+      "selected": []
+    },
+    {
+      "id": "provider-selection-subset",
+      "operation": "provider-selection",
+      "registered": ["first", "second", "third"],
+      "selected": ["third", "first"]
+    },
+    {
+      "id": "provider-selection-unknown",
+      "operation": "provider-selection",
+      "registered": ["first", "second"],
+      "selected": ["missing", "first"]
+    },
+    {
+      "id": "provider-partial-failure",
+      "operation": "provider-execution",
+      "providers": [
+        { "alias": "broken", "failure": "temporary failure" },
+        { "alias": "healthy", "works": [{ "title": "Survives", "doi": "10.1000/survives" }] }
+      ]
+    },
+    {
+      "id": "provider-all-failed",
+      "operation": "provider-execution",
+      "providers": [
+        { "alias": "first", "failure": "first unavailable" },
+        { "alias": "second", "failure": "second unavailable" }
+      ]
+    },
+    {
+      "id": "search-time-deduplication",
+      "operation": "search-time-deduplication",
+      "providers": [
+        { "alias": "first", "works": [{ "title": "First sighting", "doi": "10.1000/shared" }] },
+        { "alias": "second", "works": [{ "title": "Second sighting", "doi": "10.1000/shared" }] }
+      ]
+    }
+  ]
+}
