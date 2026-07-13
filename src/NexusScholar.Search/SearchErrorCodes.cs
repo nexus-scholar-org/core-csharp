@@ -5,6 +5,8 @@ public static class SearchErrorCodes
     public const string InvalidSearchTerm = "invalid-search-term";
     public const string QueryLengthBelowMinimum = "query-length-below-minimum";
     public const string YearFromBelowMinimum = "year-from-below-minimum";
+    public const string YearToBelowMinimum = "year-to-below-minimum";
+    public const string YearFromExceedsValidationYear = "year-from-exceeds-validation-year";
     public const string YearToExceedsValidationYear = "year-to-exceeds-validation-year";
     public const string YearRangeInverted = "year-range-inverted";
     public const string NonPositiveMaxResults = "non-positive-max-results";

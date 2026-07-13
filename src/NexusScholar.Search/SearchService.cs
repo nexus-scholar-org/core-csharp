@@ -72,39 +72,42 @@ public sealed class SearchService
         foreach (var alias in resolvedAliases)
         {
             var stopwatch = Stopwatch.StartNew();
+            var provider = _providerMap[alias];
+            IReadOnlyList<NexusScholar.Shared.ScholarlyWork> providerWorks;
             try
             {
-                var provider = _providerMap[alias];
-                var rawWorks = provider.Execute(executionContext)
-                    .Skip(input.Offset)
-                    .Take(input.MaxResults)
-                    .ToArray();
-                stopwatch.Stop();
-
-                var normalizedWorks = rawWorks
-                    .Select(work => input.IncludeRawData ? work : work.WithoutRawData())
-                    .ToArray();
-
-                var providerRank = 1;
-                foreach (var work in normalizedWorks)
-                {
-                    sightings.Add(new SearchSighting(alias, providerOrder, providerRank++, work));
-                }
-
-                providerAttempts.Add(new SearchProviderAttempt(providerAttemptOrder, alias, "success", normalizedWorks.Length, null));
-                providerStats.Add(new SearchProviderStat(alias, normalizedWorks.Length, stopwatch.ElapsedMilliseconds, null));
+                providerWorks = provider.Execute(executionContext);
             }
-            catch (SearchRuleException ex) when (string.Equals(ex.Category, SearchErrorCodes.ProviderExecutionFailed, StringComparison.Ordinal))
+            catch (Exception ex)
             {
                 stopwatch.Stop();
                 providerAttempts.Add(new SearchProviderAttempt(providerAttemptOrder, alias, "failure", 0, ex.Message));
                 providerStats.Add(new SearchProviderStat(alias, 0, stopwatch.ElapsedMilliseconds, ex.Message));
-            }
-            finally
-            {
                 providerAttemptOrder++;
                 providerOrder++;
+                continue;
             }
+
+            var rawWorks = providerWorks
+                .Skip(input.Offset)
+                .Take(input.MaxResults)
+                .ToArray();
+            stopwatch.Stop();
+
+            var normalizedWorks = rawWorks
+                .Select(work => input.IncludeRawData ? work : work.WithoutRawData())
+                .ToArray();
+
+            var providerRank = 1;
+            foreach (var work in normalizedWorks)
+            {
+                sightings.Add(new SearchSighting(alias, providerOrder, providerRank++, work));
+            }
+
+            providerAttempts.Add(new SearchProviderAttempt(providerAttemptOrder, alias, "success", normalizedWorks.Length, null));
+            providerStats.Add(new SearchProviderStat(alias, normalizedWorks.Length, stopwatch.ElapsedMilliseconds, null));
+            providerAttemptOrder++;
+            providerOrder++;
         }
 
         var summary = new SearchSummary(

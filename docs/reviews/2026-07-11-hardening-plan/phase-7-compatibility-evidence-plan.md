@@ -23,7 +23,7 @@ Generation must fail when the PHP checkout is not at the pinned commit or has tr
 | Job | Scope | State | Exit evidence |
 | --- | --- | --- | --- |
 | H25 | Fixture harness and Shared Identity | implemented on `cdx/hardening-phase-7-shared-identity` | deterministic PHP exporter, 12 cases, manifest digests, reviewed classifications, C# comparator |
-| H26 | Search query, cache, provider selection, and local import behavior | pending | generated PHP Search fixtures and comparator report; intentional cache/import differences remain explicit |
+| H26 | Search query, cache, provider selection, and local import boundary | implemented on `cdx/hardening-phase-7-search-evidence` | 18 generated PHP cases, four corrected C# defects, semantic comparators, and explicit imported-export non-claim |
 | H27 | Deduplication plus corpus lock/snapshot behavior | pending | generated clustering/lock fixtures and comparators; runtime identity and threshold differences classified |
 | H28 | Screening and local Full Text overlap | pending | generated PHP fixtures for the shared local contract surface; app/path/runtime projections excluded |
 | H29 | Citation network, dissemination exports, and Phase 7 closeout | pending | generated graph/export fixtures, compatibility claim inventory, full validation, and final phase report |
@@ -35,6 +35,15 @@ Generation must fail when the PHP checkout is not at the pinned commit or has tr
 - PHP source: `nexus-scholar/core@b24d0d71ec7b64003465182477e7edb7f49994f4`
 - Equivalent behaviors: normalization, primary precedence, overlap, identifier-set semantics across ordering differences, left-biased title/id merge, direct corpus deduplication, no-id candidate separation, and title lookup.
 - Intentional changes under ADR 0007: strict multiple-separator rejection, blank normalized identifier rejection, and no runtime-object-identity deduplication.
+
+## H26 Evidence
+
+- Generator: `scripts/php-golden/search-export.php`
+- Fixture set: `fixtures/php-golden/search/v1/`
+- Equivalent surface: query/year validation, alias normalization, cache relations, legacy-plan import, provider selection, and normalized partial/all failure behavior.
+- Intentional changes under ADR 0010: raw-data-aware local cache identity, schema-closed authoritative plans, and raw Search sightings instead of Search-time deduplication.
+- Corrected defects: future `year_from` rejection, below-minimum `year_to` rejection, normalization of exceptions thrown by provider execution, and exclusion of post-provider processing defects from that failure boundary.
+- Imported-export behavior remains local ADR 0011 evidence because the pinned PHP Search package has no corresponding import parser surface.
 
 ## Exit Condition
 

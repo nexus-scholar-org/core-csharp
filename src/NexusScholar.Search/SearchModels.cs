@@ -36,6 +36,20 @@ public sealed record SearchYearRange(int? From, int? To)
                 "Search year_from must be 1000 or greater.");
         }
 
+        if (from.HasValue && from.Value > maxYear)
+        {
+            throw new SearchRuleException(
+                SearchErrorCodes.YearFromExceedsValidationYear,
+                "Search year_from exceeds validationYear + 5.");
+        }
+
+        if (to.HasValue && to.Value < 1000)
+        {
+            throw new SearchRuleException(
+                SearchErrorCodes.YearToBelowMinimum,
+                "Search year_to must be 1000 or greater.");
+        }
+
         if (to.HasValue && to.Value > maxYear)
         {
             throw new SearchRuleException(
