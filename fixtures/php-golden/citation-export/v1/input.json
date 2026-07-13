@@ -1,0 +1,241 @@
+{
+  "fixtureSetId": "php-citation-export-observations-v1",
+  "schemaVersion": "1.0.0",
+  "cases": [
+    { "id": "graph-type-vocabulary", "operation": "graph-type-vocabulary" },
+    {
+      "id": "bibliography-format-vocabulary",
+      "operation": "bibliography-format-vocabulary"
+    },
+    {
+      "id": "network-export-format-vocabulary",
+      "operation": "network-export-format-vocabulary"
+    },
+    {
+      "id": "namespace-qualified-nodes",
+      "operation": "namespace-qualified-nodes",
+      "works": [
+        {
+          "ids": ["doi:10.1000/alpha", "openalex:w_alpha"],
+          "title": "Alpha baseline",
+          "sourceProvider": "crossref",
+          "year": 2024,
+          "authors": [
+            { "familyName": "Curie", "givenName": "Maria" }
+          ],
+          "venue": {
+            "name": "Journal of Network Topology",
+            "type": "journal"
+          }
+        },
+        {
+          "ids": ["openalex:w_beta", "doi:10.1000/beta"],
+          "title": "Beta network",
+          "sourceProvider": "openalex",
+          "year": 2023
+        }
+      ]
+    },
+    {
+      "id": "missing-citing-node-rejected",
+      "operation": "missing-citing-node-rejected",
+      "citingId": "doi:10.1000/missing-citing",
+      "citedId": "doi:10.1000/known"
+    },
+    {
+      "id": "external-cited-node-accepted",
+      "operation": "external-cited-node-accepted",
+      "sourceWork": {
+        "ids": ["doi:10.1000/citing"],
+        "title": "Internal citing node",
+        "sourceProvider": "crossref"
+      },
+      "externalCitedId": "doi:10.2000/external"
+    },
+    {
+      "id": "duplicate-normalized-edge-deduplicated",
+      "operation": "duplicate-normalized-edge-deduplicated",
+      "works": [
+        {
+          "ids": ["doi:10.1000/citing-duplicate"],
+          "title": "Citing duplicate paper",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/target"],
+          "title": "Common target",
+          "sourceProvider": "crossref"
+        }
+      ],
+      "referencesByWorkId": {
+        "doi:10.1000/citing-duplicate": [
+          "doi:10.1000/target",
+          "doi:10.1000/TARGET",
+          "doi:10.1000/target"
+        ]
+      }
+    },
+    {
+      "id": "direct-builder-known-references-only",
+      "operation": "direct-builder-known-references-only",
+      "works": [
+        {
+          "ids": ["doi:10.1000/casing-primary"],
+          "title": "Primary node",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/known-one"],
+          "title": "Known one",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/known-two"],
+          "title": "Known two",
+          "sourceProvider": "crossref"
+        }
+      ],
+      "referencesByWorkId": {
+        "doi:10.1000/casing-primary": [
+          "doi:10.1000/known-one",
+          "openalex:W_UNKNOWN",
+          "10.1000/not-an-id",
+          "doi:10.1000/known-two"
+        ]
+      }
+    },
+    {
+      "id": "co-citation-weighted-pairs",
+      "operation": "co-citation-weighted-pairs",
+      "works": [
+        {
+          "ids": ["doi:10.1000/citer-a"],
+          "title": "Citer A",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/citer-b"],
+          "title": "Citer B",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/cited-c"],
+          "title": "Cited C",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/cited-d"],
+          "title": "Cited D",
+          "sourceProvider": "crossref"
+        }
+      ],
+      "referencesByCitingWorkId": {
+        "doi:10.1000/citer-a": ["doi:10.1000/cited-c", "doi:10.1000/cited-d"],
+        "doi:10.1000/citer-b": ["doi:10.1000/cited-c", "doi:10.1000/cited-d"]
+      },
+      "citingWorkIdsByCitedWorkId": {}
+    },
+    {
+      "id": "bibliographic-coupling-weighted-pairs",
+      "operation": "bibliographic-coupling-weighted-pairs",
+      "works": [
+        {
+          "ids": ["doi:10.1000/couple-a"],
+          "title": "Coupled A",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/couple-b"],
+          "title": "Coupled B",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/couple-c"],
+          "title": "Coupled C",
+          "sourceProvider": "crossref"
+        }
+      ],
+      "referencesByWorkId": {
+        "doi:10.1000/couple-a": ["doi:10.1000/ref-x", "doi:10.1000/ref-y"],
+        "doi:10.1000/couple-b": ["doi:10.1000/ref-x", "doi:10.1000/ref-y"],
+        "doi:10.1000/couple-c": ["doi:10.1000/ref-y"]
+      }
+    },
+    {
+      "id": "bibtex-article",
+      "operation": "bibtex-article",
+      "format": "bibtex",
+      "work": {
+        "ids": ["doi:10.1000/article-001"],
+        "title": "Distributed Graph Exports",
+        "sourceProvider": "crossref",
+        "year": 2024,
+        "citedByCount": 7,
+        "authors": [
+          { "familyName": "Feynman", "givenName": "Richard" },
+          { "familyName": "Newton", "givenName": "Isaac" }
+        ],
+        "venue": {
+          "name": "Journal of Data Pipelines",
+          "type": "journal"
+        }
+      }
+    },
+    {
+      "id": "bibtex-preprint",
+      "operation": "bibtex-preprint",
+      "format": "bibtex",
+      "work": {
+        "ids": ["arxiv:2401.12345"],
+        "title": "Preprint Graph Signals",
+        "sourceProvider": "arxiv",
+        "year": 2024,
+        "citedByCount": 0,
+        "authors": [
+          { "familyName": "Turing", "givenName": "Alan" }
+        ],
+        "venue": {
+          "name": "arXiv",
+          "type": "repository"
+        }
+      }
+    },
+    {
+      "id": "graphml-corpus-nodes-and-escaping",
+      "operation": "graphml-corpus-nodes-and-escaping",
+      "works": [
+        {
+          "ids": ["doi:10.1000/escape-nodes"],
+          "title": "Ampersand & <angle> and \"quote\"",
+          "sourceProvider": "crossref"
+        },
+        {
+          "ids": ["doi:10.1000/plain-nodes"],
+          "title": "Plain node",
+          "sourceProvider": "crossref"
+        }
+      ]
+    },
+    {
+      "id": "export-filename-extension-validation",
+      "operation": "export-filename-extension-validation",
+      "checks": [
+        {
+          "format": "gexf",
+          "filename": "citation-network.gexf",
+          "extension": "gexf"
+        },
+        {
+          "format": "graphml",
+          "filename": "citation-network.graphml",
+          "extension": "gexf"
+        },
+        {
+          "format": "cytoscape",
+          "filename": "citation-network.GEXF",
+          "extension": "json"
+        }
+      ]
+    }
+  ]
+}

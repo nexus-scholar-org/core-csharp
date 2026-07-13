@@ -1,0 +1,104 @@
+{
+  "fixtureSetId": "php-citation-export-observations-v1",
+  "schemaVersion": "1.0.0",
+  "classifications": [
+    {
+      "caseId": "graph-type-vocabulary",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "bibliography-format-vocabulary",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "network-export-format-vocabulary",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "namespace-qualified-nodes",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "missing-citing-node-rejected",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "external-cited-node-accepted",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "duplicate-normalized-edge-deduplicated",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "direct-builder-known-references-only",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "co-citation-weighted-pairs",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "bibliographic-coupling-weighted-pairs",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "bibtex-article",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "bibtex-preprint",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "graphml-corpus-nodes-and-escaping",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    },
+    {
+      "caseId": "export-filename-extension-validation",
+      "classification": "intentional_change",
+      "comparisonRule": "intentional-non-adoption-no-csharp-replay",
+      "authorityRefs": ["docs/adr/0027-phase-7-citation-network-dissemination-evidence-boundary.md", "docs/port/PORT-MATRIX.csv"],
+      "rationale": "No CSharp replay target for citation-network and reporting surfaces."
+    }
+  ]
+}

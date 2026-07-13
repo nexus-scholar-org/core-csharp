@@ -1,0 +1,259 @@
+{
+    "fixtureSetId": "php-citation-export-observations-v1",
+    "schemaVersion": "1.0.0",
+    "sourceKind": "pinned-php-observable-behavior",
+    "sourceCommit": "b24d0d71ec7b64003465182477e7edb7f49994f4",
+    "cases": [
+        {
+            "id": "graph-type-vocabulary",
+            "operation": "graph-type-vocabulary",
+            "result": {
+                "values": [
+                    "citation",
+                    "co_citation",
+                    "bibliographic_coupling"
+                ]
+            }
+        },
+        {
+            "id": "bibliography-format-vocabulary",
+            "operation": "bibliography-format-vocabulary",
+            "result": {
+                "formats": [
+                    {
+                        "name": "bibtex",
+                        "extension": "bib",
+                        "mimeType": "application/x-bibtex"
+                    },
+                    {
+                        "name": "ris",
+                        "extension": "ris",
+                        "mimeType": "application/x-research-info-systems"
+                    },
+                    {
+                        "name": "csv",
+                        "extension": "csv",
+                        "mimeType": "text/csv"
+                    },
+                    {
+                        "name": "json",
+                        "extension": "json",
+                        "mimeType": "application/json"
+                    },
+                    {
+                        "name": "jsonl",
+                        "extension": "jsonl",
+                        "mimeType": "application/x-jsonlines"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "network-export-format-vocabulary",
+            "operation": "network-export-format-vocabulary",
+            "result": {
+                "formats": [
+                    {
+                        "name": "gexf",
+                        "extension": "gexf",
+                        "mimeType": "application/xml"
+                    },
+                    {
+                        "name": "graphml",
+                        "extension": "graphml",
+                        "mimeType": "application/xml"
+                    },
+                    {
+                        "name": "cytoscape",
+                        "extension": "json",
+                        "mimeType": "application/json"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "namespace-qualified-nodes",
+            "operation": "namespace-qualified-nodes",
+            "result": {
+                "nodeCount": 2,
+                "nodes": [
+                    {
+                        "primaryId": "doi:10.1000/alpha",
+                        "ids": [
+                            "doi:10.1000/alpha",
+                            "openalex:w_alpha"
+                        ],
+                        "title": "Alpha baseline"
+                    },
+                    {
+                        "primaryId": "doi:10.1000/beta",
+                        "ids": [
+                            "doi:10.1000/beta",
+                            "openalex:w_beta"
+                        ],
+                        "title": "Beta network"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "missing-citing-node-rejected",
+            "operation": "missing-citing-node-rejected",
+            "result": {
+                "rejected": true,
+                "errorCategory": "missing-citing-node",
+                "error": "Work \"doi:10.1000/missing-citing\" is not part of the citation graph."
+            }
+        },
+        {
+            "id": "external-cited-node-accepted",
+            "operation": "external-cited-node-accepted",
+            "result": {
+                "accepted": true,
+                "externalIsGraphNode": false,
+                "edgeCount": 1,
+                "edges": [
+                    {
+                        "from": "doi:10.1000/citing",
+                        "to": "doi:10.2000/external",
+                        "weight": 1
+                    }
+                ]
+            }
+        },
+        {
+            "id": "duplicate-normalized-edge-deduplicated",
+            "operation": "duplicate-normalized-edge-deduplicated",
+            "result": {
+                "edgeCount": 1,
+                "edges": [
+                    {
+                        "from": "doi:10.1000/citing-duplicate",
+                        "to": "doi:10.1000/target",
+                        "weight": 1
+                    }
+                ]
+            }
+        },
+        {
+            "id": "direct-builder-known-references-only",
+            "operation": "direct-builder-known-references-only",
+            "result": {
+                "edgeCount": 2,
+                "edges": [
+                    {
+                        "from": "doi:10.1000/casing-primary",
+                        "to": "doi:10.1000/known-one",
+                        "weight": 1
+                    },
+                    {
+                        "from": "doi:10.1000/casing-primary",
+                        "to": "doi:10.1000/known-two",
+                        "weight": 1
+                    }
+                ]
+            }
+        },
+        {
+            "id": "co-citation-weighted-pairs",
+            "operation": "co-citation-weighted-pairs",
+            "result": {
+                "nodeCount": 4,
+                "edgeCount": 1,
+                "edges": [
+                    {
+                        "from": "doi:10.1000/cited-c",
+                        "to": "doi:10.1000/cited-d",
+                        "weight": 2
+                    }
+                ],
+                "directed": false
+            }
+        },
+        {
+            "id": "bibliographic-coupling-weighted-pairs",
+            "operation": "bibliographic-coupling-weighted-pairs",
+            "result": {
+                "nodeCount": 3,
+                "edgeCount": 3,
+                "edges": [
+                    {
+                        "from": "doi:10.1000/couple-a",
+                        "to": "doi:10.1000/couple-b",
+                        "weight": 2
+                    },
+                    {
+                        "from": "doi:10.1000/couple-a",
+                        "to": "doi:10.1000/couple-c",
+                        "weight": 1
+                    },
+                    {
+                        "from": "doi:10.1000/couple-b",
+                        "to": "doi:10.1000/couple-c",
+                        "weight": 1
+                    }
+                ]
+            }
+        },
+        {
+            "id": "bibtex-article",
+            "operation": "bibtex-article",
+            "result": {
+                "format": "bibtex",
+                "content": "@article{doi:10.1000/article-001,\n  title = {Distributed Graph Exports},\n  author = {Richard Feynman and Isaac Newton},\n  year = {2024},\n  journal = {Journal of Data Pipelines},\n  doi = {doi:10.1000/article-001}\n}"
+            }
+        },
+        {
+            "id": "bibtex-preprint",
+            "operation": "bibtex-preprint",
+            "result": {
+                "format": "bibtex",
+                "content": "@misc{arxiv:2401.12345,\n  title = {Preprint Graph Signals},\n  author = {Alan Turing},\n  year = {2024},\n  note = {arXiv}\n}"
+            }
+        },
+        {
+            "id": "graphml-corpus-nodes-and-escaping",
+            "operation": "graphml-corpus-nodes-and-escaping",
+            "result": {
+                "nodeCount": 2,
+                "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n  <key id=\"label\" for=\"node\" attr.name=\"label\" attr.type=\"string\"/>\n  <graph id=\"corpus\" edgedefault=\"directed\">\n    <node id=\"doi:10.1000/escape-nodes\">\n      <data key=\"label\">Ampersand &amp; &lt;angle&gt; and \"quote\"</data>\n    </node>\n    <node id=\"doi:10.1000/plain-nodes\">\n      <data key=\"label\">Plain node</data>\n    </node>\n  </graph>\n</graphml>\n"
+            }
+        },
+        {
+            "id": "export-filename-extension-validation",
+            "operation": "export-filename-extension-validation",
+            "result": {
+                "checks": [
+                    {
+                        "format": "gexf",
+                        "filename": "citation-network.gexf",
+                        "extension": "gexf",
+                        "result": {
+                            "passed": true
+                        }
+                    },
+                    {
+                        "format": "graphml",
+                        "filename": "citation-network.graphml",
+                        "extension": "gexf",
+                        "result": {
+                            "passed": false,
+                            "errorCategory": "extension-mismatch",
+                            "error": "Export filename extension must match format graphml (.gexf): citation-network.graphml"
+                        }
+                    },
+                    {
+                        "format": "cytoscape",
+                        "filename": "citation-network.GEXF",
+                        "extension": "json",
+                        "result": {
+                            "passed": false,
+                            "errorCategory": "extension-mismatch",
+                            "error": "Export filename extension must match format cytoscape (.json): citation-network.GEXF"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
