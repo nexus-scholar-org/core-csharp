@@ -1,6 +1,7 @@
 bin/
 obj/
 artifacts/
+.packages/
 TestResults/
 .coverage/
 .idea/

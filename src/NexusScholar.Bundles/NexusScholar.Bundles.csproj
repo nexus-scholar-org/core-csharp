@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
     <Description>Portable review bundle contracts and verification.</Description>
   </PropertyGroup>
   <ItemGroup>

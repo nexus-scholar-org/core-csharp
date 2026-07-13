@@ -16,12 +16,14 @@ if ($sdk.sdk.rollForward -ne 'disable' -or $sdk.sdk.allowPrerelease -ne $false) 
     throw 'global.json must pin the stable SDK without feature-band roll-forward.'
 }
 
-$unexpectedOverrides = foreach ($project in $projects) {
+$topology = Get-Content -Raw eng/package-topology.json | ConvertFrom-Json
+$approvedPackages = @($topology.packages | Sort-Object)
+$packableProjects = foreach ($project in $projects) {
     $xml = [xml](Get-Content -Raw $project.FullName)
-    if ($xml.Project.PropertyGroup.IsPackable -contains 'true') { $project.FullName }
+    if ($xml.Project.PropertyGroup.IsPackable -contains 'true') { $project.BaseName }
 }
-if ($unexpectedOverrides) {
-    throw "Projects became packable without an accepted package gate: $($unexpectedOverrides -join ', ')"
+if (Compare-Object $approvedPackages @($packableProjects | Sort-Object)) {
+    throw 'Packable source projects do not match eng/package-topology.json.'
 }
 
-Write-Host "Release policy verified: $($projects.Count) source projects default to non-packable; SDK and MIT metadata are pinned."
+Write-Host "Release policy verified: $($approvedPackages.Count) approved packages; SDK and MIT metadata are pinned."

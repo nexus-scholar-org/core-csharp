@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup>
     <Description>Immutable artifact identity and metadata.</Description>
   </PropertyGroup>
   <ItemGroup>
