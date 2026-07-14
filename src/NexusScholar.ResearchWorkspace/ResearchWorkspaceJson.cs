@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NexusScholar.Kernel;
 
 namespace NexusScholar.ResearchWorkspace;
 
@@ -63,5 +64,19 @@ public static class ResearchWorkspaceJson
     public static void WriteTextFile(string path, string value)
     {
         File.WriteAllText(path, value.ReplaceLineEndings("\n"), Utf8NoBom);
+    }
+
+    public static void WriteCanonicalJsonFile(string path, CanonicalJsonValue value)
+    {
+        var bytes = CanonicalJsonSerializer.SerializeToUtf8Bytes(value);
+        File.WriteAllBytes(path, bytes);
+    }
+
+    public static byte[] SerializeCanonicalJson(CanonicalJsonValue value) =>
+        CanonicalJsonSerializer.SerializeToUtf8Bytes(value);
+
+    public static void WriteCanonicalJsonFile(string path, byte[] canonicalJsonBytes)
+    {
+        File.WriteAllBytes(path, canonicalJsonBytes);
     }
 }

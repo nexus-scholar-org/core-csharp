@@ -9,6 +9,7 @@ public static class ResearchWorkspacePaths
     public const string WorkspaceOutputs = "nexus-output/workspace";
     public const string ReportOutputs = "nexus-output/reports";
     public const string Generations = "nexus-output/generations";
+    public const string AuthorityGenerations = "nexus-output/authority-generations";
     public const string GenerationStaging = "nexus-output/.staging";
     public const string GenerationQuarantine = "nexus-output/quarantine";
     public const string ProjectLockFileName = "nexus.project.lock";
@@ -32,4 +33,6 @@ public static class ResearchWorkspacePaths
     }
 
     public static string GenerationRoot(string generationId) => $"{Generations}/{generationId}";
+
+    public static string AuthorityGenerationRoot(string generationId) => $"{AuthorityGenerations}/{generationId}";
 }

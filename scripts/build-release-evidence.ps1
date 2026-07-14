@@ -64,8 +64,8 @@ try {
             $_.FullName -notmatch '[\\/]tests[\\/]NexusScholar\.PackageSmoke[\\/]packages\.lock\.json$'
         } |
         Sort-Object FullName)
-    if ($lockFiles.Count -ne 30) {
-        throw "Expected exactly 30 solution restore lock files, found $($lockFiles.Count)."
+    if ($lockFiles.Count -ne 31) {
+        throw "Expected exactly 31 solution restore lock files, found $($lockFiles.Count)."
     }
 
     function Get-RelativePath([string]$path) {

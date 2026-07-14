@@ -152,6 +152,16 @@
         "resolved": "13.0.3",
         "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
       },
+      "nexusscholar.appservices": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.CorpusSnapshots": "[0.1.0-alpha.2, )",
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+        }
+      },
       "nexusscholar.artifacts": {
         "type": "Project",
         "dependencies": {
@@ -166,6 +176,13 @@
           "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
           "NexusScholar.Shared": "[0.1.0-alpha.2, )",
           "NexusScholar.Workflow": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.corpussnapshots": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.deduplication": {
@@ -198,6 +215,18 @@
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
+      "nexusscholar.researchworkspace": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.AppServices": "[0.1.0-alpha.2, )",
+          "NexusScholar.CorpusSnapshots": "[0.1.0-alpha.2, )",
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+        }
+      },
       "nexusscholar.screening": {
         "type": "Project",
         "dependencies": {
@@ -218,6 +247,9 @@
         "dependencies": {
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
+      },
+      "nexusscholar.uicontracts": {
+        "type": "Project"
       },
       "nexusscholar.workflow": {
         "type": "Project",

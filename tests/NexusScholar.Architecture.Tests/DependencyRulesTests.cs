@@ -5,6 +5,7 @@ using NexusScholar.Artifacts;
 using NexusScholar.Avalonia.Blocks;
 using NexusScholar.Avalonia.Blocks.SampleHost;
 using NexusScholar.Bundles;
+using NexusScholar.CorpusSnapshots;
 using NexusScholar.Deduplication;
 using NexusScholar.Desktop.Preview;
 using NexusScholar.Extensibility;
@@ -45,6 +46,7 @@ public sealed class DependencyRulesTests
         var assemblies = new[]
         {
             typeof(IClock).Assembly,
+            typeof(CorpusSnapshotService).Assembly,
             typeof(DeduplicationService).Assembly,
             typeof(ContentDigest).Assembly,
             typeof(ArtifactDescriptor).Assembly,
@@ -234,6 +236,59 @@ public sealed class DependencyRulesTests
     }
 
     [TestMethod]
+    public void CorpusSnapshots_project_depends_only_on_kernel_and_deduplication_inside_nexus_domain()
+    {
+        var corpusSnapshotsAssembly = typeof(CorpusSnapshotService).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(DeduplicationService).Assembly.GetName().Name
+        };
+        var disallowed = corpusSnapshotsAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(
+            0,
+            disallowed.Length,
+            $"NexusScholar.CorpusSnapshots may depend only on Kernel and Deduplication. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void CorpusSnapshots_source_contains_no_host_storage_provider_or_model_symbols()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var sourceRoot = Path.Combine(repositoryRoot, "src", "NexusScholar.CorpusSnapshots");
+        var source = string.Join(
+            "\n",
+            Directory.GetFiles(sourceRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
+                    !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .Select(File.ReadAllText));
+        var forbidden = new[]
+        {
+            string.Concat("Http", "Client"),
+            string.Concat("System.", "Net.", "Http"),
+            string.Concat("File", "."),
+            string.Concat("Directory", "."),
+            "DbContext",
+            string.Concat("Ava", "lonia"),
+            "OpenAI",
+            "Anthropic",
+            "SemanticKernel",
+            "ProviderSdk",
+            "ProviderClient"
+        };
+
+        var matches = forbidden.Where(symbol => source.Contains(symbol, StringComparison.Ordinal)).ToArray();
+
+        Assert.AreEqual(0, matches.Length, $"Forbidden CorpusSnapshots source symbols: {string.Join(", ", matches)}");
+    }
+
+    [TestMethod]
     public void Screening_project_depends_inward_on_kernel_deduplication_and_protocol()
     {
         var screeningAssembly = typeof(ScreeningService).Assembly;
@@ -283,6 +338,7 @@ public sealed class DependencyRulesTests
             typeof(IClock).Assembly.GetName().Name,
             typeof(SearchTrace).Assembly.GetName().Name,
             typeof(DeduplicationService).Assembly.GetName().Name,
+            typeof(CorpusSnapshotService).Assembly.GetName().Name,
             typeof(WorkspacePlan).Assembly.GetName().Name
         };
         var disallowed = appServicesAssembly.GetReferencedAssemblies()
@@ -294,7 +350,7 @@ public sealed class DependencyRulesTests
         Assert.AreEqual(
             0,
             disallowed.Length,
-            $"NexusScholar.AppServices must depend only on Kernel, Search, Deduplication, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
+            $"NexusScholar.AppServices must depend only on Kernel, Search, Deduplication, CorpusSnapshots, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -340,6 +396,8 @@ public sealed class DependencyRulesTests
             typeof(IClock).Assembly.GetName().Name,
             typeof(SearchTrace).Assembly.GetName().Name,
             typeof(DeduplicationService).Assembly.GetName().Name,
+            typeof(CorpusSnapshotService).Assembly.GetName().Name,
+            typeof(ResearchEvent).Assembly.GetName().Name,
             typeof(SearchDedupWorkspacePlanComposer).Assembly.GetName().Name,
             typeof(WorkspacePlan).Assembly.GetName().Name,
             typeof(WorkId).Assembly.GetName().Name
@@ -353,7 +411,7 @@ public sealed class DependencyRulesTests
         Assert.AreEqual(
             0,
             disallowed.Length,
-            $"NexusScholar.ResearchWorkspace must depend only on Kernel, Shared, Search, Deduplication, AppServices, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
+            $"NexusScholar.ResearchWorkspace must depend only on Kernel, Shared, Search, Deduplication, CorpusSnapshots, Provenance, AppServices, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -396,6 +454,7 @@ public sealed class DependencyRulesTests
         var coreAssemblies = new[]
         {
             typeof(IClock).Assembly,
+            typeof(CorpusSnapshotService).Assembly,
             typeof(DeduplicationService).Assembly,
             typeof(ContentDigest).Assembly,
             typeof(ArtifactDescriptor).Assembly,

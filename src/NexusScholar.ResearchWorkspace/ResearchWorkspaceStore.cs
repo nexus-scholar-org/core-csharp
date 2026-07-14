@@ -137,6 +137,20 @@ public static class ResearchWorkspaceStore
             throw new JsonException("Current generation id and manifest path must be valid and supplied together.");
         }
 
+        if ((project.CurrentAuthorityGenerationId is null) != (project.AuthorityGenerationManifestPath is null) ||
+            (project.CurrentAuthorityGenerationId is null) != (project.AuthorityGenerationManifestSha256 is null))
+        {
+            throw new JsonException("Authority generation fields must be valid and supplied together.");
+        }
+
+        if (project.CurrentAuthorityGenerationId is not null &&
+            (!IsSafeIdentifier(project.CurrentAuthorityGenerationId) ||
+            !IsWorkspaceRelative(project.AuthorityGenerationManifestPath!) ||
+            !TryValidateRawDigest(project.AuthorityGenerationManifestSha256!)))
+        {
+            throw new JsonException("Current authority generation pointer fields must be safe and workspace-relative.");
+        }
+
     }
 
     private static bool IsSafeIdentifier(string? value) =>
@@ -145,4 +159,7 @@ public static class ResearchWorkspaceStore
     private static bool IsWorkspaceRelative(string value) =>
         !string.IsNullOrWhiteSpace(value) && !Path.IsPathFullyQualified(value) &&
         !value.Split('/', '\\').Any(segment => segment is "" or "." or "..");
+
+    private static bool TryValidateRawDigest(string value) =>
+        ContentDigest.TryParse(value, out _);
 }

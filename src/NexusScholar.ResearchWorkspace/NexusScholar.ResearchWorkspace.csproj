@@ -3,6 +3,8 @@
     <ProjectReference Include="../NexusScholar.Kernel/NexusScholar.Kernel.csproj" />
     <ProjectReference Include="../NexusScholar.Search/NexusScholar.Search.csproj" />
     <ProjectReference Include="../NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
+    <ProjectReference Include="../NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
+    <ProjectReference Include="../NexusScholar.Provenance/NexusScholar.Provenance.csproj" />
     <ProjectReference Include="../NexusScholar.AppServices/NexusScholar.AppServices.csproj" />
     <ProjectReference Include="../NexusScholar.UiContracts/NexusScholar.UiContracts.csproj" />
   </ItemGroup>

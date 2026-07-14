@@ -21,6 +21,7 @@
     <None Include="../../fixtures/conformance/bundles/*.json" Link="fixtures/bundles/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../fixtures/conformance/kernel/*.json" Link="fixtures/kernel/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../fixtures/conformance/kernel/*.ndjson" Link="fixtures/kernel/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../fixtures/conformance/decision-snapshot-authority/*.json" Link="fixtures/decision-snapshot-authority/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../fixtures/php-golden/shared-identity/v1/*.json" Link="fixtures/php-golden/shared-identity/v1/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../fixtures/php-golden/search/v1/*.json" Link="fixtures/php-golden/search/v1/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../fixtures/php-golden/deduplication/v1/*.json" Link="fixtures/php-golden/deduplication/v1/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
@@ -37,6 +38,8 @@
     <ProjectReference Include="../../src/NexusScholar.Workflow/NexusScholar.Workflow.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Bundles/NexusScholar.Bundles.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.ResearchWorkspace/NexusScholar.ResearchWorkspace.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Screening/NexusScholar.Screening.csproj" />
     <ProjectReference Include="../../src/NexusScholar.FullText/NexusScholar.FullText.csproj" />
   </ItemGroup>
