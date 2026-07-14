@@ -1,6 +1,6 @@
 # Hardening 27 - Deduplication Compatibility Evidence
 
-Status: implemented; pending protected-branch merge verification.
+Status: complete; protected-branch merge verified by PR #51 at merge `7c0b9f4`.
 
 ## Behavior Implemented
 

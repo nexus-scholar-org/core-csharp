@@ -1,12 +1,12 @@
 # Chat Roster
 
-Status date: 2026-07-13
+Status date: 2026-07-14
 
 ## Active Lanes
 
-- Main development lane: `main` at the Hardening 24 merge `8436af3`.
-- Current manager lane: Phase 6 closeout evidence.
-- Next manager lane: Phase 7 compatibility evidence planning.
+- Main development lane: `main` at the Hardening 29 merge `37df601`.
+- Current manager lane: Hardening 30 post-Phase 7 review remediation.
+- Compatibility evidence lane: Phase 7 complete; future additions remain case-scoped and ADR-mediated.
 - Historical public-site lane: `gh-pages`; deployable site source now moves to `site/` on `main`.
 
 ## Ownership
@@ -14,7 +14,7 @@ Status date: 2026-07-13
 - Release manager: package policy, release evidence, validation workflow, governance settings, and final rehearsal.
 - Security lane: dependency review, CodeQL, private vulnerability reporting, and security policy.
 - Documentation lane: Pages source, maturity non-claims, branch board, merge queue, roster, and port matrix.
-- Compatibility lane: Phase 7 only; no PHP compatibility claim before pinned fixture generation and semantic comparison.
+- Compatibility lane: preserve pinned fixtures, semantic classifications, and explicit non-claims; do not broaden evidence into package-wide PHP compatibility.
 
 ## Current Boundaries
 
@@ -23,3 +23,4 @@ Status date: 2026-07-13
 - No live provider, persistence, cloud, PDF/OCR, product UI, publication, or signing expansion is in scope.
 - The active operating plan is `docs/reviews/2026-07-11-hardening-plan/README.md`.
 - Tag `v0.1.0-alpha.1` is a validated and attested rehearsal artifact set, not a published NuGet release.
+- Active validation package identity is `0.1.0-alpha.2`; publication and signing remain disabled.

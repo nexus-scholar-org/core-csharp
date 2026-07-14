@@ -1,6 +1,6 @@
 # Phase 5 - Test Strategy Upgrade Plan
 
-Status: in progress.
+Status: complete through Hardening 18; retained as the permanent regression-test policy.
 
 ## Goal
 

@@ -1,21 +1,43 @@
+using System.Collections.ObjectModel;
 using NexusScholar.Kernel;
 
 namespace NexusScholar.AI;
 
-public sealed record AiProposal<T>(
-    string TaskType,
-    T Value,
-    IReadOnlyList<ContentDigest> Evidence,
-    DateTimeOffset CreatedAt)
+public sealed record AiProposal<T>
 {
-    public AcceptedAiProposal<T> Accept(ActorId acceptedBy, IClock clock)
+    public AiProposal(
+        AiTaskPolicy policy,
+        T value,
+        IReadOnlyList<ContentDigest> evidence,
+        DateTimeOffset createdAt)
     {
-        ArgumentNullException.ThrowIfNull(clock);
-        return new AcceptedAiProposal<T>(this, acceptedBy, clock.UtcNow);
-    }
-}
+        Policy = policy ?? throw new ArgumentNullException(nameof(policy));
+        Value = value;
+        ArgumentNullException.ThrowIfNull(evidence);
+        if (evidence.Any(item => !item.IsValid))
+        {
+            throw new DomainRuleException("AI proposal evidence must use valid content digests.");
+        }
+        if (policy.EvidenceRequired && evidence.Count == 0)
+        {
+            throw new DomainRuleException("This AI task policy requires proposal evidence.");
+        }
+        if (createdAt == default || createdAt.Offset != TimeSpan.Zero)
+        {
+            throw new DomainRuleException("AI proposal creation time must be a non-default UTC timestamp.");
+        }
 
-public sealed record AcceptedAiProposal<T>(
-    AiProposal<T> Proposal,
-    ActorId AcceptedBy,
-    DateTimeOffset AcceptedAt);
+        Evidence = new ReadOnlyCollection<ContentDigest>(evidence.ToArray());
+        CreatedAt = createdAt;
+    }
+
+    public AiTaskPolicy Policy { get; }
+
+    public string TaskType => Policy.TaskType;
+
+    public T Value { get; }
+
+    public IReadOnlyList<ContentDigest> Evidence { get; }
+
+    public DateTimeOffset CreatedAt { get; }
+}

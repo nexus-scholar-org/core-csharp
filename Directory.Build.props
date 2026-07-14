@@ -16,7 +16,7 @@
     <Authors>Nexus Scholar contributors</Authors>
     <Product>Nexus Scholar Core</Product>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <VersionSuffix>alpha.1</VersionSuffix>
+    <VersionSuffix>alpha.2</VersionSuffix>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>research;systematic-review;local-first;provenance</PackageTags>
     <Description>Audit-oriented early-alpha contracts for local-first research workflows. Not a production researcher application.</Description>

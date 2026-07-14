@@ -155,18 +155,18 @@
       "nexusscholar.appservices": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Deduplication": "[0.1.0-alpha.1, )",
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )",
-          "NexusScholar.Search": "[0.1.0-alpha.1, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.1, )"
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.deduplication": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )",
-          "NexusScholar.Search": "[0.1.0-alpha.1, )",
-          "NexusScholar.Shared": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.kernel": {
@@ -175,24 +175,24 @@
       "nexusscholar.researchworkspace": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.AppServices": "[0.1.0-alpha.1, )",
-          "NexusScholar.Deduplication": "[0.1.0-alpha.1, )",
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )",
-          "NexusScholar.Search": "[0.1.0-alpha.1, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.1, )"
+          "NexusScholar.AppServices": "[0.1.0-alpha.2, )",
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.search": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )",
-          "NexusScholar.Shared": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.shared": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.uicontracts": {

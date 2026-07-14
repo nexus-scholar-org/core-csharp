@@ -1,13 +1,12 @@
 # Merge Queue
 
-Status date: 2026-07-13
+Status date: 2026-07-14
 
 ## Current Queue
 
 | Order | Gate | Scope | Status |
 |---|---|---|---|
-| 1 | Phase 6 closeout | Record verified Pages, governance, tag, evidence, and attestation results | Active |
-| 2 | Phase 7 planning | Pinned PHP fixtures and semantic comparators | Waiting on closeout |
+| 1 | Hardening 30 | Remediate the post-Phase 7 technical review findings and verify the complete gate | Active |
 
 Recently landed:
 
@@ -19,6 +18,12 @@ Recently landed:
 | #45 | Hardening 22 release and security workflows | Landed |
 | #46 | Hardening 23 Pages and operations | Landed |
 | #47 | Hardening 24 governance verifier | Landed |
+| #48 | Phase 6 closeout | Landed |
+| #49 | Hardening 25 shared-identity compatibility evidence | Landed |
+| #50 | Hardening 26 Search compatibility evidence | Landed |
+| #51 | Hardening 27 Deduplication compatibility evidence | Landed |
+| #52 | Hardening 28 Screening/Full Text compatibility evidence | Landed |
+| #53 | Hardening 29 Phase 7 closeout | Landed |
 
 ## Do Not Queue
 

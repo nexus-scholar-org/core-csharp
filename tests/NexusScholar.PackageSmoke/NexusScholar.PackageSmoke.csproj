@@ -7,9 +7,9 @@
     <RestoreLockedMode>false</RestoreLockedMode>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NexusScholar.Bundles" Version="0.1.0-alpha.1" />
-    <PackageReference Include="NexusScholar.Extensibility" Version="0.1.0-alpha.1" />
-    <PackageReference Include="NexusScholar.FullText" Version="0.1.0-alpha.1" />
-    <PackageReference Include="NexusScholar.Screening" Version="0.1.0-alpha.1" />
+    <PackageReference Include="NexusScholar.Bundles" Version="0.1.0-alpha.2" />
+    <PackageReference Include="NexusScholar.Extensibility" Version="0.1.0-alpha.2" />
+    <PackageReference Include="NexusScholar.FullText" Version="0.1.0-alpha.2" />
+    <PackageReference Include="NexusScholar.Screening" Version="0.1.0-alpha.2" />
   </ItemGroup>
 </Project>

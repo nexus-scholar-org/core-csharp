@@ -1,5 +1,7 @@
 # Hardening 29 - Phase 7 Compatibility Closeout (Citation/Exports Evidence)
 
+Status: complete; protected-branch merge verified by PR #53 at merge `37df601`.
+
 ## Scope
 
 H29 closes the remaining Phase 7 compatibility evidence work for citation-network and dissemination-export behavior by generating evidence-only PHP fixtures and recording a compatibility claim inventory for non-adoption and no broad compatibility claims.
@@ -50,7 +52,7 @@ H29 closes the remaining Phase 7 compatibility evidence work for citation-networ
 - ADR impact: H29 accepts `ADR 0027` as the normative basis for intentional non-adoption.
 - PHP impact: H29 preserves evidence generated from pinned PHP behavior and does not alter fixture semantics or pin state.
 
-## Pending
+## Closeout
 
-- Protected-branch merge verification remains pending for the H29 evidence and documentation closeout.
-- Final merge readiness requires branch policy and release-gate review checks to approve the generated fixtures, comparator, ADR, and documentation.
+- The H29 evidence, comparator, ADR, and documentation landed through protected PR #53.
+- Phase 7 is complete. Future compatibility claims still require fixture-backed, case-scoped evidence and ADR mediation.

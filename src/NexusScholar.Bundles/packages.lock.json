@@ -8,26 +8,26 @@
       "nexusscholar.protocol": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.provenance": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.shared": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.workflow": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )",
-          "NexusScholar.Protocol": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Protocol": "[0.1.0-alpha.2, )"
         }
       }
     }

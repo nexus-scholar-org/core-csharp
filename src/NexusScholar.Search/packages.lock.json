@@ -8,7 +8,7 @@
       "nexusscholar.shared": {
         "type": "Project",
         "dependencies": {
-          "NexusScholar.Kernel": "[0.1.0-alpha.1, )"
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
         }
       }
     }

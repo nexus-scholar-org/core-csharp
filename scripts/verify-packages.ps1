@@ -3,6 +3,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 try {
+    & (Join-Path $PSScriptRoot 'verify-release-policy.ps1')
+    & (Join-Path $PSScriptRoot 'verify-release-policy-regressions.ps1')
+
     $topology = Get-Content -Raw eng/package-topology.json | ConvertFrom-Json
     $version = $topology.version
     $packageDirectory = Join-Path $root 'artifacts/packages'
