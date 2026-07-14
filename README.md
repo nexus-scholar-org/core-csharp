@@ -6,7 +6,9 @@ The pinned PHP package remains behavioral evidence for proven workflows. This re
 
 ## Current Status
 
-The current operating plan is integrity hardening, not feature expansion. See `docs/reviews/2026-07-11-hardening-plan/README.md`.
+Integrity hardening is complete. The current operating roadmap is dependency-ordered feature expansion, beginning with FE-01 decision-and-snapshot gate planning. See `docs/plans/2026-07-14-feature-expansion-priority.md`.
+
+The roadmap authorizes planning order, not feature code by default. Each feature still requires an accepted gate with explicit authority, tests, fixtures, exit criteria, and non-claims.
 
 `main` contains the local Core implementation through the first no-network Full Text slice, plus a contract-backed UI renderer prototype:
 

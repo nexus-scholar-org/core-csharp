@@ -4,11 +4,11 @@ Status date: 2026-07-14
 
 ## Current Repository State
 
-- `main`: hardening complete through Hardening 30 at merge `32d3c5c` (PR #54).
+- `main`: hardening and closeout complete at merge `f0e5806` (PR #55).
 - `gh-pages`: retained as historical static-site source at `9a76975`; new Pages deployments are sourced from `site/` on `main`.
 - Active corrective branch: none.
-- Active plan: `docs/reviews/2026-07-11-hardening-plan/README.md`.
-- Feature expansion remains frozen.
+- Active plan: `docs/plans/2026-07-14-feature-expansion-priority.md`.
+- Immediate next job: FE-01 decision-and-snapshot gate planning; no feature-expansion implementation branch is active.
 
 ## Completed Hardening
 
@@ -23,11 +23,12 @@ Status date: 2026-07-14
 - Tag `v0.1.0-alpha.1` completed attested clean-machine run `29231634501`.
 - Phase 7 fixture-backed compatibility evidence landed through PRs #49-#53 with case-scoped claims only.
 - Hardening 30 landed through PR #54 with green Windows/Linux gates, dependency review, and CodeQL checks.
+- Hardening 30 closeout landed through PR #55; final `main` Gate 01 and CodeQL runs passed.
 - The active validation package identity is `0.1.0-alpha.2`; `v0.1.0-alpha.1` remains the historical attested rehearsal and no NuGet package is published.
 
 ## Product Boundary
 
-No live providers, scraping, persistence/API/cloud, PDF/OCR, product UI shell, package publication, signing, executable merge decisions, or PHP compatibility claims are authorized.
+The roadmap sequences later product work but does not authorize it automatically. No live providers, scraping, persistence/API/cloud, PDF/OCR, product UI shell, package publication, signing, executable merge decisions, or broader PHP compatibility claims are authorized until their accepted gate.
 
 ## Protected References
 

@@ -4,8 +4,8 @@ Status date: 2026-07-14
 
 ## Active Lanes
 
-- Main development lane: `main` at the Hardening 30 merge `32d3c5c`.
-- Current manager lane: next-gate selection; no feature-expansion branch is active.
+- Main development lane: `main` at the Hardening 30 closeout merge `f0e5806`.
+- Current manager lane: FE-01 decision-and-snapshot gate planning; no feature-expansion implementation branch is active.
 - Compatibility evidence lane: Phase 7 complete; future additions remain case-scoped and ADR-mediated.
 - Historical public-site lane: `gh-pages`; deployable site source now moves to `site/` on `main`.
 
@@ -20,7 +20,7 @@ Status date: 2026-07-14
 
 - Phase 6 artifacts are unsigned and validation-only.
 - Model outputs remain proposals; human authorization boundaries are unchanged.
-- No live provider, persistence, cloud, PDF/OCR, product UI, publication, or signing expansion is in scope.
-- The active operating plan is `docs/reviews/2026-07-11-hardening-plan/README.md`.
+- No live provider, persistence, cloud, PDF/OCR, product UI, publication, or signing implementation is authorized before its accepted feature gate.
+- The active operating roadmap is `docs/plans/2026-07-14-feature-expansion-priority.md`.
 - Tag `v0.1.0-alpha.1` is a validated and attested rehearsal artifact set, not a published NuGet release.
 - Active validation package identity is `0.1.0-alpha.2`; publication and signing remain disabled.
