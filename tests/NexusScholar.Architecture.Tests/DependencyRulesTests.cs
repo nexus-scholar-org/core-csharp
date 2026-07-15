@@ -16,6 +16,7 @@ using NexusScholar.Provenance;
 using NexusScholar.ResearchWorkspace;
 using NexusScholar.Screening;
 using NexusScholar.Screening.WorkflowExecution;
+using NexusScholar.Screening.FullText;
 using NexusScholar.Search;
 using NexusScholar.Shared;
 using NexusScholar.UiContracts;
@@ -397,6 +398,26 @@ public sealed class DependencyRulesTests
             0,
             disallowed.Length,
             $"NexusScholar.FullText may depend only on Kernel and Artifacts inside the domain. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void Screening_FullText_bridge_depends_only_on_its_authority_inputs()
+    {
+        var assembly = typeof(VerifiedFullTextAdmission).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(ScreeningConductJournal).Assembly.GetName().Name,
+            typeof(FullTextInput).Assembly.GetName().Name
+        };
+        var disallowed = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(0, disallowed.Length,
+            $"NexusScholar.Screening.FullText has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
