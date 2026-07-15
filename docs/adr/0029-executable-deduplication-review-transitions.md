@@ -64,6 +64,20 @@ cycles, implicit correction, and any merge violating an active keep-separate
 constraint. Active decisions are one per policy target. Superseded decisions
 remain in predecessor generations and are removed only from the active set.
 
+The reducer transition table is closed:
+
+| Current pair location | merge | keep-separate | mark-unresolved |
+| --- | --- | --- | --- |
+| different groups | union groups | preserve groups | preserve groups |
+| group plus candidate-level unresolved | add unresolved candidate to group and remove its unresolved entry | preserve both | preserve both |
+| two candidate-level unresolved entries | create one group and remove both unresolved entries | preserve both | preserve both |
+| already in one group | reject as already resolved unless returning an idempotent stored request | reject because FE-02 does not split groups | preserve group and record unresolved target |
+
+An active decision for the same target requires exact supersession id and digest.
+A merge may supersede that target's active keep-separate decision, but it still
+must satisfy every other active keep-separate constraint. A stale, inactive,
+cross-target, id-only, or cyclic supersession is rejected.
+
 Keep-separate and mark-unresolved state is an active-decision projection, not a
 new mutable snapshot field. Reopen traverses the authority-generation chain,
 rehydrates every decision referenced by the current snapshot, and derives active

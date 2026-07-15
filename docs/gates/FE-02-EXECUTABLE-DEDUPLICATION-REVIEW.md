@@ -36,6 +36,8 @@ preserving source evidence and predecessor authority.
 - stale result, target, snapshot, generation, policy, evidence, or request;
 - automation, AI, import, plugin, or unknown actor attempts final action;
 - transitive merge attempts to violate active keep-separate;
+- grouped/grouped, grouped/unresolved, unresolved/unresolved, already-merged,
+  active-separated, and superseded-separated transition-table cases;
 - v2 manifest, predecessor chain, or active decision-set digest is tampered;
 - partial write, stale writer, post-promotion failure, and orphan recovery;
 - reopen reconstructs the full predecessor, decision, invalidation, snapshot, and
