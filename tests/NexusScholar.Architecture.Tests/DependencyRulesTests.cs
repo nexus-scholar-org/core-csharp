@@ -15,6 +15,7 @@ using NexusScholar.Protocol;
 using NexusScholar.Provenance;
 using NexusScholar.ResearchWorkspace;
 using NexusScholar.Screening;
+using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Search;
 using NexusScholar.Shared;
 using NexusScholar.UiContracts;
@@ -197,6 +198,26 @@ public sealed class DependencyRulesTests
 
         Assert.AreEqual(0, disallowed.Length,
             $"WorkflowExecution.Provenance has disallowed dependencies: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void Screening_workflow_execution_bridge_has_only_accepted_inward_dependencies()
+    {
+        var assembly = typeof(ScreeningWorkflowExecutionBridge).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(ScreeningConductJournal).Assembly.GetName().Name,
+            typeof(WorkflowExecutionJournal).Assembly.GetName().Name
+        };
+        var disallowed = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(0, disallowed.Length,
+            $"Screening.WorkflowExecution has disallowed dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]

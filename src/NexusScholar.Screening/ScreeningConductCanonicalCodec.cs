@@ -76,14 +76,14 @@ public static class ScreeningConductCanonicalCodec
             "actor", "candidate_id", "candidate_set_digest", "candidate_set_id", "conduct_id", "criteria_digest",
             "criteria_id", "decided_at", "decision_id", "evidence", "kind", "ordinal", "policy_digest", "policy_id",
             "previous_digest", "protocol_content_digest", "protocol_version_id", "rationale", "request_digest", "request_id",
-            "source_decision_ids", "verdict"
-        ], ["exclusion_reason_code", "resolved_conflict_id", "supersedes_decision_id"]);
+            "source_decision_digests", "verdict"
+        ], ["exclusion_reason_code", "resolved_conflict_id", "supersedes_decision_digest"]);
         var decision = ScreeningConductDecision.Create(
             header, Integer(content, "ordinal"), Digest(content, "previous_digest"), Text(content, "request_id"),
             Text(content, "candidate_id"), ParseKind(Text(content, "kind")), Text(content, "verdict"),
             ParseActor(Object(content, "actor")), Text(content, "rationale"), Timestamp(content, "decided_at"),
-            OptionalText(content, "exclusion_reason_code"), OptionalText(content, "supersedes_decision_id"),
-            OptionalText(content, "resolved_conflict_id"), Array(content, "source_decision_ids").Select(Text),
+            OptionalText(content, "exclusion_reason_code"), OptionalText(content, "supersedes_decision_digest"),
+            OptionalText(content, "resolved_conflict_id"), Array(content, "source_decision_digests").Select(Digest),
             Array(content, "evidence").Select(ParseEvidence));
         RequireReproduction(bytes, decision.Digest, expectedDigest, Serialize(decision), "Screening conduct decision");
         return decision;
@@ -97,12 +97,12 @@ public static class ScreeningConductCanonicalCodec
         var content = ParseEnvelope(bytes, expectedDigest, ScreeningConductInvalidation.SchemaId);
         RequireExact(content,
         [
-            "actor", "affected_decision_ids", "conduct_id", "invalidated_at", "invalidation_id", "ordinal",
+            "actor", "affected_decision_digests", "conduct_id", "invalidated_at", "invalidation_id", "ordinal",
             "policy_digest", "policy_id", "previous_digest", "reason", "source"
         ]);
         var invalidation = ScreeningConductInvalidation.Create(
             header, Integer(content, "ordinal"), Digest(content, "previous_digest"), Text(content, "invalidation_id"),
-            ParseEvidence(Object(content, "source")), Array(content, "affected_decision_ids").Select(Text),
+            ParseEvidence(Object(content, "source")), Array(content, "affected_decision_digests").Select(Digest),
             ParseActor(Object(content, "actor")), Text(content, "reason"), Timestamp(content, "invalidated_at"));
         RequireReproduction(bytes, invalidation.Digest, expectedDigest, Serialize(invalidation), "Screening conduct invalidation");
         return invalidation;
@@ -207,6 +207,13 @@ public static class ScreeningConductCanonicalCodec
     private static ContentDigest Digest(CanonicalJsonObject root, string name)
     {
         try { return ContentDigest.Parse(Text(root, name)); }
+        catch (Exception exception) when (exception is ArgumentException or FormatException) { throw Rule($"Screening conduct digest is invalid: {exception.Message}"); }
+    }
+    private static ContentDigest Digest(CanonicalJsonValue value)
+    {
+        if (value is not CanonicalJsonString text)
+            throw Rule("Screening conduct digest must be a string.");
+        try { return ContentDigest.Parse(text.Value); }
         catch (Exception exception) when (exception is ArgumentException or FormatException) { throw Rule($"Screening conduct digest is invalid: {exception.Message}"); }
     }
     private static DateTimeOffset Timestamp(CanonicalJsonObject root, string name)

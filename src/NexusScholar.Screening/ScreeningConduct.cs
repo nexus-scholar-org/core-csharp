@@ -272,16 +272,16 @@ public sealed class ScreeningConductDecision : IScreeningConductEntry
 
     private ScreeningConductDecision(ScreeningConductHeader header, int ordinal, ContentDigest previousDigest, string requestId,
         string candidateId, ScreeningConductDecisionKind kind, string verdict, ScreeningConductActor actor, string rationale,
-        string? exclusionReasonCode, string? supersedesDecisionId, string? resolvedConflictId,
-        IReadOnlyList<string> sourceDecisionIds, IReadOnlyList<ScreeningConductEvidenceRef> evidence, DateTimeOffset decidedAt)
+        string? exclusionReasonCode, ContentDigest? supersedesDecisionDigest, string? resolvedConflictId,
+        IReadOnlyList<ContentDigest> sourceDecisionDigests, IReadOnlyList<ScreeningConductEvidenceRef> evidence, DateTimeOffset decidedAt)
     {
         ConductId = header.ConductId; PolicyId = header.PolicyId; PolicyDigest = header.PolicyDigest;
         CandidateSetId = header.CandidateSetId; CandidateSetDigest = header.CandidateSetDigest;
         CriteriaId = header.CriteriaId; CriteriaDigest = header.CriteriaDigest; ProtocolVersionId = header.ProtocolVersionId;
         ProtocolContentDigest = header.ProtocolContentDigest; Ordinal = ordinal; PreviousDigest = previousDigest;
         RequestId = requestId; CandidateId = candidateId; Kind = kind; Verdict = verdict; Actor = actor; Rationale = rationale;
-        ExclusionReasonCode = exclusionReasonCode; SupersedesDecisionId = supersedesDecisionId; ResolvedConflictId = resolvedConflictId;
-        SourceDecisionIds = sourceDecisionIds; Evidence = evidence; DecidedAt = decidedAt;
+        ExclusionReasonCode = exclusionReasonCode; SupersedesDecisionDigest = supersedesDecisionDigest; ResolvedConflictId = resolvedConflictId;
+        SourceDecisionDigests = sourceDecisionDigests; Evidence = evidence; DecidedAt = decidedAt;
         RequestDigest = new DigestEnvelope(DigestScope.CanonicalJsonRecord, "nexus.screening.conduct-request", "1.0.0", RequestContent()).ComputeDigest();
         DecisionId = $"screening-decision-{RequestDigest.Value[7..23]}";
         Digest = Envelope().ComputeDigest();
@@ -307,28 +307,37 @@ public sealed class ScreeningConductDecision : IScreeningConductEntry
     public ScreeningConductActor Actor { get; }
     public string Rationale { get; }
     public string? ExclusionReasonCode { get; }
-    public string? SupersedesDecisionId { get; }
+    public ContentDigest? SupersedesDecisionDigest { get; }
     public string? ResolvedConflictId { get; }
-    public IReadOnlyList<string> SourceDecisionIds { get; }
+    public IReadOnlyList<ContentDigest> SourceDecisionDigests { get; }
     public IReadOnlyList<ScreeningConductEvidenceRef> Evidence { get; }
     public DateTimeOffset DecidedAt { get; }
     public ContentDigest Digest { get; }
 
     public static ScreeningConductDecision Create(ScreeningConductHeader header, int ordinal, ContentDigest previousDigest,
         string requestId, string candidateId, ScreeningConductDecisionKind kind, string verdict, ScreeningConductActor actor,
-        string rationale, DateTimeOffset decidedAt, string? exclusionReasonCode = null, string? supersedesDecisionId = null,
-        string? resolvedConflictId = null, IEnumerable<string>? sourceDecisionIds = null,
+        string rationale, DateTimeOffset decidedAt, string? exclusionReasonCode = null, string? supersedesDecisionDigest = null,
+        string? resolvedConflictId = null, IEnumerable<ContentDigest>? sourceDecisionDigests = null,
         IEnumerable<ScreeningConductEvidenceRef>? evidence = null)
     {
         ArgumentNullException.ThrowIfNull(header); ArgumentNullException.ThrowIfNull(actor);
         if (ordinal < 1 || !previousDigest.IsValid) throw new ScreeningRuleException(ScreeningErrorCodes.InvalidConductChain, "Decision chain position is invalid.");
         if (!header.CandidateIds.Contains(candidateId, StringComparer.Ordinal)) throw new ScreeningRuleException(ScreeningErrorCodes.CandidateNotInSet, "Candidate is not in the conduct set.");
         if (!ScreeningVerdicts.IsKnown(verdict)) throw new ScreeningRuleException(ScreeningErrorCodes.UnknownScreeningVerdict, "Unknown Screening verdict.");
-        var sources = (sourceDecisionIds ?? Array.Empty<string>()).Select(id => Guard.NotBlank(id, nameof(sourceDecisionIds))).Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToArray();
+        if (kind == ScreeningConductDecisionKind.Correction && supersedesDecisionDigest is null)
+            throw Rule(ScreeningErrorCodes.MissingSourceDecision, "Correction must supersede one current decision digest.");
+        if (kind == ScreeningConductDecisionKind.Adjudication && sourceDecisionDigests is null)
+            throw Rule(ScreeningErrorCodes.MissingSourceDecision, "Adjudication must identify all source decision digests.");
+        var sources = (sourceDecisionDigests ?? Array.Empty<ContentDigest>())
+            .Select(digest => digest.IsValid ? digest : throw Rule(ScreeningErrorCodes.UnverifiedConductAuthority, "Screening conduct source decision digest is invalid."))
+            .Distinct()
+            .OrderBy(digest => digest.ToString(), StringComparer.Ordinal)
+            .ToArray();
+        var supersedes = ParseOptionalDigest(supersedesDecisionDigest);
         var refs = (evidence ?? Array.Empty<ScreeningConductEvidenceRef>()).OrderBy(item => item.Kind, StringComparer.Ordinal).ThenBy(item => item.Id, StringComparer.Ordinal).ToArray();
         return new ScreeningConductDecision(header, ordinal, previousDigest, Guard.NotBlank(requestId, nameof(requestId)),
             Guard.NotBlank(candidateId, nameof(candidateId)), kind, verdict, actor, Guard.NotBlank(rationale, nameof(rationale)),
-            exclusionReasonCode, supersedesDecisionId, resolvedConflictId, Array.AsReadOnly(sources), Array.AsReadOnly(refs), decidedAt);
+            exclusionReasonCode, supersedes, resolvedConflictId, Array.AsReadOnly(sources), Array.AsReadOnly(refs), decidedAt);
     }
 
     public CanonicalJsonObject ToCanonicalJson() => Envelope().ToCanonicalJsonObject();
@@ -342,19 +351,29 @@ public sealed class ScreeningConductDecision : IScreeningConductEntry
             .Add("criteria_id", CriteriaId).Add("criteria_digest", CriteriaDigest.ToString()).Add("protocol_version_id", ProtocolVersionId)
             .Add("protocol_content_digest", ProtocolContentDigest.ToString()).Add("request_id", RequestId).Add("candidate_id", CandidateId)
             .Add("kind", Kind.ToString().ToLowerInvariant()).Add("verdict", Verdict).Add("actor", Actor.ToCanonicalJson()).Add("rationale", Rationale)
-            .Add("source_decision_ids", CanonicalJsonValue.Array(SourceDecisionIds.Select(CanonicalJsonValue.From).ToArray()))
+            .Add("source_decision_digests", CanonicalJsonValue.Array(SourceDecisionDigests.Select(item => CanonicalJsonValue.From(item.ToString())).ToArray()))
             .Add("evidence", CanonicalJsonValue.Array(Evidence.Select(item => item.ToCanonicalJson()).ToArray()));
         if (ExclusionReasonCode is not null) value.Add("exclusion_reason_code", ExclusionReasonCode);
-        if (SupersedesDecisionId is not null) value.Add("supersedes_decision_id", SupersedesDecisionId);
+        if (SupersedesDecisionDigest is not null) value.Add("supersedes_decision_digest", SupersedesDecisionDigest.Value.ToString());
         if (ResolvedConflictId is not null) value.Add("resolved_conflict_id", ResolvedConflictId);
         return value;
     }
+
+    private static ContentDigest? ParseOptionalDigest(string? value)
+    {
+        if (value is null) return null;
+        if (!ContentDigest.TryParse(value, out var digest) || !digest.IsValid)
+            throw Rule(ScreeningErrorCodes.UnverifiedConductAuthority, "Screening conduct decision digest is invalid.");
+        return digest;
+    }
+
+    private static ScreeningRuleException Rule(string category, string message) => new(category, message);
 }
 
-public sealed record ScreeningConductConflict(string ConflictId, string CandidateId, IReadOnlyList<string> SourceDecisionIds, bool Resolved);
-public sealed record ScreeningConductOutcome(string CandidateId, string Verdict, string DecisionId, string? ExclusionReasonCode);
+public sealed record ScreeningConductConflict(string ConflictId, string CandidateId, IReadOnlyList<ContentDigest> SourceDecisionDigests, bool Resolved);
+public sealed record ScreeningConductOutcome(string CandidateId, string Verdict, ContentDigest DecisionDigest, string? ExclusionReasonCode);
 public sealed record ScreeningConductProjection(ContentDigest HeadDigest, IReadOnlyDictionary<string, ScreeningConductOutcome> Outcomes,
-    IReadOnlyList<ScreeningConductConflict> Conflicts, IReadOnlySet<string> InvalidatedDecisionIds, bool HandoffReady);
+    IReadOnlyList<ScreeningConductConflict> Conflicts, IReadOnlySet<ContentDigest> InvalidatedDecisionDigests, bool HandoffReady);
 
 public sealed class ScreeningConductInvalidation : IScreeningConductEntry
 {
@@ -367,7 +386,7 @@ public sealed class ScreeningConductInvalidation : IScreeningConductEntry
         ContentDigest previousDigest,
         string invalidationId,
         ScreeningConductEvidenceRef source,
-        IReadOnlyList<string> affectedDecisionIds,
+        IReadOnlyList<ContentDigest> affectedDecisionDigests,
         ScreeningConductActor actor,
         string reason,
         DateTimeOffset invalidatedAt)
@@ -379,7 +398,7 @@ public sealed class ScreeningConductInvalidation : IScreeningConductEntry
         PreviousDigest = previousDigest;
         InvalidationId = Guard.NotBlank(invalidationId, nameof(invalidationId));
         Source = source;
-        AffectedDecisionIds = affectedDecisionIds;
+        AffectedDecisionDigests = affectedDecisionDigests;
         Actor = actor;
         Reason = Guard.NotBlank(reason, nameof(reason));
         InvalidatedAt = invalidatedAt;
@@ -393,7 +412,7 @@ public sealed class ScreeningConductInvalidation : IScreeningConductEntry
     public ContentDigest PreviousDigest { get; }
     public string InvalidationId { get; }
     public ScreeningConductEvidenceRef Source { get; }
-    public IReadOnlyList<string> AffectedDecisionIds { get; }
+    public IReadOnlyList<ContentDigest> AffectedDecisionDigests { get; }
     public ScreeningConductActor Actor { get; }
     public string Reason { get; }
     public DateTimeOffset InvalidatedAt { get; }
@@ -405,19 +424,22 @@ public sealed class ScreeningConductInvalidation : IScreeningConductEntry
         ContentDigest previousDigest,
         string invalidationId,
         ScreeningConductEvidenceRef source,
-        IEnumerable<string> affectedDecisionIds,
+        IEnumerable<ContentDigest> affectedDecisionDigests,
         ScreeningConductActor actor,
         string reason,
         DateTimeOffset invalidatedAt)
     {
         ArgumentNullException.ThrowIfNull(header);
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(affectedDecisionIds);
+        ArgumentNullException.ThrowIfNull(affectedDecisionDigests);
         ArgumentNullException.ThrowIfNull(actor);
         if (ordinal < 1 || !previousDigest.IsValid) throw new ScreeningRuleException(ScreeningErrorCodes.InvalidConductChain, "Invalidation chain position is invalid.");
         _ = source.ToCanonicalJson();
-        var affected = affectedDecisionIds.Select(id => Guard.NotBlank(id, nameof(affectedDecisionIds)))
-            .Distinct(StringComparer.Ordinal).OrderBy(id => id, StringComparer.Ordinal).ToArray();
+        var affected = affectedDecisionDigests.Select(digest => digest.IsValid
+            ? digest
+            : throw Rule(ScreeningErrorCodes.UnverifiedConductAuthority, "Screening conduct affected decision digest is invalid."))
+            .Distinct()
+            .OrderBy(digest => digest.ToString(), StringComparer.Ordinal).ToArray();
         if (affected.Length == 0) throw new ScreeningRuleException(ScreeningErrorCodes.MissingSourceDecision, "Invalidation must identify affected decisions.");
         return new ScreeningConductInvalidation(header, ordinal, previousDigest, invalidationId, source,
             Array.AsReadOnly(affected), actor, reason, invalidatedAt);
@@ -429,8 +451,10 @@ public sealed class ScreeningConductInvalidation : IScreeningConductEntry
         new CanonicalJsonObject().Add("conduct_id", ConductId).Add("policy_id", PolicyId).Add("policy_digest", PolicyDigest.ToString())
             .Add("ordinal", Ordinal).Add("previous_digest", PreviousDigest.ToString()).Add("invalidation_id", InvalidationId)
             .Add("source", Source.ToCanonicalJson())
-            .Add("affected_decision_ids", CanonicalJsonValue.Array(AffectedDecisionIds.Select(CanonicalJsonValue.From).ToArray()))
+            .Add("affected_decision_digests", CanonicalJsonValue.Array(AffectedDecisionDigests.Select(item => CanonicalJsonValue.From(item.ToString())).ToArray()))
             .Add("actor", Actor.ToCanonicalJson()).Add("reason", Reason).AddTimestamp("invalidated_at", InvalidatedAt));
+
+    private static ScreeningRuleException Rule(string category, string message) => new(category, message);
 }
 
 public sealed class ScreeningConductHandoff
@@ -472,7 +496,7 @@ public sealed class ScreeningConductHandoff
             .Add("journal_head_digest", JournalHeadDigest.ToString())
             .Add("outcomes", CanonicalJsonValue.Array(Outcomes.Select(item =>
             {
-                var value = new CanonicalJsonObject().Add("candidate_id", item.CandidateId).Add("verdict", item.Verdict).Add("decision_id", item.DecisionId);
+                var value = new CanonicalJsonObject().Add("candidate_id", item.CandidateId).Add("verdict", item.Verdict).Add("decision_digest", item.DecisionDigest.ToString());
                 if (item.ExclusionReasonCode is not null) value.Add("exclusion_reason_code", item.ExclusionReasonCode);
                 return value;
             }).ToArray())).AddTimestamp("created_at", CreatedAt));
@@ -533,7 +557,7 @@ public sealed class ScreeningConductJournal
                 throw new ScreeningRuleException(ScreeningErrorCodes.UnauthorizedReviewer, "Actor is not authorized to adjudicate.");
             var conflict = Projection.Conflicts.SingleOrDefault(item =>
                 item.CandidateId == decision.CandidateId && !item.Resolved && item.ConflictId == decision.ResolvedConflictId);
-            if (conflict is null || !conflict.SourceDecisionIds.SequenceEqual(decision.SourceDecisionIds))
+            if (conflict is null || !conflict.SourceDecisionDigests.SequenceEqual(decision.SourceDecisionDigests))
                 throw new ScreeningRuleException(ScreeningErrorCodes.AdjudicationSourceMismatch, "Adjudication must bind the exact unresolved conflict and source decisions.");
         }
         if (decision.Verdict == ScreeningVerdicts.Exclude ? decision.ExclusionReasonCode is null || !Policy.AllowsReason(decision.ExclusionReasonCode) : decision.ExclusionReasonCode is not null)
@@ -541,7 +565,7 @@ public sealed class ScreeningConductJournal
         if (decision.Kind == ScreeningConductDecisionKind.Review && _decisions.Any(item => item.CandidateId == decision.CandidateId && item.Kind == ScreeningConductDecisionKind.Review && item.Actor.ActorId == decision.Actor.ActorId))
             throw new ScreeningRuleException(ScreeningErrorCodes.DuplicateIndependentReviewer, "One actor cannot satisfy two independent review slots.");
         if (decision.Kind == ScreeningConductDecisionKind.Correction &&
-            (decision.SupersedesDecisionId is null || !_decisions.Any(item => item.DecisionId == decision.SupersedesDecisionId && item.CandidateId == decision.CandidateId && item.Actor.ActorId == decision.Actor.ActorId)))
+            (decision.SupersedesDecisionDigest is null || !_decisions.Any(item => item.Digest == decision.SupersedesDecisionDigest && item.CandidateId == decision.CandidateId && item.Actor.ActorId == decision.Actor.ActorId)))
             throw new ScreeningRuleException(ScreeningErrorCodes.MissingSourceDecision, "Correction must supersede the actor's current decision for this candidate.");
         _decisions.Add(decision);
         _entries.Add(decision);
@@ -557,8 +581,8 @@ public sealed class ScreeningConductJournal
             throw new ScreeningRuleException(ScreeningErrorCodes.UnverifiedConductAuthority, "Screening invalidation authority binding is stale or mismatched.");
         if (!Policy.Authorizes(invalidation.Actor))
             throw new ScreeningRuleException(ScreeningErrorCodes.UnauthorizedReviewer, "Invalidation requires an authorized human actor.");
-        var current = CurrentDecisionIds();
-        if (!current.SetEquals(invalidation.AffectedDecisionIds))
+        var current = CurrentDecisionDigests();
+        if (!current.SetEquals(invalidation.AffectedDecisionDigests))
             throw new ScreeningRuleException(ScreeningErrorCodes.MissingSourceDecision, "Invalidation must identify the complete current decision set.");
         _invalidations.Add(invalidation);
         _entries.Add(invalidation);
@@ -567,26 +591,26 @@ public sealed class ScreeningConductJournal
 
     private ScreeningConductProjection Replay()
     {
-        var superseded = _decisions.Where(item => item.SupersedesDecisionId is not null).Select(item => item.SupersedesDecisionId!).ToHashSet(StringComparer.Ordinal);
-        var invalidated = _invalidations.SelectMany(item => item.AffectedDecisionIds).ToHashSet(StringComparer.Ordinal);
+        var superseded = _decisions.Where(item => item.SupersedesDecisionDigest is not null).Select(item => item.SupersedesDecisionDigest!).ToHashSet();
+        var invalidated = _invalidations.SelectMany(item => item.AffectedDecisionDigests).ToHashSet();
         var outcomes = new Dictionary<string, ScreeningConductOutcome>(StringComparer.Ordinal);
         var conflicts = new List<ScreeningConductConflict>();
         foreach (var candidateId in Header.CandidateIds)
         {
-            var current = _decisions.Where(item => item.CandidateId == candidateId && !superseded.Contains(item.DecisionId) && !invalidated.Contains(item.DecisionId)).ToArray();
+            var current = _decisions.Where(item => item.CandidateId == candidateId && !superseded.Contains(item.Digest) && !invalidated.Contains(item.Digest)).ToArray();
             var adjudication = current.LastOrDefault(item => item.Kind == ScreeningConductDecisionKind.Adjudication);
             var reviews = current.Where(item => item.Kind != ScreeningConductDecisionKind.Adjudication).ToArray();
             if (reviews.Select(item => item.Verdict).Distinct(StringComparer.Ordinal).Count() > 1)
             {
-                var ids = reviews.Select(item => item.DecisionId).OrderBy(id => id, StringComparer.Ordinal).ToArray();
+                var ids = reviews.Select(item => item.Digest).OrderBy(id => id.ToString(), StringComparer.Ordinal).ToArray();
                 var conflictId = $"screening-conflict-{ContentDigest.Sha256Utf8(string.Join("|", ids)).Value[7..23]}";
-                var resolved = adjudication is not null && adjudication.ResolvedConflictId == conflictId && ids.SequenceEqual(adjudication.SourceDecisionIds);
+                var resolved = adjudication is not null && adjudication.ResolvedConflictId == conflictId && ids.SequenceEqual(adjudication.SourceDecisionDigests);
                 conflicts.Add(new ScreeningConductConflict(conflictId, candidateId, Array.AsReadOnly(ids), resolved));
-                if (resolved) outcomes[candidateId] = new ScreeningConductOutcome(candidateId, adjudication!.Verdict, adjudication.DecisionId, adjudication.ExclusionReasonCode);
+                if (resolved) outcomes[candidateId] = new ScreeningConductOutcome(candidateId, adjudication!.Verdict, adjudication.Digest, adjudication.ExclusionReasonCode);
             }
             else if (reviews.Length >= Policy.RequiredReviewCount)
             {
-                var latest = reviews[^1]; outcomes[candidateId] = new ScreeningConductOutcome(candidateId, latest.Verdict, latest.DecisionId, latest.ExclusionReasonCode);
+                var latest = reviews[^1]; outcomes[candidateId] = new ScreeningConductOutcome(candidateId, latest.Verdict, latest.Digest, latest.ExclusionReasonCode);
             }
         }
         var ready = Header.CandidateIds.All(outcomes.ContainsKey) && conflicts.All(item => item.Resolved) && outcomes.Values.All(item => item.Verdict != ScreeningVerdicts.NeedsReview);
@@ -594,12 +618,12 @@ public sealed class ScreeningConductJournal
             new System.Collections.ObjectModel.ReadOnlyDictionary<string, ScreeningConductOutcome>(outcomes), conflicts.AsReadOnly(), invalidated, ready);
     }
 
-    private HashSet<string> CurrentDecisionIds()
+    private HashSet<ContentDigest> CurrentDecisionDigests()
     {
-        var superseded = _decisions.Where(item => item.SupersedesDecisionId is not null).Select(item => item.SupersedesDecisionId!).ToHashSet(StringComparer.Ordinal);
-        var invalidated = _invalidations.SelectMany(item => item.AffectedDecisionIds).ToHashSet(StringComparer.Ordinal);
-        return _decisions.Where(item => !superseded.Contains(item.DecisionId) && !invalidated.Contains(item.DecisionId))
-            .Select(item => item.DecisionId).ToHashSet(StringComparer.Ordinal);
+        var superseded = _decisions.Where(item => item.SupersedesDecisionDigest is not null).Select(item => item.SupersedesDecisionDigest!).ToHashSet();
+        var invalidated = _invalidations.SelectMany(item => item.AffectedDecisionDigests).ToHashSet();
+        return _decisions.Where(item => !superseded.Contains(item.Digest) && !invalidated.Contains(item.Digest))
+            .Select(item => item.Digest).ToHashSet();
     }
 
     private static void EnsureBinding(ScreeningConductHeader header, ScreeningConductPolicy policy)

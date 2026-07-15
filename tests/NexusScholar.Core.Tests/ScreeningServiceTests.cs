@@ -3,11 +3,14 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NexusScholar.AppServices;
 using NexusScholar.Deduplication;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Screening;
+using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Search;
+using NexusScholar.WorkflowExecution;
 
 namespace NexusScholar.Core.Tests;
 
@@ -841,12 +844,12 @@ public sealed class ScreeningServiceTests
             header, 3, second.Digest, "request-chair", "candidate-1", ScreeningConductDecisionKind.Adjudication,
             ScreeningVerdicts.Include, new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
             "Adjudicated after reviewing both source decisions.", DateTimeOffset.UtcNow,
-            resolvedConflictId: conflict.ConflictId, sourceDecisionIds: conflict.SourceDecisionIds);
+            resolvedConflictId: conflict.ConflictId, sourceDecisionDigests: conflict.SourceDecisionDigests);
         journal.Append(adjudication);
 
         Assert.IsTrue(journal.Projection.HandoffReady);
         Assert.IsTrue(journal.Projection.Conflicts.Single().Resolved);
-        Assert.AreEqual(adjudication.DecisionId, journal.Projection.Outcomes["candidate-1"].DecisionId);
+        Assert.AreEqual(adjudication.Digest, journal.Projection.Outcomes["candidate-1"].DecisionDigest);
     }
 
     [TestMethod]
@@ -903,7 +906,7 @@ public sealed class ScreeningServiceTests
         var invalidation = ScreeningConductInvalidation.Create(
             header, 2, decision.Digest, "invalidate-protocol-change",
             new ScreeningConductEvidenceRef("protocol-version", policy.ProtocolVersionId, policy.ProtocolContentDigest),
-            [decision.DecisionId], new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
+            [decision.Digest], new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
             "Protocol authority changed.", DateTimeOffset.UtcNow);
 
         journal.Append(ScreeningConductCanonicalCodec.RehydrateInvalidation(
@@ -911,7 +914,7 @@ public sealed class ScreeningServiceTests
 
         Assert.IsFalse(journal.Projection.HandoffReady);
         Assert.IsFalse(journal.Projection.Outcomes.ContainsKey("candidate-1"));
-        Assert.IsTrue(journal.Projection.InvalidatedDecisionIds.Contains(decision.DecisionId));
+        Assert.IsTrue(journal.Projection.InvalidatedDecisionDigests.Contains(decision.Digest));
         Assert.ThrowsExactly<ScreeningRuleException>(() => ScreeningConductCanonicalCodec.RehydrateHandoff(
             ScreeningConductCanonicalCodec.Serialize(handoff), handoff.Digest, journal));
     }
@@ -932,13 +935,52 @@ public sealed class ScreeningServiceTests
         var partial = ScreeningConductInvalidation.Create(
             header, 3, second.Digest, "invalidate-partial",
             new ScreeningConductEvidenceRef("criteria", policy.Criteria.CriteriaId, policy.CriteriaDigest),
-            [first.DecisionId], new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
+            [first.Digest], new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
             "Criteria changed.", DateTimeOffset.UtcNow);
 
         var error = Assert.ThrowsExactly<ScreeningRuleException>(() => journal.Append(partial));
 
         Assert.AreEqual(ScreeningErrorCodes.MissingSourceDecision, error.Category);
         Assert.IsTrue(journal.Projection.HandoffReady);
+    }
+
+    [TestMethod]
+    public void Conduct_bridge_requires_the_same_human_actor_and_role()
+    {
+        var (policy, header) = BuildConductAuthority("workflow-bridge", 1);
+        var actor = new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer");
+        var decision = ScreeningConductDecision.Create(
+            header, 1, header.Digest, "request-workflow-bridge", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, actor, "Candidate meets the criteria.", DateTimeOffset.UtcNow);
+        var journal = ScreeningConductJournal.Rehydrate(header, policy, [decision]);
+
+        var reference = ScreeningWorkflowExecutionBridge.CreateHumanTaskDecisionReference(
+            journal, decision, new WorkflowExecutionActor("reviewer-1", WorkflowExecutionActorKinds.Human, "reviewer"));
+
+        Assert.AreEqual(ScreeningWorkflowExecutionBridge.DecisionRecordKind, reference.Kind);
+        Assert.AreEqual(decision.Digest, reference.Digest);
+        var error = Assert.ThrowsExactly<ScreeningRuleException>(() =>
+            ScreeningWorkflowExecutionBridge.CreateHumanTaskDecisionReference(
+                journal, decision, new WorkflowExecutionActor("different-reviewer", WorkflowExecutionActorKinds.Human, "reviewer")));
+        Assert.AreEqual(ScreeningErrorCodes.UnauthorizedReviewer, error.Category);
+    }
+
+    [TestMethod]
+    public void Conduct_application_service_previews_then_commits_the_verified_projection()
+    {
+        var (policy, header) = BuildConductAuthority("app-service", 1);
+        var decision = ScreeningConductDecision.Create(
+            header, 1, header.Digest, "request-app-service", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"),
+            "Candidate meets the criteria.", DateTimeOffset.UtcNow);
+        var change = new ScreeningConductChange(policy, header, [], [decision]);
+        var preview = ScreeningConductApplicationService.Preview(change);
+        var committed = ScreeningConductApplicationService.Commit(change, new CapturingScreeningCommitPort());
+
+        Assert.IsTrue(preview.HandoffReady);
+        Assert.AreEqual(decision.Digest, preview.ResultingHeadDigest);
+        Assert.AreEqual(preview.ResultingHeadDigest, committed.HeadDigest);
+        Assert.AreEqual(1, committed.EntryCount);
     }
 
     private static (ScreeningConductPolicy Policy, ScreeningConductHeader Header) BuildConductAuthority(string suffix, int reviewCount)
@@ -964,6 +1006,18 @@ public sealed class ScreeningServiceTests
             $"conduct-{suffix}", policy,
             new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), DateTimeOffset.UtcNow);
         return (policy, header);
+    }
+
+    private sealed class CapturingScreeningCommitPort : IScreeningConductCommitPort
+    {
+        public ScreeningConductCommitResult Commit(
+            ScreeningConductPolicy policy,
+            ScreeningConductHeader header,
+            IReadOnlyList<IScreeningConductEntry> entries)
+        {
+            var journal = ScreeningConductJournal.RehydrateEntries(header, policy, entries);
+            return new ScreeningConductCommitResult(header.ConductId, journal.Projection.HeadDigest, entries.Count, false);
+        }
     }
 
     private static DeduplicationResult BuildDedupResult(
