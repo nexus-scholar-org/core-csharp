@@ -175,6 +175,13 @@
           "NexusScholar.Workflow": "[0.1.0-alpha.2, )"
         }
       },
+      "nexusscholar.corpussnapshots": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )"
+        }
+      },
       "nexusscholar.deduplication": {
         "type": "Project",
         "dependencies": {

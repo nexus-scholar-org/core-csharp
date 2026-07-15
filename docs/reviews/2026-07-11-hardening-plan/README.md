@@ -1,6 +1,6 @@
 # Core Hardening Plan - 2026-07-11
 
-Status: complete through Hardening 30; feature expansion remains frozen pending an accepted next gate.
+Status: complete through Hardening 30. Successor roadmap: [Feature Expansion Priority Plan](../../plans/2026-07-14-feature-expansion-priority.md).
 
 Implementation progress:
 
@@ -19,17 +19,19 @@ Baseline:
 
 - Repository: `nexus-scholar/core-csharp`
 - Original review commit: `7f9e2850dc312cb0b8e8ac0007421937bf5fad1c`
-- Current protected `main`: `37df601a4870fa130225c3231a1f44e93f8232e4` (PR #53)
+- Current protected `main`: `f0e580680a82c561f62e39305579fe0155bd0db7` (PR #55)
 - Date refreshed: 2026-07-14
 - Protected-main H30 baseline: 573 tests passed on Windows and Linux with build, package, security, and formatting checks green.
 
 ## Decision
 
-Feature expansion remains frozen until an accepted next gate defines scope, authority, tests, and non-claims. Phases 1-7 and the H30 corrective closeout are complete.
+Phases 1-7 and the H30 corrective closeout are complete. The successor roadmap is `docs/plans/2026-07-14-feature-expansion-priority.md`; its immediate next job is FE-01 decision-and-snapshot gate planning.
+
+The roadmap authorizes sequencing and planning only. Feature code remains frozen until the relevant gate defines scope, authority, tests, and non-claims and is accepted.
 
 The repository remains useful for contract development, deterministic local fixtures, architecture exploration, and controlled alpha demonstrations. It must not be used yet for real evidence reviews, final scientific decisions, published NuGet packages, durable workspace storage, PHP compatibility claims, or production desktop workflows.
 
-This plan supersedes the 2026-06-29 public-readiness plan as the current operating plan. Older review folders remain historical context only.
+This plan superseded the 2026-06-29 public-readiness plan during hardening. It is now a completed historical operating plan, and the feature-expansion roadmap is the active successor. Older review folders remain historical context only.
 
 ## Hardening Order
 
@@ -72,7 +74,7 @@ This plan supersedes the 2026-06-29 public-readiness plan as the current operati
 
 ## Rules For Follow-Up Work
 
-- Do not add new product surface before the relevant hardening phase is complete.
+- Do not add new product surface before the relevant feature gate is accepted.
 - Do not broaden Full Text into live retrieval, provider SDKs, OCR, PDF text extraction, persistence, API, UI product shell, cloud behavior, or PHP compatibility claims.
 - Do not call the project audit-grade in public-facing material until the hardening plan's authority and release-engineering blockers are closed.
 - Treat legacy PHP behavior as evidence only after fixture-backed comparison.

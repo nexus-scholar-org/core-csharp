@@ -6,7 +6,7 @@ Status date: 2026-07-14
 
 | Order | Gate | Scope | Status |
 |---|---|---|---|
-| - | None | Await an accepted feature-expansion gate | Clear |
+| 1 | FE-01 | Decision-and-snapshot authority implementation on `cdx/fe-01-decision-snapshot-authority` | In progress |
 
 Recently landed:
 
@@ -25,7 +25,8 @@ Recently landed:
 | #52 | Hardening 28 Screening/Full Text compatibility evidence | Landed |
 | #53 | Hardening 29 Phase 7 closeout | Landed |
 | #54 | Hardening 30 post-Phase 7 remediation | Landed |
+| #55 | Hardening 30 protected-main closeout | Landed |
 
 ## Do Not Queue
 
-Feature work remains frozen. Do not queue package publication, signing, live providers, scraping, persistence/API/cloud, product UI, PDF/OCR, model calls, executable merge decisions, or compatibility claims without a later accepted ADR and gate.
+ADR 0028 authorizes only the FE-01 baseline authority-initialization scope. Do not queue FE-02 decision append or later package publication, signing, live providers, scraping, persistence/API/cloud, product UI, PDF/OCR, model calls, executable merge decisions, or compatibility claims without the relevant accepted ADR and gate.

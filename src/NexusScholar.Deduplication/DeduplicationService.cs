@@ -374,7 +374,7 @@ public sealed class DeduplicationService
         return left.SourceSpecificIds.Any(item => right.SourceSpecificIds.Any(other => string.Equals(item, other, StringComparison.Ordinal)));
     }
 
-    private static DedupRepresentativeResult ElectRepresentative(DedupCandidateRecord[] members)
+    internal static DedupRepresentativeResult ElectRepresentative(DedupCandidateRecord[] members)
     {
         var ranked = members
             .Select(member => new

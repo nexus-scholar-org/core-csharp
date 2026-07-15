@@ -14,7 +14,10 @@ public sealed record ResearchWorkspaceProject(
     IReadOnlyList<string> NonClaims,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] long Revision = 0,
     string? CurrentGenerationId = null,
-    string? GenerationManifestPath = null)
+    string? GenerationManifestPath = null,
+    string? CurrentAuthorityGenerationId = null,
+    string? AuthorityGenerationManifestPath = null,
+    string? AuthorityGenerationManifestSha256 = null)
 {
     public const string CurrentSchema = "nexus.project.v0";
 
@@ -64,6 +67,17 @@ public sealed record ResearchWorkspaceProject(
             Revision = checked(Revision + 1),
             CurrentGenerationId = generationId,
             GenerationManifestPath = manifestPath
+        };
+
+    public ResearchWorkspaceProject CommitAuthorityGeneration(
+        string authorityGenerationId,
+        string manifestPath,
+        string manifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentAuthorityGenerationId = authorityGenerationId,
+            AuthorityGenerationManifestPath = manifestPath,
+            AuthorityGenerationManifestSha256 = manifestSha256
         };
 
     private static string CreateWorkspaceId(string title)
