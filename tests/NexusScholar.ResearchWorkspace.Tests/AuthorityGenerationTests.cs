@@ -122,6 +122,111 @@ public sealed class AuthorityGenerationTests
             $"{ResearchWorkspacePaths.GenerationQuarantine}/authority-orphaned")));
     }
 
+    [TestMethod]
+    public void CommitDeduplicationDecision_publishes_verified_successor_and_reopens_chain()
+    {
+        using var workspace = Workspace.CreateAnalyzed();
+        var baseline = Initialize(workspace);
+        var source = DeduplicationAuthorityDigests.CreateResultDigestMaterial(workspace.Analysis.DeduplicationResult);
+        var (command, target) = BuildCommand(workspace, baseline.Project, source);
+
+        var commit = ResearchWorkspaceTransaction.CommitDeduplicationDecision(
+            workspace.Location, baseline.Project, source, command, target, Clock,
+            new FixedIdGenerator(Guid.Parse("00000000-0000-0000-0000-000000000711")));
+        var reopened = ResearchWorkspaceStore.ReadProject(workspace.Location.ProjectFilePath);
+        var chain = ResearchWorkspaceAuthorityChainVerifier.VerifyCurrent(workspace.Location, reopened, source);
+
+        Assert.IsFalse(commit.AlreadyApplied);
+        Assert.AreEqual(baseline.Project.Revision + 1, reopened.Revision);
+        Assert.AreEqual(command.RequestDigest.ToString(), commit.Manifest.RequestDigest);
+        Assert.AreEqual(commit.Snapshot.RecordDigest, chain.CurrentSnapshot.RecordDigest);
+        Assert.AreEqual(1, chain.Transitions.Count);
+        Assert.AreEqual(1, chain.ActiveDecisions.Count);
+        Assert.AreEqual(8, commit.Manifest.Artifacts.Count);
+    }
+
+    [TestMethod]
+    public void CommitDeduplicationDecision_exact_replay_returns_stored_transition_without_time_or_ids()
+    {
+        using var workspace = Workspace.CreateAnalyzed();
+        var baseline = Initialize(workspace);
+        var source = DeduplicationAuthorityDigests.CreateResultDigestMaterial(workspace.Analysis.DeduplicationResult);
+        var (command, target) = BuildCommand(workspace, baseline.Project, source);
+        var first = ResearchWorkspaceTransaction.CommitDeduplicationDecision(
+            workspace.Location, baseline.Project, source, command, target, Clock,
+            new FixedIdGenerator(Guid.Parse("00000000-0000-0000-0000-000000000712")));
+
+        var replay = ResearchWorkspaceTransaction.CommitDeduplicationDecision(
+            workspace.Location, first.Project, source, command, target, new ThrowingClock(), new ThrowingIdGenerator());
+
+        Assert.IsTrue(replay.AlreadyApplied);
+        Assert.AreEqual(first.Project.Revision, replay.Project.Revision);
+        Assert.AreEqual(first.Decision.DecisionDigest, replay.Decision.DecisionDigest);
+        Assert.AreEqual(first.Snapshot.RecordDigest, replay.Snapshot.RecordDigest);
+    }
+
+    [TestMethod]
+    public void CommitDeduplicationDecision_quarantines_promoted_successor_when_pointer_write_fails()
+    {
+        using var workspace = Workspace.CreateAnalyzed();
+        var baseline = Initialize(workspace);
+        var source = DeduplicationAuthorityDigests.CreateResultDigestMaterial(workspace.Analysis.DeduplicationResult);
+        var (command, target) = BuildCommand(workspace, baseline.Project, source);
+
+        Assert.ThrowsExactly<InjectedFailure>(() => ResearchWorkspaceTransaction.CommitDeduplicationDecision(
+            workspace.Location, baseline.Project, source, command, target, Clock,
+            new FixedIdGenerator(Guid.Parse("00000000-0000-0000-0000-000000000713")),
+            point => { if (point == ResearchWorkspaceAuthorityFaultPoint.AfterPromotion) throw new InjectedFailure(); }));
+
+        var reopened = ResearchWorkspaceStore.ReadProject(workspace.Location.ProjectFilePath);
+        Assert.AreEqual(baseline.Project.CurrentAuthorityGenerationId, reopened.CurrentAuthorityGenerationId);
+        Assert.AreEqual(baseline.Project.Revision, reopened.Revision);
+        Assert.AreEqual(1, Directory.GetDirectories(ResearchWorkspacePaths.InProject(
+            workspace.Root, ResearchWorkspacePaths.GenerationQuarantine)).Length);
+    }
+
+    private static (VerifiedDeduplicationReviewCommand Command, VerifiedDeduplicationAuthorityReviewTargetDigest Target) BuildCommand(
+        Workspace workspace,
+        ResearchWorkspaceProject project,
+        VerifiedDeduplicationAuthorityResultDigest source)
+    {
+        var chain = ResearchWorkspaceAuthorityChainVerifier.VerifyCurrent(workspace.Location, project, source);
+        var policy = chain.Policy;
+        var pair = source.Result.ReviewRequiredCandidates.Single();
+        var ids = new[] { pair.CandidateAId, pair.CandidateBId }.OrderBy(item => item, StringComparer.Ordinal).ToArray();
+        var evidence = source.Result.Evidence.Where(item => item.ObjectCandidateId is not null &&
+            ids.Contains(item.SubjectCandidateId, StringComparer.Ordinal) && ids.Contains(item.ObjectCandidateId, StringComparer.Ordinal) &&
+            item.SubjectCandidateId != item.ObjectCandidateId).ToArray();
+        var target = DeduplicationAuthorityDigests.CreateReviewTargetDigestMaterial(source, pair, ids, evidence);
+        var material = new UnverifiedDeduplicationReviewCommand(
+            DeduplicationReviewCommandConstants.SchemaId,
+            DeduplicationReviewCommandConstants.SchemaVersion,
+            project.CurrentAuthorityGenerationId!,
+            ContentDigest.Parse(project.AuthorityGenerationManifestSha256!),
+            chain.CurrentSnapshot.DecisionSetDigest,
+            source.Result.ResultId,
+            source.ResultDigest,
+            chain.CurrentSnapshot.SnapshotId,
+            chain.CurrentSnapshot.RecordDigest,
+            target.TargetKind,
+            target.TargetId,
+            target.TargetDigest,
+            policy.PolicyId,
+            policy.PolicyVersion,
+            policy.PolicyDigest,
+            DeduplicationAuthorityPolicyConstants.MergeAction,
+            "duplicate",
+            "Reviewed as duplicate.",
+            "alice",
+            "owner",
+            null,
+            null);
+        return (DeduplicationReviewCommand.Create(
+            material, policy, source, target, chain.CurrentSnapshot.DecisionSetDigest,
+            chain.GenerationId, ContentDigest.Parse(project.AuthorityGenerationManifestSha256!),
+            chain.CurrentSnapshot.SnapshotId, chain.CurrentSnapshot.RecordDigest), target);
+    }
+
     private static ResearchWorkspaceAuthorityCommit Initialize(
         Workspace workspace,
         ResearchWorkspaceProject? expected = null,
@@ -194,7 +299,8 @@ public sealed class AuthorityGenerationTests
             }
 
             var relative = $"{ResearchWorkspacePaths.SearchInputs}/input.csv";
-            var bytes = System.Text.Encoding.UTF8.GetBytes("eid,title,doi\n1,Example,10.1000/example\n");
+            var bytes = System.Text.Encoding.UTF8.GetBytes(
+                "eid,title,doi\n1,Example record,10.1000/example-a\n2,Example record,10.1000/example-b\n");
             File.WriteAllBytes(ResearchWorkspacePaths.InProject(root, relative), bytes);
             project = project.WithInput(new ResearchWorkspaceInput
             {
@@ -229,6 +335,16 @@ public sealed class AuthorityGenerationTests
     private sealed class FixedIdGenerator(Guid value) : IIdGenerator
     {
         public Guid NewId() => value;
+    }
+
+    private sealed class ThrowingClock : IClock
+    {
+        public DateTimeOffset UtcNow => throw new InvalidOperationException("Replay consumed the clock.");
+    }
+
+    private sealed class ThrowingIdGenerator : IIdGenerator
+    {
+        public Guid NewId() => throw new InvalidOperationException("Replay consumed an id.");
     }
 
     private sealed class InjectedFailure : Exception;

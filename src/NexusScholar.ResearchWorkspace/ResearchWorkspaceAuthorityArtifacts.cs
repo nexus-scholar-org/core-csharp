@@ -9,6 +9,13 @@ namespace NexusScholar.ResearchWorkspace;
 
 public static class ResearchWorkspaceAuthorityArtifacts
 {
+    private static byte[] SerializeDigestRecord(CanonicalJsonValue material, string digestName, ContentDigest digest)
+    {
+        var content = CanonicalJsonValue.DeepClone(material) as CanonicalJsonObject
+            ?? throw new InvalidOperationException("Authority digest material must be an object.");
+        content.Add(digestName, digest.ToString());
+        return CanonicalJsonSerializer.SerializeToUtf8Bytes(content);
+    }
     public static byte[] SerializePolicyCanonicalRecord(VerifiedDeduplicationAuthorityPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
@@ -56,6 +63,95 @@ public static class ResearchWorkspaceAuthorityArtifacts
         content.Add("event_digest", researchEvent.EventDigest.ToString());
 
         return CanonicalJsonSerializer.SerializeToUtf8Bytes(content);
+    }
+
+    public static byte[] SerializeReviewCommandCanonicalRecord(VerifiedDeduplicationReviewCommand command) =>
+        SerializeDigestRecord(command.DigestEnvelope.Content, "request_digest", command.RequestDigest);
+
+    public static byte[] SerializeDecisionCanonicalRecord(VerifiedDeduplicationAuthorityDecision decision) =>
+        SerializeDigestRecord(decision.DecisionDigestEnvelope.Content, "decision_digest", decision.DecisionDigest);
+
+    public static byte[] SerializeInvalidationCanonicalRecord(VerifiedCorpusSnapshotInvalidation invalidation) =>
+        SerializeDigestRecord(invalidation.RecordDigestEnvelope.Content, "record_digest", invalidation.RecordDigest);
+
+    public static VerifiedDeduplicationReviewCommand VerifyReviewCommandCanonicalRecord(
+        byte[] bytes,
+        VerifiedDeduplicationAuthorityPolicy policy,
+        VerifiedDeduplicationAuthorityResultDigest sourceResult,
+        VerifiedDeduplicationAuthorityReviewTargetDigest target,
+        ContentDigest activeDecisionSetDigest,
+        string authorityGenerationId,
+        ContentDigest authorityManifestDigest,
+        string snapshotId,
+        ContentDigest snapshotRecordDigest)
+    {
+        var value = ParseCanonicalObject(bytes);
+        return DeduplicationReviewCommand.Rehydrate(new UnverifiedDeduplicationReviewCommand(
+            RequireString(value, "schema_id"), RequireString(value, "schema_version"),
+            RequireString(value, "authority_generation_id"), ParseDigest(RequireString(value, "authority_generation_manifest_digest")),
+            ParseDigest(RequireString(value, "active_decision_set_digest")), RequireString(value, "source_result_id"),
+            ParseDigest(RequireString(value, "source_result_digest")), RequireString(value, "source_snapshot_id"),
+            ParseDigest(RequireString(value, "source_snapshot_record_digest")), RequireString(value, "target_kind"),
+            RequireString(value, "target_id"), ParseDigest(RequireString(value, "target_digest")), RequireString(value, "policy_id"),
+            RequireString(value, "policy_version"), ParseDigest(RequireString(value, "policy_digest")), RequireString(value, "action_type"),
+            RequireString(value, "reason_code"), TryGetString(value, "rationale"), RequireString(value, "actor_id"),
+            RequireString(value, "actor_role"), TryGetString(value, "supersedes_decision_id"), TryGetDigest(value, "supersedes_decision_digest"),
+            ParseDigest(RequireString(value, "request_digest"))), policy, sourceResult, target, activeDecisionSetDigest,
+            authorityGenerationId, authorityManifestDigest, snapshotId, snapshotRecordDigest);
+    }
+
+    public static VerifiedDeduplicationAuthorityDecision VerifyDecisionCanonicalRecord(
+        byte[] bytes,
+        VerifiedDeduplicationAuthorityPolicy policy,
+        VerifiedDeduplicationAuthorityResultDigest sourceResult,
+        VerifiedDeduplicationAuthorityReviewTargetDigest target)
+    {
+        var value = ParseCanonicalObject(bytes);
+        return DeduplicationDecision.RehydrateDecisionMaterial(new UnverifiedDeduplicationAuthorityDecision(
+            RequireString(value, "schema_id"), RequireString(value, "schema_version"), RequireString(value, "decision_id"),
+            RequireString(value, "action_type"), RequireString(value, "policy_id"), RequireString(value, "policy_version"),
+            RequireString(value, "target_kind"), RequireString(value, "target_id"), ParseDigest(RequireString(value, "target_content_digest")),
+            RequireString(value, "source_result_id"), ParseDigest(RequireString(value, "source_result_digest")), TryGetString(value, "source_snapshot_id"),
+            TryGetDigest(value, "source_snapshot_record_digest"), RequireArray(value, "evidence_references").Select(ParseDecisionEvidence).ToArray(),
+            RequireString(value, "actor_id"), RequireString(value, "actor_role"), RequireString(value, "authority_source_id"),
+            RequireString(value, "authority_source_kind"), ParseDigest(RequireString(value, "authority_source_digest")), TryGetString(value, "rationale"),
+            RequireString(value, "reason_code"), ParseCanonicalTimestamp(RequireString(value, "decided_at")), TryGetString(value, "supersedes_decision_id"),
+            RequireArray(value, "invalidation_effects").Select(ParseDecisionInvalidation).ToArray(), ParseDigest(RequireString(value, "decision_digest"))),
+            policy, sourceResult, target);
+    }
+
+    public static VerifiedCorpusSnapshot VerifySuccessorSnapshotCanonicalRecord(
+        byte[] bytes,
+        VerifiedDeduplicationAuthorityResultDigest sourceResult,
+        VerifiedDeduplicationAuthorityPolicy policy,
+        VerifiedCorpusSnapshot predecessor,
+        IReadOnlyList<VerifiedDeduplicationAuthorityDecision> activeDecisions,
+        IReadOnlyList<VerifiedDeduplicationAuthorityDecision> knownDecisions,
+        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots,
+        VerifiedDeduplicationAuthorityDecision decision)
+    {
+        var parsed = ParseCanonicalSnapshotRecord(bytes);
+        return CorpusSnapshotService.RehydrateSuccessor(ParseSnapshot(parsed), sourceResult, policy, predecessor,
+            activeDecisions, knownDecisions, knownSnapshots, decision);
+    }
+
+    public static VerifiedCorpusSnapshotInvalidation VerifyInvalidationCanonicalRecord(
+        byte[] bytes,
+        VerifiedDeduplicationAuthorityPolicy policy,
+        VerifiedDeduplicationAuthorityDecision decision,
+        VerifiedCorpusSnapshot successor,
+        IReadOnlyList<VerifiedDeduplicationAuthorityDecision> knownDecisions,
+        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots)
+    {
+        var value = ParseCanonicalObject(bytes);
+        return CorpusSnapshotInvalidation.RehydrateInvalidationMaterial(new UnverifiedCorpusSnapshotInvalidation(
+            RequireString(value, "schema_id"), RequireString(value, "schema_version"), RequireString(value, "invalidation_id"),
+            RequireString(value, "cause_decision_id"), ParseDigest(RequireString(value, "cause_decision_digest")),
+            RequireString(value, "cause_snapshot_id"), ParseDigest(RequireString(value, "cause_snapshot_digest")),
+            RequireArray(value, "invalidated_records").Select(ParseInvalidatedRecord).ToArray(), RequireString(value, "actor_id"),
+            RequireString(value, "actor_role"), RequireString(value, "authority_source_id"), RequireString(value, "authority_source_kind"),
+            ParseDigest(RequireString(value, "authority_source_digest")), ParseCanonicalTimestamp(RequireString(value, "invalidated_at")),
+            ParseDigest(RequireString(value, "record_digest"))), policy, decision, successor, knownDecisions, knownSnapshots);
     }
 
     internal static CanonicalJsonObject ParseCanonicalPolicyRecord(byte[] canonicalPolicyRecord)
@@ -123,31 +219,20 @@ public static class ResearchWorkspaceAuthorityArtifacts
         VerifiedDeduplicationAuthorityResultDigest sourceResult,
         VerifiedDeduplicationAuthorityPolicy policy)
     {
-        var parsed = ParseCanonicalSnapshotRecord(canonicalSnapshotRecord);
+        var unverified = ParseSnapshot(ParseCanonicalSnapshotRecord(canonicalSnapshotRecord));
+        return CorpusSnapshotService.Rehydrate(unverified, sourceResult, policy);
+    }
 
-        var decisionReferences = RequireArray(parsed, "decision_references")
-            .Select(item => ParseDecisionReference(item))
-            .ToArray();
-        var groups = RequireArray(parsed, "groups")
-            .Select(ParseGroup)
-            .ToArray();
-        var unresolvedCandidates = RequireArray(parsed, "unresolved_candidates")
-            .Select(ParseUnresolvedCandidate)
-            .ToArray();
-        var invalidations = RequireArray(parsed, "invalidation_references")
-            .Select(ParseInvalidationReference)
-            .ToArray();
-
-        var unverified = new UnverifiedCorpusSnapshot(
+    private static UnverifiedCorpusSnapshot ParseSnapshot(CanonicalJsonObject parsed) => new(
             SchemaId: RequireString(parsed, "schema_id"),
             SchemaVersion: RequireString(parsed, "schema_version"),
             SnapshotId: RequireString(parsed, "snapshot_id"),
             SourceResultId: RequireString(parsed, "source_result_id"),
             SourceResultDigest: ParseDigest(RequireString(parsed, "source_result_digest")),
-            DecisionReferences: decisionReferences,
+            DecisionReferences: RequireArray(parsed, "decision_references").Select(ParseDecisionReference).ToArray(),
             DecisionSetDigest: ParseDigest(RequireString(parsed, "decision_set_digest")),
-            Groups: groups,
-            UnresolvedCandidates: unresolvedCandidates,
+            Groups: RequireArray(parsed, "groups").Select(ParseGroup).ToArray(),
+            UnresolvedCandidates: RequireArray(parsed, "unresolved_candidates").Select(ParseUnresolvedCandidate).ToArray(),
             CreatedByActorId: RequireString(parsed, "created_by_actor_id"),
             CreatedByRole: RequireString(parsed, "created_by_role"),
             AuthoritySourceId: RequireString(parsed, "authority_source_id"),
@@ -155,12 +240,9 @@ public static class ResearchWorkspaceAuthorityArtifacts
             CreatedAt: ParseCanonicalTimestamp(RequireString(parsed, "created_at")),
             SupersedesSnapshotId: TryGetString(parsed, "supersedes_snapshot_id"),
             SupersedesSnapshotRecordDigest: TryGetDigest(parsed, "supersedes_snapshot_record_digest"),
-            InvalidationReferences: invalidations,
+            InvalidationReferences: RequireArray(parsed, "invalidation_references").Select(ParseInvalidationReference).ToArray(),
             ContentDigest: ParseDigest(RequireString(parsed, "content_digest")),
             RecordDigest: ParseDigest(RequireString(parsed, "record_digest")));
-
-        return CorpusSnapshotService.Rehydrate(unverified, sourceResult, policy);
-    }
 
     public static ResearchEvent VerifyResearchEventCanonicalRecord(byte[] canonicalEventRecord)
     {
@@ -380,6 +462,28 @@ public static class ResearchWorkspaceAuthorityArtifacts
             RequireString(item, "record_kind"),
             RequireString(item, "record_id"),
             ParseDigest(RequireString(item, "record_digest")));
+    }
+
+    private static DeduplicationAuthorityDecisionEvidenceReference ParseDecisionEvidence(CanonicalJsonValue value)
+    {
+        var item = ParseObject(value);
+        return new DeduplicationAuthorityDecisionEvidenceReference(
+            RequireString(item, "kind"), RequireString(item, "evidence_id"), RequireString(item, "digest_scope"),
+            ParseDigest(RequireString(item, "digest")));
+    }
+
+    private static DeduplicationAuthorityDecisionInvalidationEffect ParseDecisionInvalidation(CanonicalJsonValue value)
+    {
+        var item = ParseObject(value);
+        return new DeduplicationAuthorityDecisionInvalidationEffect(
+            RequireString(item, "record_kind"), RequireString(item, "record_id"), ParseDigest(RequireString(item, "record_digest")));
+    }
+
+    private static CorpusSnapshotInvalidationInvalidatedRecordReference ParseInvalidatedRecord(CanonicalJsonValue value)
+    {
+        var item = ParseObject(value);
+        return new CorpusSnapshotInvalidationInvalidatedRecordReference(
+            RequireString(item, "record_kind"), RequireString(item, "record_id"), ParseDigest(RequireString(item, "record_digest")));
     }
 
     private static ProvenanceActivity ParseActivity(CanonicalJsonObject value) => new(

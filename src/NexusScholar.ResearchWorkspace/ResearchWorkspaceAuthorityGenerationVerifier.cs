@@ -36,6 +36,14 @@ public static class ResearchWorkspaceAuthorityGenerationVerifier
         }
 
         var root = document.RootElement;
+        if (string.Equals(root.GetProperty("schema").GetString(),
+            ResearchWorkspaceSuccessorAuthorityGenerationManifest.CurrentSchema, StringComparison.Ordinal))
+        {
+            var chain = ResearchWorkspaceAuthorityChainVerifier.VerifyCurrent(location, project, sourceResult);
+            return new ResearchWorkspaceVerifiedAuthorityGeneration(
+                chain.Policy, chain.CurrentSnapshot, chain.CurrentPublicationEvent);
+        }
+
         Require(root, "schema", ResearchWorkspaceAuthorityGenerationManifest.CurrentSchema);
         Require(root, "authority_generation_id", project.CurrentAuthorityGenerationId);
         Require(root, "workspace_id", project.WorkspaceId);
