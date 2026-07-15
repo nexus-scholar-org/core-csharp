@@ -20,6 +20,7 @@ using NexusScholar.Shared;
 using NexusScholar.UiContracts;
 using NexusScholar.Workflow;
 using NexusScholar.WorkflowExecution;
+using NexusScholar.WorkflowExecution.Provenance;
 
 namespace NexusScholar.Architecture.Tests;
 
@@ -176,6 +177,26 @@ public sealed class DependencyRulesTests
             typeof(WorkflowDefinition).Assembly.GetReferencedAssemblies()
                 .Any(reference => string.Equals(reference.Name, assembly.GetName().Name, StringComparison.Ordinal)),
             "NexusScholar.Workflow must not depend on WorkflowExecution.");
+    }
+
+    [TestMethod]
+    public void WorkflowExecution_provenance_bridge_has_only_accepted_inward_dependencies()
+    {
+        var assembly = typeof(WorkflowExecutionProvenanceProjector).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(ResearchEvent).Assembly.GetName().Name,
+            typeof(WorkflowExecutionJournal).Assembly.GetName().Name
+        };
+        var disallowed = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(0, disallowed.Length,
+            $"WorkflowExecution.Provenance has disallowed dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -366,7 +387,9 @@ public sealed class DependencyRulesTests
             typeof(SearchTrace).Assembly.GetName().Name,
             typeof(DeduplicationService).Assembly.GetName().Name,
             typeof(CorpusSnapshotService).Assembly.GetName().Name,
-            typeof(WorkspacePlan).Assembly.GetName().Name
+            typeof(WorkspacePlan).Assembly.GetName().Name,
+            typeof(WorkflowDefinition).Assembly.GetName().Name,
+            typeof(WorkflowExecutionJournal).Assembly.GetName().Name
         };
         var disallowed = appServicesAssembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)
@@ -377,7 +400,7 @@ public sealed class DependencyRulesTests
         Assert.AreEqual(
             0,
             disallowed.Length,
-            $"NexusScholar.AppServices must depend only on Kernel, Search, Deduplication, CorpusSnapshots, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
+            $"NexusScholar.AppServices has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -427,7 +450,9 @@ public sealed class DependencyRulesTests
             typeof(ResearchEvent).Assembly.GetName().Name,
             typeof(SearchDedupWorkspacePlanComposer).Assembly.GetName().Name,
             typeof(WorkspacePlan).Assembly.GetName().Name,
-            typeof(WorkId).Assembly.GetName().Name
+            typeof(WorkId).Assembly.GetName().Name,
+            typeof(WorkflowDefinition).Assembly.GetName().Name,
+            typeof(WorkflowExecutionJournal).Assembly.GetName().Name
         };
         var disallowed = researchWorkspaceAssembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)
@@ -438,7 +463,7 @@ public sealed class DependencyRulesTests
         Assert.AreEqual(
             0,
             disallowed.Length,
-            $"NexusScholar.ResearchWorkspace must depend only on Kernel, Shared, Search, Deduplication, CorpusSnapshots, Provenance, AppServices, and UiContracts inside Nexus. Found: {string.Join(", ", disallowed)}");
+            $"NexusScholar.ResearchWorkspace has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -494,7 +519,9 @@ public sealed class DependencyRulesTests
             typeof(FullTextInput).Assembly,
             typeof(ReviewBundleManifest).Assembly,
             typeof(ExtensionManifest).Assembly,
-            typeof(AiTaskPolicy).Assembly
+            typeof(AiTaskPolicy).Assembly,
+            typeof(WorkflowExecutionJournal).Assembly,
+            typeof(WorkflowExecutionProvenanceProjector).Assembly
         }.Distinct();
 
         foreach (var assembly in coreAssemblies)

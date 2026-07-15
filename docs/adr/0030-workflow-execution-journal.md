@@ -29,8 +29,12 @@ compiler and verified-definition owner and must not depend on execution history.
 
 Provenance is a deterministic outward projection of accepted execution records.
 `NexusScholar.Provenance` remains Kernel-only and does not depend on
-WorkflowExecution. Storage, commands, UI, scheduling, plugin execution, and
-model execution remain outside the domain project.
+WorkflowExecution. The dependency bridge is the separate
+`NexusScholar.WorkflowExecution.Provenance` package, which depends inward on
+Kernel, Provenance, and WorkflowExecution. Storage, commands, UI, scheduling,
+plugin execution, and model execution remain outside the domain project.
+AppServices owns a verified preview/commit port; ResearchWorkspace implements
+that port with generation persistence.
 
 ### Canonical records
 
@@ -85,10 +89,12 @@ The first transition table is:
 | active | completed | work-completed |
 | active | failed | work-failed |
 | failed | ready | retry-authorized |
-| ready, active, blocked, completed, failed | invalidated | work-invalidated |
+| pending, ready, active, blocked, completed, failed | invalidated | work-invalidated |
 | invalidated | superseded | successor-bound |
 
-No other transition is admitted. `dependencies-satisfied` requires every
+`pending -> invalidated` is admitted only as part of a complete propagation batch
+from an invalidated predecessor; it prevents dependent work from remaining
+apparently current. No other transition is admitted. `dependencies-satisfied` requires every
 compiled predecessor to be completed and current. Completion may make direct
 successors eligible, but each successor still receives its own append-only
 transition. Invalidated and superseded nodes never resume in the same execution.
@@ -164,11 +170,17 @@ same projection and head digest across process restarts and supported platforms.
 
 ### First implementation slice
 
-The first FE-03 slice implements the domain project, header/event canonical
+The first FE-03 slice implemented the domain project, header/event canonical
 records, execution authority policy, the closed transition reducer, hash-chain
-verification, verified rehydration, deterministic replay, and focused tests. It does not yet add
-ResearchWorkspace persistence, AppServices commands, CLI commands, or a
-provenance adapter. Those follow only after this state machine is accepted.
+verification, verified rehydration, deterministic replay, and focused tests.
+The completion slice adds the separate provenance bridge, AppServices
+preview/commit port, and ResearchWorkspace generations.
+
+A standalone CLI mutation command is deferred. The workspace does not yet own a
+canonical verified Workflow authority package, so a process-entry command could
+only trust unverified IDs or embed sample authority. Hosts may invoke the
+AppServices port once they can supply a `VerifiedWorkflowDefinition`; FE-04 must
+not add a CLI adapter until that authority can be resolved from durable input.
 
 ## Alternatives Rejected
 

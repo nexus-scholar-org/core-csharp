@@ -74,6 +74,11 @@ public sealed record WorkflowExecutionRecordRef(string Kind, string Id, ContentD
         : throw new WorkflowExecutionRuleException(WorkflowExecutionErrorCodes.UnverifiedAuthority, $"{name} must be valid.");
 }
 
+public interface IWorkflowExecutionRecordResolver
+{
+    WorkflowExecutionRecordRef? Resolve(string kind, string id);
+}
+
 public sealed record WorkflowExecutionActor(string ActorId, string Kind, string Role)
 {
     public CanonicalJsonObject ToCanonicalJson() => new CanonicalJsonObject()
@@ -329,7 +334,9 @@ public sealed class WorkflowExecutionEvent
         WorkflowExecutionRecordRef? decision,
         string? errorCategory,
         string? errorSummary,
-        WorkflowExecutionRecordRef? invalidationSource)
+        WorkflowExecutionRecordRef? invalidationSource,
+        string? invalidationPolicyRef,
+        WorkflowExecutionRecordRef? successorExecution)
     {
         ExecutionId = header.ExecutionId;
         WorkflowId = header.WorkflowId;
@@ -359,6 +366,8 @@ public sealed class WorkflowExecutionEvent
         ErrorCategory = errorCategory;
         ErrorSummary = errorSummary;
         InvalidationSource = invalidationSource;
+        InvalidationPolicyRef = invalidationPolicyRef;
+        SuccessorExecution = successorExecution;
         Digest = new DigestEnvelope(DigestScope.CanonicalJsonRecord, SchemaId, SchemaVersion, BuildContent()).ComputeDigest();
     }
 
@@ -390,6 +399,8 @@ public sealed class WorkflowExecutionEvent
     public string? ErrorCategory { get; }
     public string? ErrorSummary { get; }
     public WorkflowExecutionRecordRef? InvalidationSource { get; }
+    public string? InvalidationPolicyRef { get; }
+    public WorkflowExecutionRecordRef? SuccessorExecution { get; }
     public ContentDigest Digest { get; }
 
     public static WorkflowExecutionEvent Create(
@@ -412,7 +423,9 @@ public sealed class WorkflowExecutionEvent
         WorkflowExecutionRecordRef? decision = null,
         string? errorCategory = null,
         string? errorSummary = null,
-        WorkflowExecutionRecordRef? invalidationSource = null)
+        WorkflowExecutionRecordRef? invalidationSource = null,
+        string? invalidationPolicyRef = null,
+        WorkflowExecutionRecordRef? successorExecution = null)
     {
         ArgumentNullException.ThrowIfNull(header);
         ArgumentNullException.ThrowIfNull(actor);
@@ -422,13 +435,14 @@ public sealed class WorkflowExecutionEvent
             OrderBy(item => item.Actor.ActorId, StringComparer.Ordinal).ThenBy(item => item.Record.Id, StringComparer.Ordinal).ToArray();
         var requestContent = BuildRequestContent(
             header, requestId, nodeId, kind, expectedPriorState, resultingState, actor, rationale,
-            attemptId, attemptSequence, inputArray, outputArray, approvalArray, decision, errorCategory, errorSummary, invalidationSource);
+            attemptId, attemptSequence, inputArray, outputArray, approvalArray, decision, errorCategory, errorSummary,
+            invalidationSource, invalidationPolicyRef, successorExecution);
         var requestDigest = new DigestEnvelope(DigestScope.CanonicalJsonRecord, "nexus.workflow-execution.request", "1.0.0", requestContent).ComputeDigest();
         return new WorkflowExecutionEvent(
             header, ordinal, WorkflowExecutionRecordRef.RequireDigest(previousDigest, nameof(previousDigest)), requestId,
             requestDigest, nodeId, kind, expectedPriorState, resultingState, actor, occurredAt, rationale,
             attemptId, attemptSequence, Array.AsReadOnly(inputArray), Array.AsReadOnly(outputArray),
-            Array.AsReadOnly(approvalArray), decision, errorCategory, errorSummary, invalidationSource);
+            Array.AsReadOnly(approvalArray), decision, errorCategory, errorSummary, invalidationSource, invalidationPolicyRef, successorExecution);
     }
 
     public CanonicalJsonObject ToCanonicalJson() => new DigestEnvelope(
@@ -441,7 +455,7 @@ public sealed class WorkflowExecutionEvent
             ExecutionId, WorkflowId, WorkflowDigest, ProtocolVersionId, ProtocolContentDigest,
             AuthorityPolicyId, AuthorityPolicyDigest, RequestId, NodeId, Kind, ExpectedPriorState,
             ResultingState, Actor, Rationale, AttemptId, AttemptSequence, Inputs, Outputs, Approvals,
-            Decision, ErrorCategory, ErrorSummary, InvalidationSource)
+            Decision, ErrorCategory, ErrorSummary, InvalidationSource, InvalidationPolicyRef, SuccessorExecution)
         .Add("event_id", EventId)
         .Add("ordinal", Ordinal)
         .Add("previous_digest", PreviousDigest.ToString())
@@ -454,11 +468,12 @@ public sealed class WorkflowExecutionEvent
         string rationale, string? attemptId, int? attemptSequence, IReadOnlyList<WorkflowExecutionRecordRef> inputs,
         IReadOnlyList<WorkflowExecutionRecordRef> outputs, IReadOnlyList<WorkflowExecutionApproval> approvals,
         WorkflowExecutionRecordRef? decision, string? errorCategory, string? errorSummary,
-        WorkflowExecutionRecordRef? invalidationSource) => BuildRequestContent(
+        WorkflowExecutionRecordRef? invalidationSource, string? invalidationPolicyRef,
+        WorkflowExecutionRecordRef? successorExecution = null) => BuildRequestContent(
             header.ExecutionId, header.WorkflowId, header.WorkflowDigest, header.ProtocolVersionId,
             header.ProtocolContentDigest, header.AuthorityPolicyId, header.AuthorityPolicyDigest, requestId,
             nodeId, kind, expectedPriorState, resultingState, actor, rationale, attemptId, attemptSequence,
-            inputs, outputs, approvals, decision, errorCategory, errorSummary, invalidationSource);
+            inputs, outputs, approvals, decision, errorCategory, errorSummary, invalidationSource, invalidationPolicyRef, successorExecution);
 
     private static CanonicalJsonObject BuildRequestContent(
         string executionId, string workflowId, ContentDigest workflowDigest, string protocolVersionId,
@@ -467,7 +482,8 @@ public sealed class WorkflowExecutionEvent
         WorkflowExecutionState resultingState, WorkflowExecutionActor actor, string rationale, string? attemptId,
         int? attemptSequence, IReadOnlyList<WorkflowExecutionRecordRef> inputs, IReadOnlyList<WorkflowExecutionRecordRef> outputs,
         IReadOnlyList<WorkflowExecutionApproval> approvals, WorkflowExecutionRecordRef? decision,
-        string? errorCategory, string? errorSummary, WorkflowExecutionRecordRef? invalidationSource)
+        string? errorCategory, string? errorSummary, WorkflowExecutionRecordRef? invalidationSource, string? invalidationPolicyRef,
+        WorkflowExecutionRecordRef? successorExecution)
     {
         var content = new CanonicalJsonObject()
             .Add("execution_id", executionId)
@@ -493,6 +509,8 @@ public sealed class WorkflowExecutionEvent
         AddOptional(content, "error_category", errorCategory);
         AddOptional(content, "error_summary", errorSummary);
         if (invalidationSource is not null) content.Add("invalidation_source", invalidationSource.ToCanonicalJson());
+        AddOptional(content, "invalidation_policy_ref", invalidationPolicyRef);
+        if (successorExecution is not null) content.Add("successor_execution", successorExecution.ToCanonicalJson());
         return content;
     }
 
@@ -571,49 +589,146 @@ public sealed class WorkflowExecutionJournal
     private WorkflowExecutionJournal(
         WorkflowExecutionHeader header,
         VerifiedWorkflowDefinition workflow,
-        WorkflowExecutionAuthorityPolicy policy)
+        WorkflowExecutionAuthorityPolicy policy,
+        IWorkflowExecutionRecordResolver recordResolver)
     {
         Header = header;
         Workflow = workflow;
         AuthorityPolicy = policy;
+        RecordResolver = recordResolver;
         Projection = Project();
     }
 
     public WorkflowExecutionHeader Header { get; }
     public VerifiedWorkflowDefinition Workflow { get; }
     public WorkflowExecutionAuthorityPolicy AuthorityPolicy { get; }
+    public IWorkflowExecutionRecordResolver RecordResolver { get; }
     public IReadOnlyList<WorkflowExecutionEvent> Events => _events.AsReadOnly();
     public WorkflowExecutionProjection Projection { get; private set; }
 
     public static WorkflowExecutionJournal Create(
         WorkflowExecutionHeader header,
         VerifiedWorkflowDefinition workflow,
-        WorkflowExecutionAuthorityPolicy policy)
+        WorkflowExecutionAuthorityPolicy policy,
+        IWorkflowExecutionRecordResolver recordResolver)
     {
         ArgumentNullException.ThrowIfNull(header);
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(recordResolver);
         WorkflowExecutionHeader.EnsureAuthorityBinding(workflow, policy);
         if (!string.Equals(header.WorkflowId, workflow.Definition.WorkflowId, StringComparison.Ordinal) ||
             header.WorkflowDigest != workflow.Definition.WorkflowDigest || header.AuthorityPolicyDigest != policy.Digest)
         {
             throw new WorkflowExecutionRuleException(WorkflowExecutionErrorCodes.UnverifiedAuthority, "Execution header does not resolve to supplied authority.");
         }
-        return new WorkflowExecutionJournal(header, workflow, policy);
+        return new WorkflowExecutionJournal(header, workflow, policy, recordResolver);
     }
 
     public static WorkflowExecutionJournal Rehydrate(
         WorkflowExecutionHeader header,
         IEnumerable<WorkflowExecutionEvent> events,
         VerifiedWorkflowDefinition workflow,
-        WorkflowExecutionAuthorityPolicy policy)
+        WorkflowExecutionAuthorityPolicy policy,
+        IWorkflowExecutionRecordResolver recordResolver)
     {
-        var journal = Create(header, workflow, policy);
-        foreach (var item in events ?? throw new ArgumentNullException(nameof(events))) journal.Append(item, allowIdempotentReplay: false);
+        var journal = Create(header, workflow, policy, recordResolver);
+        var records = (events ?? throw new ArgumentNullException(nameof(events))).ToArray();
+        for (var index = 0; index < records.Length;)
+        {
+            if (records[index].Kind == WorkflowExecutionEventKind.WorkInvalidated)
+            {
+                var source = records[index].InvalidationSource;
+                var batch = records.Skip(index).TakeWhile(item =>
+                    item.Kind == WorkflowExecutionEventKind.WorkInvalidated && item.InvalidationSource == source).ToArray();
+                journal.AppendInvalidationBatch(batch[0].NodeId, batch);
+                index += batch.Length;
+            }
+            else if (records[index].Kind == WorkflowExecutionEventKind.SuccessorBound)
+            {
+                var successor = records[index].SuccessorExecution;
+                var batch = records.Skip(index).TakeWhile(item =>
+                    item.Kind == WorkflowExecutionEventKind.SuccessorBound && item.SuccessorExecution == successor).ToArray();
+                journal.AppendSupersessionBatch(batch);
+                index += batch.Length;
+            }
+            else
+            {
+                journal.Append(records[index], allowIdempotentReplay: false);
+                index++;
+            }
+        }
         return journal;
     }
 
     public WorkflowExecutionEvent Append(WorkflowExecutionEvent item) => Append(item, allowIdempotentReplay: true);
+
+    public IReadOnlyList<WorkflowExecutionEvent> AppendInvalidationBatch(
+        string sourceNodeId,
+        IReadOnlyList<WorkflowExecutionEvent> events)
+    {
+        sourceNodeId = Guard.NotBlank(sourceNodeId, nameof(sourceNodeId));
+        ArgumentNullException.ThrowIfNull(events);
+        if (!Projection.NodeStates.ContainsKey(sourceNodeId))
+            throw Rule(WorkflowExecutionErrorCodes.UnknownNode, "Invalidation source node is unknown.");
+
+        var affected = DescendantsAndSelf(sourceNodeId);
+        var ordered = Workflow.Definition.Nodes.Select(node => node.NodeId).Where(affected.Contains).ToArray();
+        if (events.Count != ordered.Length || !events.Select(item => item.NodeId).SequenceEqual(ordered, StringComparer.Ordinal))
+            throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Invalidation batch must contain the complete dependency closure in Workflow order.");
+
+        var source = events.FirstOrDefault()?.InvalidationSource
+            ?? throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Invalidation batch requires one digest-bound source.");
+        ValidateBatchChain(events);
+        foreach (var item in events)
+        {
+            if (item.Kind != WorkflowExecutionEventKind.WorkInvalidated ||
+                item.ResultingState != WorkflowExecutionState.Invalidated ||
+                item.InvalidationSource != source || item.SuccessorExecution is not null ||
+                !string.Equals(item.InvalidationPolicyRef,
+                    Workflow.Definition.Nodes.Single(node => node.NodeId == item.NodeId).InvalidationPolicyRef,
+                    StringComparison.Ordinal) ||
+                item.ExpectedPriorState != Projection.NodeStates[item.NodeId] ||
+                item.ExpectedPriorState is WorkflowExecutionState.Invalidated or WorkflowExecutionState.Superseded ||
+                WorkflowExecutionActor.NormalizeActorKind(item.Actor.Kind) != WorkflowExecutionActorKinds.Human ||
+                !AuthorityPolicy.Authorizes(item.Actor))
+                throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Invalidation batch contains an invalid event or actor authority.");
+            ValidateRecordResolution(item);
+        }
+
+        _events.AddRange(events);
+        Projection = Project();
+        return Array.AsReadOnly(events.ToArray());
+    }
+
+    public IReadOnlyList<WorkflowExecutionEvent> AppendSupersessionBatch(IReadOnlyList<WorkflowExecutionEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        var ordered = Workflow.Definition.Nodes.Select(node => node.NodeId)
+            .Where(id => Projection.NodeStates[id] == WorkflowExecutionState.Invalidated).ToArray();
+        if (ordered.Length == 0 || events.Count != ordered.Length ||
+            !events.Select(item => item.NodeId).SequenceEqual(ordered, StringComparer.Ordinal))
+            throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Supersession batch must contain every invalidated node in Workflow order.");
+
+        var successor = events.FirstOrDefault()?.SuccessorExecution
+            ?? throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Supersession batch requires a digest-bound successor execution.");
+        ValidateBatchChain(events);
+        foreach (var item in events)
+        {
+            if (item.Kind != WorkflowExecutionEventKind.SuccessorBound ||
+                item.ExpectedPriorState != WorkflowExecutionState.Invalidated ||
+                item.ResultingState != WorkflowExecutionState.Superseded ||
+                item.SuccessorExecution != successor || item.InvalidationSource is not null || item.InvalidationPolicyRef is not null ||
+                WorkflowExecutionActor.NormalizeActorKind(item.Actor.Kind) != WorkflowExecutionActorKinds.Human ||
+                !AuthorityPolicy.Authorizes(item.Actor))
+                throw Rule(WorkflowExecutionErrorCodes.InvalidInvalidation, "Supersession batch contains an invalid event or actor authority.");
+            ValidateRecordResolution(item);
+        }
+
+        _events.AddRange(events);
+        Projection = Project();
+        return Array.AsReadOnly(events.ToArray());
+    }
 
     private WorkflowExecutionEvent Append(WorkflowExecutionEvent item, bool allowIdempotentReplay)
     {
@@ -621,7 +736,7 @@ public sealed class WorkflowExecutionJournal
         var replay = _events.SingleOrDefault(existing => string.Equals(existing.RequestId, item.RequestId, StringComparison.Ordinal));
         if (replay is not null)
         {
-            if (!allowIdempotentReplay || replay.RequestDigest != item.RequestDigest)
+            if (!allowIdempotentReplay || replay.Digest != item.Digest)
                 throw Rule(WorkflowExecutionErrorCodes.ConflictingRequest, "Execution request id was reused with different material.");
             return replay;
         }
@@ -652,6 +767,7 @@ public sealed class WorkflowExecutionJournal
             throw Rule(WorkflowExecutionErrorCodes.InvalidTransition, "Execution event does not match the current state or closed transition table.");
         if (!AuthorityPolicy.Authorizes(item.Actor))
             throw Rule(WorkflowExecutionErrorCodes.UnauthorizedActor, "Execution actor and role are not authorized by the bound policy.");
+        ValidateRecordResolution(item);
 
         if (item.Kind == WorkflowExecutionEventKind.DependenciesSatisfied)
         {
@@ -663,6 +779,53 @@ public sealed class WorkflowExecutionJournal
         ValidateAttempt(item);
         ValidateHumanAuthority(node, item);
         ValidateOutputs(node, item);
+    }
+
+    private void ValidateRecordResolution(WorkflowExecutionEvent item)
+    {
+        var references = item.Inputs.Concat(item.Outputs)
+            .Concat(item.Approvals.Select(value => value.Record)).ToList();
+        if (item.Decision is not null) references.Add(item.Decision);
+        if (item.InvalidationSource is not null) references.Add(item.InvalidationSource);
+        if (item.SuccessorExecution is not null) references.Add(item.SuccessorExecution);
+        foreach (var reference in references)
+        {
+            var resolved = RecordResolver.Resolve(reference.Kind, reference.Id);
+            if (resolved != reference)
+                throw Rule(WorkflowExecutionErrorCodes.UnverifiedAuthority,
+                    $"Execution record '{reference.Kind}:{reference.Id}' does not resolve to the bound digest.");
+        }
+    }
+
+    private void ValidateBatchChain(IReadOnlyList<WorkflowExecutionEvent> events)
+    {
+        var previous = Projection.HeadDigest;
+        var ordinal = _events.Count + 1;
+        var requestIds = new HashSet<string>(_events.Select(item => item.RequestId), StringComparer.Ordinal);
+        foreach (var item in events)
+        {
+            if (item.Ordinal != ordinal++ || item.PreviousDigest != previous || !requestIds.Add(item.RequestId) ||
+                !string.Equals(item.ExecutionId, Header.ExecutionId, StringComparison.Ordinal) ||
+                !string.Equals(item.WorkflowId, Header.WorkflowId, StringComparison.Ordinal) || item.WorkflowDigest != Header.WorkflowDigest ||
+                !string.Equals(item.ProtocolVersionId, Header.ProtocolVersionId, StringComparison.Ordinal) || item.ProtocolContentDigest != Header.ProtocolContentDigest ||
+                !string.Equals(item.AuthorityPolicyId, Header.AuthorityPolicyId, StringComparison.Ordinal) || item.AuthorityPolicyDigest != Header.AuthorityPolicyDigest)
+                throw Rule(WorkflowExecutionErrorCodes.InvalidJournalChain, "Batch event does not extend the exact journal authority chain.");
+            previous = item.Digest;
+        }
+    }
+
+    private HashSet<string> DescendantsAndSelf(string sourceNodeId)
+    {
+        var affected = new HashSet<string>(StringComparer.Ordinal) { sourceNodeId };
+        var queue = new Queue<string>();
+        queue.Enqueue(sourceNodeId);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var child in Workflow.Definition.Edges.Where(edge => edge.FromNodeId == current).Select(edge => edge.ToNodeId))
+                if (affected.Add(child)) queue.Enqueue(child);
+        }
+        return affected;
     }
 
     private void ValidateAttempt(WorkflowExecutionEvent item)
@@ -718,6 +881,8 @@ public sealed class WorkflowExecutionJournal
         if (node.Kind == WorkflowNodeKind.Approval && item.Kind == WorkflowExecutionEventKind.WorkCompleted)
         {
             if (requirement is null || item.Approvals.Count < requirement.MinimumApprovals ||
+                item.Approvals.Select(value => value.Record).Distinct().Count() != item.Approvals.Count ||
+                item.Approvals.Select(value => (value.Actor.ActorId, value.Actor.Role)).Distinct().Count() != item.Approvals.Count ||
                 item.Approvals.Any(value => WorkflowExecutionActor.NormalizeActorKind(value.Actor.Kind) != WorkflowExecutionActorKinds.Human ||
                     !AuthorityPolicy.Authorizes(value.Actor) || !requirement.RequiredRoles.Contains(value.Actor.Role, StringComparer.Ordinal)) ||
                 (requirement.RequiresDistinctActors && item.Approvals.Select(value => value.Actor.ActorId).Distinct(StringComparer.Ordinal).Count() != item.Approvals.Count))
@@ -725,11 +890,15 @@ public sealed class WorkflowExecutionJournal
         }
     }
 
-    private static void ValidateOutputs(WorkflowCompiledNode node, WorkflowExecutionEvent item)
+    private void ValidateOutputs(WorkflowCompiledNode node, WorkflowExecutionEvent item)
     {
         if (item.Kind != WorkflowExecutionEventKind.WorkCompleted) return;
-        var outputIds = item.Outputs.Select(value => value.Id).ToHashSet(StringComparer.Ordinal);
-        if (node.Produces.Any(required => !outputIds.Contains(required)))
+        var declarations = Workflow.ResolvedTemplate.ArtifactDeclarations
+            .Where(value => node.Produces.Contains(value.ArtifactRef, StringComparer.Ordinal))
+            .ToDictionary(value => value.ArtifactRef, StringComparer.Ordinal);
+        if (node.Produces.Any(required => !declarations.TryGetValue(required, out var declaration) ||
+                !item.Outputs.Any(output => string.Equals(output.Id, declaration.ArtifactRef, StringComparison.Ordinal) &&
+                    string.Equals(output.Kind, declaration.ArtifactKind, StringComparison.Ordinal))))
             throw Rule(WorkflowExecutionErrorCodes.MissingOutput, "Work completion is missing a declared output artifact reference.");
     }
 

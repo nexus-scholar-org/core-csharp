@@ -1,3 +1,5 @@
+using NexusScholar.Kernel;
+
 namespace NexusScholar.ResearchWorkspace;
 
 public static class ResearchWorkspacePaths
@@ -10,6 +12,7 @@ public static class ResearchWorkspacePaths
     public const string ReportOutputs = "nexus-output/reports";
     public const string Generations = "nexus-output/generations";
     public const string AuthorityGenerations = "nexus-output/authority-generations";
+    public const string WorkflowExecutionJournals = "nexus-output/workflow-executions";
     public const string GenerationStaging = "nexus-output/.staging";
     public const string GenerationQuarantine = "nexus-output/quarantine";
     public const string ProjectLockFileName = "nexus.project.lock";
@@ -35,4 +38,7 @@ public static class ResearchWorkspacePaths
     public static string GenerationRoot(string generationId) => $"{Generations}/{generationId}";
 
     public static string AuthorityGenerationRoot(string generationId) => $"{AuthorityGenerations}/{generationId}";
+
+    public static string WorkflowExecutionJournalRoot(string executionId, string generationId) =>
+        $"{WorkflowExecutionJournals}/execution-{ContentDigest.Sha256Utf8(executionId).Value[..24]}/{generationId}";
 }

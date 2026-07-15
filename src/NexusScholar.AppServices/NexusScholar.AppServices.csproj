@@ -5,5 +5,7 @@
     <ProjectReference Include="../NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
     <ProjectReference Include="../NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
     <ProjectReference Include="../NexusScholar.UiContracts/NexusScholar.UiContracts.csproj" />
+    <ProjectReference Include="../NexusScholar.Workflow/NexusScholar.Workflow.csproj" />
+    <ProjectReference Include="../NexusScholar.WorkflowExecution/NexusScholar.WorkflowExecution.csproj" />
   </ItemGroup>
 </Project>

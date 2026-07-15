@@ -1,10 +1,11 @@
 # FE-03: Workflow Execution Journal
 
-Status: first domain slice active under accepted ADR 0030.
+Status: complete under accepted ADR 0030. Completion evidence:
+`FE-03-WORKFLOW-EXECUTION-JOURNAL-EVIDENCE.md`.
 
 ## Current Implementation State
 
-Started on `cdx/fe-03-workflow-execution-journal`:
+Completed on `cdx/fe-03-workflow-execution-journal`:
 
 - `NexusScholar.WorkflowExecution` exists with Kernel + Workflow dependencies;
 - verified Workflow rehydration exposes its digest-verified template authority;
@@ -13,17 +14,18 @@ Started on `cdx/fe-03-workflow-execution-journal`:
   chaining, attempts,
   retries, role authorization, human/automation separation, and replay projection
   have focused tests;
-- architecture tests enforce inward-only dependencies.
+- architecture tests enforce inward-only dependencies;
+- strict canonical policy, header, and event byte rehydration rejects malformed,
+  noncanonical, or digest-mismatched records;
+- invalidation and supersession append complete ordered batches atomically;
+- deterministic execution-to-provenance projection lives in a separate bridge;
+- ResearchWorkspace persists replayable generations with stale-writer rejection,
+  pointer-last commit, idempotency, tamper verification, and quarantine recovery;
+- AppServices exposes UI-neutral preview/commit orchestration through a port.
 
-Still required before FE-03 completion:
-
-- canonical unverified DTO parsing and byte-level rehydration fixtures;
-- exhaustive approval, output-resolution, idempotency-conflict, and invalidation
-  propagation cases;
-- execution-to-provenance projection;
-- atomic ResearchWorkspace journal persistence and recovery;
-- AppServices and CLI orchestration;
-- completion evidence and roadmap closeout.
+The direct CLI adapter is intentionally deferred by ADR 0030 because the
+workspace has no durable verified Workflow authority package for process-entry
+resolution. No command may manufacture authority from CLI role or digest text.
 
 ## Goal
 
@@ -49,8 +51,8 @@ execution behavior to the first slice.
    changing Provenance authority ownership.
 4. FE-03.4: persist journals atomically in ResearchWorkspace generations with
    crash recovery and stale-writer rejection.
-5. FE-03.5: expose UI-neutral preview/commit orchestration in AppServices and an
-   explicit-confirmation local CLI surface.
+5. FE-03.5: expose UI-neutral preview/commit orchestration in AppServices; add a
+   local CLI adapter only after durable Workflow authority is resolvable.
 6. FE-03.6: add conformance fixtures, architecture rules, completion evidence,
    and roadmap closeout.
 
@@ -92,7 +94,11 @@ The first slice must implement:
 - stale expected head and concurrent node advance;
 - partial invalidation propagation.
 
-## Excluded From First Slice
+## Historical First-Slice Exclusions
+
+These exclusions governed the initial domain-only commit. The completion slice
+subsequently admitted the provenance bridge, AppServices port, and
+ResearchWorkspace generation files described above.
 
 - ResearchWorkspace files, generations, pointers, locks, or recovery;
 - AppServices and CLI commands;
@@ -112,7 +118,7 @@ dotnet format NexusScholar.Core.slnx --verify-no-changes --no-restore
 
 Also run focused WorkflowExecution, Workflow, architecture, and conformance tests.
 
-## First-Slice Exit
+## Completion Exit
 
 - ADR 0030 remains satisfied after architecture and scientific review;
 - every admitted transition is explicit and every other transition fails;
@@ -120,4 +126,6 @@ Also run focused WorkflowExecution, Workflow, architecture, and conformance test
 - human authority cannot be forged with role text or automation actor kind;
 - retries and invalidations preserve all predecessor history;
 - project dependency and forbidden-symbol architecture tests pass;
-- no production behavior outside the first-slice paths is added.
+- completion behavior remains limited to the accepted domain, provenance bridge,
+  AppServices port, ResearchWorkspace generation, conformance, and documentation
+  paths; no scheduler, provider, plugin, model, API, or UI runtime is added.

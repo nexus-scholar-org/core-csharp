@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Deterministic provenance projection for verified workflow execution records.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NexusScholar.Kernel/NexusScholar.Kernel.csproj" />
+    <ProjectReference Include="../NexusScholar.Provenance/NexusScholar.Provenance.csproj" />
+    <ProjectReference Include="../NexusScholar.WorkflowExecution/NexusScholar.WorkflowExecution.csproj" />
+  </ItemGroup>
+</Project>

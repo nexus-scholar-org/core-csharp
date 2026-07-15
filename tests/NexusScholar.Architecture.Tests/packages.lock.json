@@ -319,7 +319,9 @@
           "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Search": "[0.1.0-alpha.2, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )",
+          "NexusScholar.Workflow": "[0.1.0-alpha.2, )",
+          "NexusScholar.WorkflowExecution": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.artifacts": {
@@ -415,7 +417,9 @@
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
           "NexusScholar.Search": "[0.1.0-alpha.2, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )",
+          "NexusScholar.Workflow": "[0.1.0-alpha.2, )",
+          "NexusScholar.WorkflowExecution": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.screening": {
@@ -454,6 +458,14 @@
         "dependencies": {
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Workflow": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.workflowexecution.provenance": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
+          "NexusScholar.WorkflowExecution": "[0.1.0-alpha.2, )"
         }
       },
       "Avalonia": {

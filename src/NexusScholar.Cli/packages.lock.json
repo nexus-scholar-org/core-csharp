@@ -16,7 +16,9 @@
           "NexusScholar.Deduplication": "[0.1.0-alpha.2, )",
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Search": "[0.1.0-alpha.2, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )",
+          "NexusScholar.Workflow": "[0.1.0-alpha.2, )",
+          "NexusScholar.WorkflowExecution": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.bundles": {
@@ -74,7 +76,9 @@
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
           "NexusScholar.Search": "[0.1.0-alpha.2, )",
-          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )"
+          "NexusScholar.UiContracts": "[0.1.0-alpha.2, )",
+          "NexusScholar.Workflow": "[0.1.0-alpha.2, )",
+          "NexusScholar.WorkflowExecution": "[0.1.0-alpha.2, )"
         }
       },
       "nexusscholar.search": {
@@ -98,6 +102,13 @@
         "dependencies": {
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
           "NexusScholar.Protocol": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.workflowexecution": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Workflow": "[0.1.0-alpha.2, )"
         }
       }
     }

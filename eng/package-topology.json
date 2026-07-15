@@ -14,7 +14,8 @@
     "NexusScholar.Search",
     "NexusScholar.Shared",
     "NexusScholar.Workflow",
-    "NexusScholar.WorkflowExecution"
+    "NexusScholar.WorkflowExecution",
+    "NexusScholar.WorkflowExecution.Provenance"
   ],
   "smokeRoots": [
     "NexusScholar.Bundles",

@@ -17,7 +17,10 @@ public sealed record ResearchWorkspaceProject(
     string? GenerationManifestPath = null,
     string? CurrentAuthorityGenerationId = null,
     string? AuthorityGenerationManifestPath = null,
-    string? AuthorityGenerationManifestSha256 = null)
+    string? AuthorityGenerationManifestSha256 = null,
+    string? CurrentWorkflowExecutionJournalGenerationId = null,
+    string? WorkflowExecutionJournalManifestPath = null,
+    string? WorkflowExecutionJournalManifestSha256 = null)
 {
     public const string CurrentSchema = "nexus.project.v0";
 
@@ -78,6 +81,17 @@ public sealed record ResearchWorkspaceProject(
             CurrentAuthorityGenerationId = authorityGenerationId,
             AuthorityGenerationManifestPath = manifestPath,
             AuthorityGenerationManifestSha256 = manifestSha256
+        };
+
+    public ResearchWorkspaceProject CommitWorkflowExecutionJournalGeneration(
+        string generationId,
+        string manifestPath,
+        string manifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentWorkflowExecutionJournalGenerationId = generationId,
+            WorkflowExecutionJournalManifestPath = manifestPath,
+            WorkflowExecutionJournalManifestSha256 = manifestSha256
         };
 
     private static string CreateWorkspaceId(string title)

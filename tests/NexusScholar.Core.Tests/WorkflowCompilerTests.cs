@@ -1,10 +1,13 @@
 using System;
 using System.Runtime.CompilerServices;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NexusScholar.AppServices;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
+using NexusScholar.ResearchWorkspace;
 using NexusScholar.Workflow;
 using NexusScholar.WorkflowExecution;
+using NexusScholar.WorkflowExecution.Provenance;
 
 namespace NexusScholar.Core.Tests;
 
@@ -13,6 +16,7 @@ public sealed class WorkflowCompilerTests
 {
     private static readonly ProtocolActor Researcher = ProtocolActor.Human("researcher-1");
     private static readonly IClock Clock = new FixedClock();
+    private static readonly IWorkflowExecutionRecordResolver ExecutionRecordResolver = new TestExecutionRecordResolver();
     private static readonly ConditionalWeakTable<ProtocolVersion, VerifiedProtocolVersion> ProtocolAuthorities = new();
 
     [TestMethod]
@@ -79,7 +83,7 @@ public sealed class WorkflowCompilerTests
         var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
         var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
         var header = WorkflowExecutionHeader.Create("execution-1", authority, policy, researcher, Clock.UtcNow);
-        var journal = WorkflowExecutionJournal.Create(header, authority, policy);
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
 
         Assert.AreEqual(WorkflowExecutionState.Ready, journal.Projection.NodeStates["start"]);
         Assert.AreEqual(WorkflowExecutionState.Pending, journal.Projection.NodeStates["approve"]);
@@ -88,11 +92,11 @@ public sealed class WorkflowCompilerTests
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
         Append(journal, "complete-1", "start", WorkflowExecutionEventKind.WorkCompleted,
             WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, attemptId: "attempt-1", attemptSequence: 1,
-            outputs: new[] { Ref("artifact", "search-plan") });
+            outputs: new[] { Ref("workflow-artifact", "search-plan") });
         Append(journal, "ready-approve", "approve", WorkflowExecutionEventKind.DependenciesSatisfied,
             WorkflowExecutionState.Pending, WorkflowExecutionState.Ready, researcher);
 
-        var replay = WorkflowExecutionJournal.Rehydrate(header, journal.Events, authority, policy);
+        var replay = WorkflowExecutionJournal.Rehydrate(header, journal.Events, authority, policy, ExecutionRecordResolver);
 
         Assert.AreEqual(journal.Projection.HeadDigest, replay.Projection.HeadDigest);
         Assert.AreEqual(WorkflowExecutionState.Ready, replay.Projection.NodeStates["approve"]);
@@ -108,7 +112,7 @@ public sealed class WorkflowCompilerTests
         var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
         var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
         var journal = WorkflowExecutionJournal.Create(
-            WorkflowExecutionHeader.Create("execution-retry", authority, policy, researcher, Clock.UtcNow), authority, policy);
+            WorkflowExecutionHeader.Create("execution-retry", authority, policy, researcher, Clock.UtcNow), authority, policy, ExecutionRecordResolver);
 
         Append(journal, "start-1", "start", WorkflowExecutionEventKind.WorkStarted,
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
@@ -121,7 +125,7 @@ public sealed class WorkflowCompilerTests
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-2", attemptSequence: 2);
         Append(journal, "complete-2", "start", WorkflowExecutionEventKind.WorkCompleted,
             WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, attemptId: "attempt-2", attemptSequence: 2,
-            outputs: new[] { Ref("artifact", "search-plan") });
+            outputs: new[] { Ref("workflow-artifact", "search-plan") });
 
         Assert.AreEqual(2, journal.Projection.Attempts["start"].Count);
         Assert.AreEqual(WorkflowExecutionState.Failed, journal.Projection.Attempts["start"][0].State);
@@ -136,7 +140,7 @@ public sealed class WorkflowCompilerTests
         var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
         var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
         var journal = WorkflowExecutionJournal.Create(
-            WorkflowExecutionHeader.Create("execution-block", authority, policy, researcher, Clock.UtcNow), authority, policy);
+            WorkflowExecutionHeader.Create("execution-block", authority, policy, researcher, Clock.UtcNow), authority, policy, ExecutionRecordResolver);
 
         Append(journal, "start", "start", WorkflowExecutionEventKind.WorkStarted,
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
@@ -146,7 +150,7 @@ public sealed class WorkflowCompilerTests
             WorkflowExecutionState.Blocked, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
         Append(journal, "complete", "start", WorkflowExecutionEventKind.WorkCompleted,
             WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, attemptId: "attempt-1", attemptSequence: 1,
-            outputs: new[] { Ref("artifact", "search-plan") });
+            outputs: new[] { Ref("workflow-artifact", "search-plan") });
 
         Assert.AreEqual(1, journal.Projection.Attempts["start"].Count);
         Assert.AreEqual(WorkflowExecutionState.Completed, journal.Projection.Attempts["start"][0].State);
@@ -160,12 +164,12 @@ public sealed class WorkflowCompilerTests
         var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
         var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
         var header = WorkflowExecutionHeader.Create("execution-replay", authority, policy, researcher, Clock.UtcNow);
-        var journal = WorkflowExecutionJournal.Create(header, authority, policy);
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
         Append(journal, "start", "start", WorkflowExecutionEventKind.WorkStarted,
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
 
         var replayError = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() => WorkflowExecutionJournal.Rehydrate(
-            header, journal.Events.Concat(new[] { journal.Events[0] }), authority, policy));
+            header, journal.Events.Concat(new[] { journal.Events[0] }), authority, policy, ExecutionRecordResolver));
         Assert.AreEqual(WorkflowExecutionErrorCodes.ConflictingRequest, replayError.Category);
 
         var invalidation = WorkflowExecutionEvent.Create(
@@ -177,6 +181,382 @@ public sealed class WorkflowCompilerTests
     }
 
     [TestMethod]
+    public void Execution_journal_rejects_same_request_material_with_different_event_bytes()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var header = WorkflowExecutionHeader.Create("execution-idempotency", authority, policy, researcher, Clock.UtcNow);
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
+        var first = WorkflowExecutionEvent.Create(
+            header, 1, header.Digest, "same-request", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow, "start", "attempt-1", 1);
+        var changedTimestamp = WorkflowExecutionEvent.Create(
+            header, 1, header.Digest, "same-request", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow.AddSeconds(1), "start", "attempt-1", 1);
+        journal.Append(first);
+
+        var error = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() => journal.Append(changedTimestamp));
+
+        Assert.AreEqual(first.RequestDigest, changedTimestamp.RequestDigest);
+        Assert.AreNotEqual(first.Digest, changedTimestamp.Digest);
+        Assert.AreEqual(WorkflowExecutionErrorCodes.ConflictingRequest, error.Category);
+    }
+
+    [TestMethod]
+    public void Execution_journal_invalidates_and_supersedes_complete_dependency_closure_atomically()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var header = WorkflowExecutionHeader.Create("execution-invalidation", authority, policy, researcher, Clock.UtcNow);
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
+        var source = Ref("protocol-amendment", "amendment-1");
+        var invalidations = BuildBatch(
+            journal,
+            authority.Definition.Nodes.Select(node => node.NodeId),
+            WorkflowExecutionEventKind.WorkInvalidated,
+            id => journal.Projection.NodeStates[id],
+            WorkflowExecutionState.Invalidated,
+            researcher,
+            invalidationSource: source);
+
+        var partialError = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() =>
+            journal.AppendInvalidationBatch("start", invalidations.Take(invalidations.Count - 1).ToArray()));
+        Assert.AreEqual(WorkflowExecutionErrorCodes.InvalidInvalidation, partialError.Category);
+
+        journal.AppendInvalidationBatch("start", invalidations);
+        Assert.IsTrue(journal.Projection.NodeStates.Values.All(state => state == WorkflowExecutionState.Invalidated));
+
+        var successor = Ref("workflow-execution", "execution-successor");
+        var supersessions = BuildBatch(
+            journal,
+            authority.Definition.Nodes.Select(node => node.NodeId),
+            WorkflowExecutionEventKind.SuccessorBound,
+            _ => WorkflowExecutionState.Invalidated,
+            WorkflowExecutionState.Superseded,
+            researcher,
+            successorExecution: successor);
+        journal.AppendSupersessionBatch(supersessions);
+
+        Assert.IsTrue(journal.Projection.NodeStates.Values.All(state => state == WorkflowExecutionState.Superseded));
+    }
+
+    [TestMethod]
+    public void Execution_canonical_records_round_trip_and_reject_noncanonical_bytes()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var header = WorkflowExecutionHeader.Create("execution-codec", authority, policy, researcher, Clock.UtcNow);
+        var item = WorkflowExecutionEvent.Create(
+            header, 1, header.Digest, "start", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow,
+            "start deterministic work", "attempt-1", 1);
+
+        var verifiedPolicy = WorkflowExecutionCanonicalCodec.RehydratePolicy(
+            WorkflowExecutionCanonicalCodec.Serialize(policy), policy.Digest, authority);
+        var verifiedHeader = WorkflowExecutionCanonicalCodec.RehydrateHeader(
+            WorkflowExecutionCanonicalCodec.Serialize(header), header.Digest, authority, verifiedPolicy);
+        var verifiedEvent = WorkflowExecutionCanonicalCodec.RehydrateEvent(
+            WorkflowExecutionCanonicalCodec.Serialize(item), item.Digest, verifiedHeader);
+        var replay = WorkflowExecutionJournal.Rehydrate(verifiedHeader, new[] { verifiedEvent }, authority, verifiedPolicy, ExecutionRecordResolver);
+
+        Assert.AreEqual(policy.Digest, verifiedPolicy.Digest);
+        Assert.AreEqual(header.Digest, verifiedHeader.Digest);
+        Assert.AreEqual(item.Digest, verifiedEvent.Digest);
+        Assert.AreEqual(WorkflowExecutionState.Active, replay.Projection.NodeStates["start"]);
+
+        var nonCanonical = WorkflowExecutionCanonicalCodec.Serialize(item).Concat(new byte[] { (byte)'\n' }).ToArray();
+        var error = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() =>
+            WorkflowExecutionCanonicalCodec.RehydrateEvent(nonCanonical, item.Digest, header));
+        Assert.AreEqual(WorkflowExecutionErrorCodes.UnverifiedAuthority, error.Category);
+    }
+
+    [TestMethod]
+    public void Execution_provenance_projection_is_deterministic_and_authority_bound()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var header = WorkflowExecutionHeader.Create("execution-provenance", authority, policy, researcher, Clock.UtcNow);
+        var item = WorkflowExecutionEvent.Create(
+            header, 1, header.Digest, "start", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow,
+            "start deterministic work", "attempt-1", 1, inputs: new[] { Ref("search-plan", "plan-1") });
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
+        journal.Append(item);
+
+        var first = WorkflowExecutionProvenanceProjector.Project(journal, item);
+        var second = WorkflowExecutionProvenanceProjector.Project(journal, item);
+
+        Assert.AreEqual(first.EventId, second.EventId);
+        Assert.AreEqual(first.EventDigest, second.EventDigest);
+        Assert.AreEqual(header.ProtocolVersionId, first.ProtocolBinding!.ProtocolVersionId);
+        Assert.AreEqual(header.WorkflowDigest, first.WorkflowBinding!.WorkflowDigest);
+        Assert.AreEqual("start", first.WorkflowBinding.WorkflowNodeId);
+        Assert.IsTrue(first.Inputs.Any(input => input.Digest == item.PreviousDigest));
+        Assert.IsTrue(first.Outputs.Any(output => output.Digest == item.Digest));
+    }
+
+    [TestMethod]
+    public void Execution_workspace_generation_saves_reopens_and_replays_idempotently()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"nexus-fe03-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var location = new ResearchWorkspaceLocation(root, Path.Combine(root, ResearchWorkspacePaths.ProjectFileName));
+            var project = ResearchWorkspaceProject.Create("FE-03", Clock.UtcNow, "workspace-fe03");
+            ResearchWorkspaceStore.WriteProject(location, project);
+            var authority = BuildExecutionAuthority();
+            var policy = BuildExecutionPolicy(authority);
+            var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+            var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+            var header = WorkflowExecutionHeader.Create("execution-workspace", authority, policy, researcher, Clock.UtcNow);
+            var item = WorkflowExecutionEvent.Create(
+                header, 1, header.Digest, "start", "start", WorkflowExecutionEventKind.WorkStarted,
+                WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow,
+                "start deterministic work", "attempt-1", 1);
+
+            var committed = ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                location, project, authority, policy, header, new[] { item }, ExecutionRecordResolver);
+            var reopenedProject = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+            var reopened = ResearchWorkspaceWorkflowExecutionJournalVerifier.VerifyCurrent(location, reopenedProject, authority, ExecutionRecordResolver);
+            var replay = ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                location, reopenedProject, authority, policy, header, new[] { item }, ExecutionRecordResolver);
+
+            Assert.AreEqual(item.Digest, reopened.Journal.Projection.HeadDigest);
+            Assert.AreEqual(WorkflowExecutionState.Active, reopened.Journal.Projection.NodeStates["start"]);
+            Assert.IsTrue(replay.AlreadyApplied);
+            Assert.AreEqual(committed.Manifest.GenerationId, replay.Manifest.GenerationId);
+            var generationDirectory = Path.GetDirectoryName(
+                ResearchWorkspacePaths.InProject(root, reopenedProject.WorkflowExecutionJournalManifestPath!))!;
+            Assert.IsFalse(File.Exists(Path.Combine(generationDirectory, "current-state.json")));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void Execution_workspace_generation_rejects_stale_project_and_tampered_artifact()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"nexus-fe03-negative-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var location = new ResearchWorkspaceLocation(root, Path.Combine(root, ResearchWorkspacePaths.ProjectFileName));
+            var project = ResearchWorkspaceProject.Create("FE-03", Clock.UtcNow, "workspace-fe03-negative");
+            ResearchWorkspaceStore.WriteProject(location, project);
+            var authority = BuildExecutionAuthority();
+            var policy = BuildExecutionPolicy(authority);
+            var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+            var header = WorkflowExecutionHeader.Create("execution-workspace-negative", authority, policy, researcher, Clock.UtcNow);
+            var commit = ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                location, project, authority, policy, header, Array.Empty<WorkflowExecutionEvent>(), ExecutionRecordResolver);
+
+            var stale = Assert.ThrowsExactly<ResearchWorkspaceConcurrencyException>(() =>
+                ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                    location, project, authority, policy, header, Array.Empty<WorkflowExecutionEvent>(), ExecutionRecordResolver));
+            StringAssert.Contains(stale.Message.ToLowerInvariant(), "revision");
+
+            var headerArtifact = commit.Manifest.Artifacts.Single(artifact => artifact.Name == "header");
+            File.AppendAllText(ResearchWorkspacePaths.InProject(root, headerArtifact.RelativePath), "\n");
+            _ = Assert.ThrowsExactly<InvalidOperationException>(() =>
+                ResearchWorkspaceWorkflowExecutionJournalVerifier.VerifyCurrent(location, commit.Project, authority, ExecutionRecordResolver));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void Execution_application_service_previews_then_commits_the_exact_validated_history()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var header = WorkflowExecutionHeader.Create("execution-app-service", authority, policy, researcher, Clock.UtcNow);
+        var started = WorkflowExecutionEvent.Create(
+            header, 1, header.Digest, "start-app-service", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, Clock.UtcNow,
+            "Start deterministic work", "attempt-app-service", 1);
+        var change = new WorkflowExecutionJournalChange(
+            authority, policy, header, ExecutionRecordResolver, Array.Empty<WorkflowExecutionEvent>(), new[] { started });
+        var preview = WorkflowExecutionJournalApplicationService.Preview(change);
+        var port = new RecordingExecutionCommitPort(preview);
+
+        var result = WorkflowExecutionJournalApplicationService.Commit(change, port);
+
+        Assert.AreEqual(header.Digest, preview.PriorHeadDigest);
+        Assert.AreEqual(WorkflowExecutionState.Active, preview.ResultingNodeStates["start"]);
+        Assert.AreEqual(started.Digest, result.HeadDigest);
+        Assert.AreEqual(1, port.CommitCount);
+    }
+
+    [TestMethod]
+    public void Execution_workspace_generation_recovers_from_staging_and_promotion_failures()
+    {
+        foreach (var point in new[] { ResearchWorkspaceAuthorityFaultPoint.AfterStaging, ResearchWorkspaceAuthorityFaultPoint.AfterPromotion })
+        {
+            var root = Path.Combine(Path.GetTempPath(), $"nexus-fe03-crash-{point}-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(root);
+            try
+            {
+                var location = new ResearchWorkspaceLocation(root, Path.Combine(root, ResearchWorkspacePaths.ProjectFileName));
+                var project = ResearchWorkspaceProject.Create("FE-03", Clock.UtcNow, $"workspace-fe03-{point}");
+                ResearchWorkspaceStore.WriteProject(location, project);
+                var authority = BuildExecutionAuthority();
+                var policy = BuildExecutionPolicy(authority);
+                var actor = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+                var header = WorkflowExecutionHeader.Create($"execution-{point}", authority, policy, actor, Clock.UtcNow);
+
+                _ = Assert.ThrowsExactly<InvalidOperationException>(() =>
+                    ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                        location, project, authority, policy, header, Array.Empty<WorkflowExecutionEvent>(), ExecutionRecordResolver,
+                        current => { if (current == point) throw new InvalidOperationException("injected failure"); }));
+
+                var currentProject = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+                Assert.IsNull(currentProject.CurrentWorkflowExecutionJournalGenerationId);
+                var staging = ResearchWorkspacePaths.InProject(root, ResearchWorkspacePaths.GenerationStaging);
+                Assert.IsFalse(Directory.Exists(staging) && Directory.EnumerateFileSystemEntries(staging).Any());
+                if (point == ResearchWorkspaceAuthorityFaultPoint.AfterPromotion)
+                {
+                    var quarantine = ResearchWorkspacePaths.InProject(root, ResearchWorkspacePaths.GenerationQuarantine);
+                    Assert.IsTrue(Directory.Exists(quarantine) && Directory.EnumerateDirectories(quarantine).Any());
+                }
+            }
+            finally
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void Execution_workspace_generation_resumes_an_identical_orphan_after_process_crash()
+    {
+        var sourceRoot = Path.Combine(Path.GetTempPath(), $"nexus-fe03-promoted-source-{Guid.NewGuid():N}");
+        var recoveredRoot = Path.Combine(Path.GetTempPath(), $"nexus-fe03-promoted-recovered-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(sourceRoot);
+        Directory.CreateDirectory(recoveredRoot);
+        try
+        {
+            var project = ResearchWorkspaceProject.Create("FE-03", Clock.UtcNow, "workspace-fe03-promoted");
+            var sourceLocation = new ResearchWorkspaceLocation(sourceRoot, Path.Combine(sourceRoot, ResearchWorkspacePaths.ProjectFileName));
+            var recoveredLocation = new ResearchWorkspaceLocation(recoveredRoot, Path.Combine(recoveredRoot, ResearchWorkspacePaths.ProjectFileName));
+            ResearchWorkspaceStore.WriteProject(sourceLocation, project);
+            ResearchWorkspaceStore.WriteProject(recoveredLocation, project);
+            var authority = BuildExecutionAuthority();
+            var policy = BuildExecutionPolicy(authority);
+            var actor = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+            var header = WorkflowExecutionHeader.Create("execution-process-crash", authority, policy, actor, Clock.UtcNow);
+            var committed = ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                sourceLocation, project, authority, policy, header, Array.Empty<WorkflowExecutionEvent>(), ExecutionRecordResolver);
+            var sourceGeneration = Path.GetDirectoryName(
+                ResearchWorkspacePaths.InProject(sourceRoot, committed.Project.WorkflowExecutionJournalManifestPath!))!;
+            var recoveredGeneration = sourceGeneration.Replace(sourceRoot, recoveredRoot, StringComparison.Ordinal);
+            foreach (var sourceFile in Directory.GetFiles(sourceGeneration, "*", SearchOption.AllDirectories))
+            {
+                var target = Path.Combine(recoveredGeneration, Path.GetRelativePath(sourceGeneration, sourceFile));
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(sourceFile, target);
+            }
+
+            var resumed = ResearchWorkspaceWorkflowExecutionTransaction.Commit(
+                recoveredLocation, project, authority, policy, header, Array.Empty<WorkflowExecutionEvent>(), ExecutionRecordResolver);
+
+            Assert.IsFalse(resumed.AlreadyApplied);
+            Assert.AreEqual(committed.Manifest.GenerationId, resumed.Manifest.GenerationId);
+            Assert.AreEqual(resumed.Project.CurrentWorkflowExecutionJournalGenerationId,
+                ResearchWorkspaceStore.ReadProject(recoveredLocation.ProjectFilePath).CurrentWorkflowExecutionJournalGenerationId);
+        }
+        finally
+        {
+            Directory.Delete(sourceRoot, recursive: true);
+            Directory.Delete(recoveredRoot, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void Execution_completion_rejects_wrong_declared_artifact_kind()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var journal = WorkflowExecutionJournal.Create(
+            WorkflowExecutionHeader.Create("execution-output-kind", authority, policy, researcher, Clock.UtcNow), authority, policy, ExecutionRecordResolver);
+        Append(journal, "start-output-kind", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, "attempt-output-kind", 1);
+
+        var error = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() => Append(
+            journal, "complete-output-kind", "start", WorkflowExecutionEventKind.WorkCompleted,
+            WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, "attempt-output-kind", 1,
+            new[] { Ref("wrong-kind", "search-plan") }));
+
+        Assert.AreEqual(WorkflowExecutionErrorCodes.MissingOutput, error.Category);
+    }
+
+    [TestMethod]
+    public void Execution_completion_rejects_output_digest_that_does_not_resolve()
+    {
+        var authority = BuildExecutionAuthority();
+        var policy = BuildExecutionPolicy(authority);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var journal = WorkflowExecutionJournal.Create(
+            WorkflowExecutionHeader.Create("execution-output-resolution", authority, policy, researcher, Clock.UtcNow),
+            authority, policy, new MissingExecutionRecordResolver());
+        Append(journal, "start-output-resolution", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, "attempt-output-resolution", 1);
+
+        var error = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() => Append(
+            journal, "complete-output-resolution", "start", WorkflowExecutionEventKind.WorkCompleted,
+            WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, "attempt-output-resolution", 1,
+            new[] { Ref("workflow-artifact", "search-plan") }));
+
+        Assert.AreEqual(WorkflowExecutionErrorCodes.UnverifiedAuthority, error.Category);
+    }
+
+    [TestMethod]
+    public void Execution_approval_rejects_duplicate_records_and_actor_role_pairs()
+    {
+        var authority = BuildExecutionAuthority(minimumApprovals: 2);
+        var policy = BuildExecutionPolicy(authority, includeSecondReviewer: true);
+        var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+        var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
+        var header = WorkflowExecutionHeader.Create("execution-duplicate-approvals", authority, policy, researcher, Clock.UtcNow);
+        var journal = WorkflowExecutionJournal.Create(header, authority, policy, ExecutionRecordResolver);
+        Append(journal, "start-approval-input", "start", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, "attempt-start", 1);
+        Append(journal, "complete-approval-input", "start", WorkflowExecutionEventKind.WorkCompleted,
+            WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, "attempt-start", 1,
+            new[] { Ref("workflow-artifact", "search-plan") });
+        Append(journal, "ready-duplicate-approval", "approve", WorkflowExecutionEventKind.DependenciesSatisfied,
+            WorkflowExecutionState.Pending, WorkflowExecutionState.Ready, researcher);
+        Append(journal, "start-duplicate-approval", "approve", WorkflowExecutionEventKind.WorkStarted,
+            WorkflowExecutionState.Ready, WorkflowExecutionState.Active, researcher, "attempt-approve", 1);
+        var approval = new WorkflowExecutionApproval(researcher, Ref("approval-record", "approval-1"));
+        var completion = WorkflowExecutionEvent.Create(
+            header, journal.Events.Count + 1, journal.Projection.HeadDigest, "complete-duplicate-approval", "approve",
+            WorkflowExecutionEventKind.WorkCompleted, WorkflowExecutionState.Active, WorkflowExecutionState.Completed,
+            researcher, Clock.UtcNow, "duplicate records are invalid", "attempt-approve", 1,
+            approvals: new[] { approval, approval }, decision: Ref("approval-decision", "decision-1"));
+
+        var error = Assert.ThrowsExactly<WorkflowExecutionRuleException>(() => journal.Append(completion));
+
+        Assert.AreEqual(WorkflowExecutionErrorCodes.InvalidApproval, error.Category);
+    }
+
+    [TestMethod]
     public void Execution_journal_rejects_stale_head_and_automation_human_authority()
     {
         var authority = BuildExecutionAuthority();
@@ -184,13 +564,13 @@ public sealed class WorkflowCompilerTests
         var researcher = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
         var runner = new WorkflowExecutionActor("runner-1", WorkflowExecutionActorKinds.Automation, "runner");
         var journal = WorkflowExecutionJournal.Create(
-            WorkflowExecutionHeader.Create("execution-negative", authority, policy, researcher, Clock.UtcNow), authority, policy);
+            WorkflowExecutionHeader.Create("execution-negative", authority, policy, researcher, Clock.UtcNow), authority, policy, ExecutionRecordResolver);
 
         Append(journal, "start-1", "start", WorkflowExecutionEventKind.WorkStarted,
             WorkflowExecutionState.Ready, WorkflowExecutionState.Active, runner, attemptId: "attempt-1", attemptSequence: 1);
         Append(journal, "complete-1", "start", WorkflowExecutionEventKind.WorkCompleted,
             WorkflowExecutionState.Active, WorkflowExecutionState.Completed, runner, attemptId: "attempt-1", attemptSequence: 1,
-            outputs: new[] { Ref("artifact", "search-plan") });
+            outputs: new[] { Ref("workflow-artifact", "search-plan") });
         Append(journal, "ready-approve", "approve", WorkflowExecutionEventKind.DependenciesSatisfied,
             WorkflowExecutionState.Pending, WorkflowExecutionState.Ready, researcher);
 
@@ -768,7 +1148,7 @@ public sealed class WorkflowCompilerTests
         Assert.AreEqual(WorkflowErrorCodes.WorkflowIdMismatch, error.Category);
     }
 
-    private static VerifiedWorkflowDefinition BuildExecutionAuthority()
+    private static VerifiedWorkflowDefinition BuildExecutionAuthority(int minimumApprovals = 1)
     {
         var protocol = BuildApprovedProtocol();
         var source = BuildTemplate();
@@ -778,6 +1158,8 @@ public sealed class WorkflowCompilerTests
         var template = source with
         {
             Nodes = nodes,
+            ApprovalRequirements = source.ApprovalRequirements.Select(requirement =>
+                requirement with { MinimumApprovals = minimumApprovals }).ToArray(),
             Roles = source.Roles.Concat(new[]
             {
                 new WorkflowTemplateRole("runner", "Runner", "Execute deterministic automated work")
@@ -792,7 +1174,9 @@ public sealed class WorkflowCompilerTests
                 template));
     }
 
-    private static WorkflowExecutionAuthorityPolicy BuildExecutionPolicy(VerifiedWorkflowDefinition authority) =>
+    private static WorkflowExecutionAuthorityPolicy BuildExecutionPolicy(
+        VerifiedWorkflowDefinition authority,
+        bool includeSecondReviewer = false) =>
         WorkflowExecutionAuthorityPolicy.Create(
             "execution-policy-1",
             Ref("review", "review-1"),
@@ -801,7 +1185,9 @@ public sealed class WorkflowCompilerTests
             {
                 new WorkflowExecutionRoleAssignment("researcher-1", "methodologist"),
                 new WorkflowExecutionRoleAssignment("runner-1", "runner")
-            },
+            }.Concat(includeSecondReviewer
+                ? new[] { new WorkflowExecutionRoleAssignment("researcher-2", "methodologist") }
+                : Array.Empty<WorkflowExecutionRoleAssignment>()),
             new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist"),
             Clock.UtcNow);
 
@@ -839,8 +1225,73 @@ public sealed class WorkflowCompilerTests
         return journal.Append(item);
     }
 
+    private static IReadOnlyList<WorkflowExecutionEvent> BuildBatch(
+        WorkflowExecutionJournal journal,
+        IEnumerable<string> nodeIds,
+        WorkflowExecutionEventKind kind,
+        Func<string, WorkflowExecutionState> expectedState,
+        WorkflowExecutionState result,
+        WorkflowExecutionActor actor,
+        WorkflowExecutionRecordRef? invalidationSource = null,
+        WorkflowExecutionRecordRef? successorExecution = null)
+    {
+        var items = new List<WorkflowExecutionEvent>();
+        var previous = journal.Projection.HeadDigest;
+        var ordinal = journal.Events.Count + 1;
+        foreach (var nodeId in nodeIds)
+        {
+            var item = WorkflowExecutionEvent.Create(
+                journal.Header,
+                ordinal++,
+                previous,
+                $"{kind}-{nodeId}",
+                nodeId,
+                kind,
+                expectedState(nodeId),
+                result,
+                actor,
+                Clock.UtcNow,
+                $"{kind} {nodeId}",
+                invalidationSource: invalidationSource,
+                invalidationPolicyRef: kind == WorkflowExecutionEventKind.WorkInvalidated
+                    ? journal.Workflow.Definition.Nodes.Single(node => node.NodeId == nodeId).InvalidationPolicyRef
+                    : null,
+                successorExecution: successorExecution);
+            items.Add(item);
+            previous = item.Digest;
+        }
+        return items;
+    }
+
     private static WorkflowExecutionRecordRef Ref(string kind, string id) =>
         new(kind, id, ContentDigest.Sha256Utf8($"{kind}:{id}"));
+
+    private sealed class RecordingExecutionCommitPort(WorkflowExecutionJournalPreview preview)
+        : IWorkflowExecutionJournalCommitPort
+    {
+        public int CommitCount { get; private set; }
+
+        public WorkflowExecutionJournalCommitResult Commit(
+            VerifiedWorkflowDefinition workflow,
+            WorkflowExecutionAuthorityPolicy policy,
+            WorkflowExecutionHeader header,
+            IReadOnlyList<WorkflowExecutionEvent> events)
+        {
+            CommitCount++;
+            return new WorkflowExecutionJournalCommitResult(
+                header.ExecutionId, preview.ResultingHeadDigest, events.Count, AlreadyApplied: false);
+        }
+    }
+
+    private sealed class TestExecutionRecordResolver : IWorkflowExecutionRecordResolver
+    {
+        public WorkflowExecutionRecordRef Resolve(string kind, string id) => Ref(kind, id);
+    }
+
+    private sealed class MissingExecutionRecordResolver : IWorkflowExecutionRecordResolver
+    {
+        public WorkflowExecutionRecordRef? Resolve(string kind, string id) => null;
+    }
 
     private static WorkflowCompileInput BuildInput(
         ProtocolVersion protocol,
