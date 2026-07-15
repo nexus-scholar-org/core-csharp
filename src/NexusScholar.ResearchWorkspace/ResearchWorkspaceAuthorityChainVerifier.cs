@@ -24,14 +24,15 @@ public static class ResearchWorkspaceAuthorityChainVerifier
 
         var manifestPath = Resolve(location, project.AuthorityGenerationManifestPath);
         var currentManifestBytes = File.ReadAllBytes(manifestPath);
+        var analysisManifestPath = Resolve(location, project.GenerationManifestPath!);
+        var analysisManifestDigest = ContentDigest.Sha256(File.ReadAllBytes(analysisManifestPath));
         using (var currentManifest = JsonDocument.Parse(currentManifestBytes))
         {
             Require(currentManifest.RootElement, "source_analysis_generation_id", project.CurrentGenerationId!);
-            var analysisManifestPath = Resolve(location, project.GenerationManifestPath!);
-            Require(currentManifest.RootElement, "source_analysis_manifest_sha256",
-                ContentDigest.Sha256(File.ReadAllBytes(analysisManifestPath)).ToString());
+            Require(currentManifest.RootElement, "source_analysis_manifest_sha256", analysisManifestDigest.ToString());
         }
-        var loaded = Load(location, manifestPath, currentDigest, project.WorkspaceId, sourceResult, new HashSet<string>(StringComparer.Ordinal));
+        var loaded = Load(location, manifestPath, currentDigest, project.WorkspaceId, project.CurrentGenerationId!,
+            analysisManifestDigest, sourceResult, new HashSet<string>(StringComparer.Ordinal));
         if (!string.Equals(loaded.GenerationId, project.CurrentAuthorityGenerationId, StringComparison.Ordinal) || loaded.ProjectRevision != project.Revision)
         {
             throw new InvalidOperationException("Current authority generation does not match the project pointer.");
@@ -45,6 +46,8 @@ public static class ResearchWorkspaceAuthorityChainVerifier
         string manifestPath,
         ContentDigest expectedRawDigest,
         string workspaceId,
+        string sourceAnalysisGenerationId,
+        ContentDigest sourceAnalysisManifestDigest,
         VerifiedDeduplicationAuthorityResultDigest sourceResult,
         HashSet<string> visited)
     {
@@ -62,8 +65,11 @@ public static class ResearchWorkspaceAuthorityChainVerifier
 
         return schema switch
         {
-            ResearchWorkspaceAuthorityGenerationManifest.CurrentSchema => LoadBaseline(location, document.RootElement, generationId, workspaceId, sourceResult),
-            ResearchWorkspaceSuccessorAuthorityGenerationManifest.CurrentSchema => LoadSuccessor(location, bytes, workspaceId, sourceResult, visited),
+            ResearchWorkspaceAuthorityGenerationManifest.CurrentSchema => LoadBaseline(
+                location, document.RootElement, generationId, workspaceId, sourceAnalysisGenerationId,
+                sourceAnalysisManifestDigest, sourceResult),
+            ResearchWorkspaceSuccessorAuthorityGenerationManifest.CurrentSchema => LoadSuccessor(
+                location, bytes, workspaceId, sourceAnalysisGenerationId, sourceAnalysisManifestDigest, sourceResult, visited),
             _ => throw new InvalidOperationException("Authority manifest schema is unsupported.")
         };
     }
@@ -73,9 +79,13 @@ public static class ResearchWorkspaceAuthorityChainVerifier
         JsonElement root,
         string generationId,
         string workspaceId,
+        string sourceAnalysisGenerationId,
+        ContentDigest sourceAnalysisManifestDigest,
         VerifiedDeduplicationAuthorityResultDigest sourceResult)
     {
         Require(root, "workspace_id", workspaceId);
+        Require(root, "source_analysis_generation_id", sourceAnalysisGenerationId);
+        Require(root, "source_analysis_manifest_sha256", sourceAnalysisManifestDigest.ToString());
         Require(root, "source_result_id", sourceResult.Result.ResultId);
         Require(root, "source_result_digest", sourceResult.ResultDigest.ToString());
         if (root.GetProperty("predecessor_authority_generation_id").ValueKind != JsonValueKind.Null ||
@@ -92,6 +102,9 @@ public static class ResearchWorkspaceAuthorityChainVerifier
         Require(root, "authority_policy_id", policy.PolicyId);
         Require(root, "authority_policy_digest", policy.PolicyDigest.ToString());
         Require(root, "decision_set_digest", snapshot.DecisionSetDigest.ToString());
+        if (!HasBaselinePublicationBinding(publication, sourceResult, policy, snapshot,
+            sourceAnalysisGenerationId, sourceAnalysisManifestDigest))
+            throw new InvalidOperationException("Baseline publication provenance binding is invalid.");
         return new ResearchWorkspaceVerifiedAuthorityChain(
             generationId, root.GetProperty("project_revision").GetInt64(), policy, snapshot, publication,
             Array.Empty<VerifiedDeduplicationAuthorityDecision>(), Array.Empty<VerifiedDeduplicationAuthorityDecision>(),
@@ -102,11 +115,15 @@ public static class ResearchWorkspaceAuthorityChainVerifier
         ResearchWorkspaceLocation location,
         byte[] manifestBytes,
         string workspaceId,
+        string sourceAnalysisGenerationId,
+        ContentDigest sourceAnalysisManifestDigest,
         VerifiedDeduplicationAuthorityResultDigest sourceResult,
         HashSet<string> visited)
     {
         var manifest = ResearchWorkspaceSuccessorAuthorityManifestCodec.ParseCanonical(manifestBytes);
         if (!string.Equals(manifest.WorkspaceId, workspaceId, StringComparison.Ordinal) ||
+            !string.Equals(manifest.SourceAnalysisGenerationId, sourceAnalysisGenerationId, StringComparison.Ordinal) ||
+            !string.Equals(manifest.SourceAnalysisManifestSha256, sourceAnalysisManifestDigest.ToString(), StringComparison.Ordinal) ||
             !string.Equals(manifest.SourceResultId, sourceResult.Result.ResultId, StringComparison.Ordinal) ||
             !string.Equals(manifest.SourceResultDigest, sourceResult.ResultDigest.ToString(), StringComparison.Ordinal))
         {
@@ -116,12 +133,18 @@ public static class ResearchWorkspaceAuthorityChainVerifier
         var predecessorPath = ResearchWorkspacePaths.InProject(location.RootDirectory,
             $"{ResearchWorkspacePaths.AuthorityGenerationRoot(manifest.PredecessorAuthorityGenerationId)}/authority-generation.manifest.json");
         var predecessor = Load(location, predecessorPath, ContentDigest.Parse(manifest.PredecessorAuthorityGenerationManifestSha256),
-            workspaceId, sourceResult, visited);
+            workspaceId, sourceAnalysisGenerationId, sourceAnalysisManifestDigest, sourceResult, visited);
+        if (!string.Equals(predecessor.GenerationId, manifest.PredecessorAuthorityGenerationId, StringComparison.Ordinal) ||
+            manifest.ProjectRevision != checked(predecessor.ProjectRevision + 1))
+            throw new InvalidOperationException("Successor authority predecessor identity or revision is invalid.");
         var generationRoot = ResearchWorkspacePaths.InProject(location.RootDirectory,
             ResearchWorkspacePaths.AuthorityGenerationRoot(manifest.AuthorityGenerationId));
         var artifactBytes = ReadArtifacts(generationRoot, manifest.Artifacts);
         var policy = ResearchWorkspaceAuthorityArtifacts.VerifyPolicyCanonicalRecord(artifactBytes["authority-policy"]);
-        if (policy.PolicyDigest != predecessor.Policy.PolicyDigest) throw new InvalidOperationException("FE-02 policy rotation is not admitted.");
+        if (policy.PolicyDigest != predecessor.Policy.PolicyDigest ||
+            !string.Equals(manifest.AuthorityPolicyId, policy.PolicyId, StringComparison.Ordinal) ||
+            !string.Equals(manifest.AuthorityPolicyDigest, policy.PolicyDigest.ToString(), StringComparison.Ordinal))
+            throw new InvalidOperationException("FE-02 policy rotation or manifest policy mismatch is not admitted.");
         var target = ResolveTarget(sourceResult, artifactBytes["review-command"]);
         var command = ResearchWorkspaceAuthorityArtifacts.VerifyReviewCommandCanonicalRecord(
             artifactBytes["review-command"], policy, sourceResult, target, predecessor.CurrentSnapshot.DecisionSetDigest,
@@ -257,6 +280,31 @@ public static class ResearchWorkspaceAuthorityChainVerifier
             decisionEvent.ProtocolBinding is not null || invalidatedEvent.ProtocolBinding is not null || publicationEvent.ProtocolBinding is not null ||
             decisionEvent.WorkflowBinding is not null || invalidatedEvent.WorkflowBinding is not null || publicationEvent.WorkflowBinding is not null)
             throw new InvalidOperationException("Successor provenance activities are invalid.");
+    }
+
+    private static bool HasBaselinePublicationBinding(
+        ResearchEvent publicationEvent,
+        VerifiedDeduplicationAuthorityResultDigest sourceResult,
+        VerifiedDeduplicationAuthorityPolicy policy,
+        VerifiedCorpusSnapshot snapshot,
+        string analysisGenerationId,
+        ContentDigest analysisManifestDigest)
+    {
+        var snapshotRef = new ProvenanceEntityRef("nexus.corpus.snapshot", snapshot.SnapshotId, snapshot.RecordDigest);
+        var expectedInputs = new[]
+        {
+            new ProvenanceEntityRef("nexus.deduplication.result", sourceResult.Result.ResultId, sourceResult.ResultDigest),
+            new ProvenanceEntityRef(DeduplicationAuthorityPolicyConstants.LocalAuthoritySourceKind, policy.PolicyId, policy.PolicyDigest),
+            new ProvenanceEntityRef("source-analysis-manifest", analysisGenerationId, analysisManifestDigest),
+            new ProvenanceEntityRef("deduplication-decision-set", "decision-set-empty", snapshot.DecisionSetDigest)
+        };
+        return string.Equals(publicationEvent.Activity.ActivityId, "corpus-snapshot-published", StringComparison.Ordinal) &&
+            publicationEvent.Agent.AgentKind == ProvenanceAgent.HumanKind &&
+            string.Equals(publicationEvent.Agent.AgentId, snapshot.CreatedByActorId, StringComparison.Ordinal) &&
+            publicationEvent.Subject == snapshotRef &&
+            publicationEvent.Outputs.SequenceEqual(new[] { snapshotRef }) &&
+            publicationEvent.Inputs.SequenceEqual(expectedInputs) &&
+            publicationEvent.ProtocolBinding is null && publicationEvent.WorkflowBinding is null;
     }
 
     private static string Resolve(ResearchWorkspaceLocation location, string relativePath)
