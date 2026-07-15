@@ -313,7 +313,9 @@ public static class CorpusSnapshotService
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> activeDecisions,
         IReadOnlyList<CorpusSnapshotInvalidationReference> invalidationReferences,
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> knownDecisions,
-        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots)
+        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots,
+        VerifiedDeduplicationAuthorityResultDigest? sourceResult = null,
+        VerifiedDeduplicationAuthorityDecision? decisionToApply = null)
     {
         if (snapshotId is null)
         {
@@ -391,7 +393,24 @@ public static class CorpusSnapshotService
             activeDecisions,
             knownDecisions,
             knownSnapshots,
-            policy);
+            policy,
+            decisionToApply is not null);
+
+        if ((sourceResult is null) != (decisionToApply is null))
+        {
+            throw Invalid(
+                CorpusSnapshotErrorCodes.InvalidSnapshot,
+                "Reduced successor creation requires both the verified source result and decision to apply.");
+        }
+
+        var reduction = sourceResult is null
+            ? null
+            : DeduplicationSnapshotReducer.Reduce(
+                sourceResult,
+                predecessorSnapshot,
+                decisionToApply!,
+                activeDecisions,
+                knownDecisions);
 
         var normalized = new NormalizedCorpusSnapshot(
             RequireCanonicalText(snapshotId, nameof(snapshotId)),
@@ -399,8 +418,8 @@ public static class CorpusSnapshotService
             predecessorSnapshot.SourceResultDigest,
             decisionRefs,
             decisionSetDigest,
-            predecessorSnapshot.Groups,
-            predecessorSnapshot.UnresolvedCandidates,
+            reduction?.Groups ?? predecessorSnapshot.Groups,
+            reduction?.UnresolvedCandidates ?? predecessorSnapshot.UnresolvedCandidates,
             actorId,
             actorRole,
             policy.PolicyId,
@@ -456,7 +475,8 @@ public static class CorpusSnapshotService
         VerifiedCorpusSnapshot predecessorSnapshot,
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> activeDecisions,
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> knownDecisions,
-        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots)
+        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots,
+        VerifiedDeduplicationAuthorityDecision? decisionToApply = null)
     {
         if (input is null)
         {
@@ -578,7 +598,12 @@ public static class CorpusSnapshotService
             throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Successor snapshots must include invalidation references.");
         }
 
-        ValidateSnapshotMaterial(source, successor, inputDecisionRefsMustExist: true, validateSupersession: true);
+        ValidateSnapshotMaterial(
+            source,
+            successor,
+            inputDecisionRefsMustExist: true,
+            validateSupersession: true,
+            requireSourceGroupMembership: decisionToApply is null);
         ValidateSuccessorSnapshotReferences(
             successor.DecisionReferences,
             decisionSetDigest,
@@ -587,7 +612,19 @@ public static class CorpusSnapshotService
             activeDecisions,
             knownDecisions,
             knownSnapshots,
-            policy);
+            policy,
+            decisionToApply is not null);
+
+        if (decisionToApply is not null)
+        {
+            var expected = DeduplicationSnapshotReducer.Reduce(
+                sourceResult,
+                predecessorSnapshot,
+                decisionToApply,
+                activeDecisions,
+                knownDecisions);
+            EnsureReducedMembershipMatches(successor, expected);
+        }
 
         var providedContent = BuildSnapshotContent(successor, canonicalizeCollections: false);
         var canonicalContent = BuildSnapshotContent(successor, canonicalizeCollections: true);
@@ -958,7 +995,8 @@ public static class CorpusSnapshotService
         NormalizedSourceMaterial source,
         NormalizedCorpusSnapshot normalized,
         bool inputDecisionRefsMustExist,
-        bool validateSupersession)
+        bool validateSupersession,
+        bool requireSourceGroupMembership = true)
     {
         if (inputDecisionRefsMustExist && normalized.DecisionReferences.Count == 0)
         {
@@ -1044,6 +1082,20 @@ public static class CorpusSnapshotService
 
         foreach (var normalizedGroup in normalized.Groups)
         {
+            var orderedMembers = normalizedGroup.MemberCandidateIds.OrderBy(id => id, StringComparer.Ordinal).ToArray();
+            if (orderedMembers.Length == 0 ||
+                !string.Equals(normalizedGroup.GroupId, BuildGroupId(orderedMembers), StringComparison.Ordinal) ||
+                !orderedMembers.Contains(normalizedGroup.RepresentativeCandidateId, StringComparer.Ordinal) ||
+                orderedMembers.Any(candidateId => !source.CandidatesById.ContainsKey(candidateId)))
+            {
+                throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Snapshot group identity, membership, or representative is invalid.");
+            }
+
+            if (!requireSourceGroupMembership)
+            {
+                continue;
+            }
+
             if (!sourceGroupLookup.TryGetValue(normalizedGroup.GroupId, out var sourceGroup))
             {
                 throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Snapshot group is not present in the bound source result.");
@@ -1071,6 +1123,44 @@ public static class CorpusSnapshotService
         }
     }
 
+    private static void EnsureReducedMembershipMatches(
+        NormalizedCorpusSnapshot successor,
+        DeduplicationSnapshotReduction expected)
+    {
+        if (successor.Groups.Count != expected.Groups.Count ||
+            successor.UnresolvedCandidates.Count != expected.UnresolvedCandidates.Count)
+        {
+            throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Successor membership does not match the verified decision reduction.");
+        }
+
+        for (var index = 0; index < expected.Groups.Count; index++)
+        {
+            var actual = successor.Groups[index];
+            var required = expected.Groups[index];
+            if (!string.Equals(actual.GroupId, required.GroupId, StringComparison.Ordinal) ||
+                !string.Equals(actual.RepresentativeCandidateId, required.RepresentativeCandidateId, StringComparison.Ordinal) ||
+                !actual.MemberCandidateIds.SequenceEqual(required.MemberCandidateIds, StringComparer.Ordinal) ||
+                !actual.EvidenceReferences.Select(reference => reference.WithSortKey())
+                    .SequenceEqual(required.EvidenceReferences.Select(reference => reference.WithSortKey()), StringComparer.Ordinal))
+            {
+                throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Successor groups do not match the verified decision reduction.");
+            }
+        }
+
+        for (var index = 0; index < expected.UnresolvedCandidates.Count; index++)
+        {
+            var actual = successor.UnresolvedCandidates[index];
+            var required = expected.UnresolvedCandidates[index];
+            if (!string.Equals(actual.CandidateId, required.CandidateId, StringComparison.Ordinal) ||
+                !string.Equals(actual.UnresolvedReason, required.UnresolvedReason, StringComparison.Ordinal) ||
+                actual.CandidateContentDigest != required.CandidateContentDigest ||
+                !actual.RawSightingReferences.SequenceEqual(required.RawSightingReferences, StringComparer.Ordinal))
+            {
+                throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Successor unresolved membership does not match the verified decision reduction.");
+            }
+        }
+    }
+
     private static void ValidateSuccessorSnapshotReferences(
         IReadOnlyList<CorpusSnapshotDecisionReference> activeDecisionRefs,
         ContentDigest decisionSetDigest,
@@ -1079,7 +1169,8 @@ public static class CorpusSnapshotService
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> activeDecisions,
         IReadOnlyList<VerifiedDeduplicationAuthorityDecision> knownDecisions,
         IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots,
-        VerifiedDeduplicationAuthorityPolicy policy)
+        VerifiedDeduplicationAuthorityPolicy policy,
+        bool requireActiveInvalidatedDecision)
     {
         if (activeDecisionRefs is null)
         {
@@ -1150,8 +1241,7 @@ public static class CorpusSnapshotService
                 knownDecision.SourceResultDigest != predecessorSnapshot.SourceResultDigest ||
                 !string.Equals(knownDecision.AuthoritySourceId, policy.PolicyId, StringComparison.Ordinal) ||
                 knownDecision.AuthoritySourceDigest != policy.PolicyDigest ||
-                !string.Equals(knownDecision.SourceSnapshotId, predecessorSnapshot.SnapshotId, StringComparison.Ordinal) ||
-                knownDecision.SourceSnapshotRecordDigest != predecessorSnapshot.RecordDigest)
+                !ResolvesSourceSnapshot(knownDecision, predecessorSnapshot, knownSnapshots))
             {
                 throw Invalid(
                     CorpusSnapshotErrorCodes.InvalidSnapshot,
@@ -1181,8 +1271,12 @@ public static class CorpusSnapshotService
                     invalidatedDecision.SourceResultDigest != predecessorSnapshot.SourceResultDigest ||
                     !string.Equals(invalidatedDecision.AuthoritySourceId, policy.PolicyId, StringComparison.Ordinal) ||
                     invalidatedDecision.AuthoritySourceDigest != policy.PolicyDigest ||
-                    !string.Equals(invalidatedDecision.SourceSnapshotId, predecessorSnapshot.SnapshotId, StringComparison.Ordinal) ||
-                    invalidatedDecision.SourceSnapshotRecordDigest != predecessorSnapshot.RecordDigest)
+                    (requireActiveInvalidatedDecision
+                        ? !predecessorSnapshot.DecisionReferences.Any(reference =>
+                            string.Equals(reference.DecisionId, invalidatedDecision.DecisionId, StringComparison.Ordinal) &&
+                            reference.DecisionDigest == invalidatedDecision.DecisionDigest)
+                        : !string.Equals(invalidatedDecision.SourceSnapshotId, predecessorSnapshot.SnapshotId, StringComparison.Ordinal) ||
+                          invalidatedDecision.SourceSnapshotRecordDigest != predecessorSnapshot.RecordDigest))
                 {
                     throw Invalid(
                         CorpusSnapshotErrorCodes.InvalidSnapshot,
@@ -1212,6 +1306,40 @@ public static class CorpusSnapshotService
         {
             throw Invalid(CorpusSnapshotErrorCodes.InvalidSnapshot, "Invalidation references must be unique by kind,id,digest.");
         }
+    }
+
+    private static bool ResolvesSourceSnapshot(
+        VerifiedDeduplicationAuthorityDecision decision,
+        VerifiedCorpusSnapshot predecessorSnapshot,
+        IReadOnlyList<VerifiedCorpusSnapshot> knownSnapshots)
+    {
+        if (decision.SourceSnapshotId is null || decision.SourceSnapshotRecordDigest is null)
+        {
+            return false;
+        }
+
+        var knownByRecord = knownSnapshots
+            .Append(predecessorSnapshot)
+            .GroupBy(snapshot => $"{snapshot.SnapshotId}\u001f{snapshot.RecordDigest}", StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var current = predecessorSnapshot;
+        while (visited.Add($"{current.SnapshotId}\u001f{current.RecordDigest}"))
+        {
+            if (string.Equals(decision.SourceSnapshotId, current.SnapshotId, StringComparison.Ordinal) &&
+                decision.SourceSnapshotRecordDigest == current.RecordDigest)
+            {
+                return true;
+            }
+
+            if (current.SupersedesSnapshotId is null || current.SupersedesSnapshotRecordDigest is null ||
+                !knownByRecord.TryGetValue($"{current.SupersedesSnapshotId}\u001f{current.SupersedesSnapshotRecordDigest}", out current))
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static void ValidateActiveDecisionSet(
