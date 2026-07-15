@@ -769,6 +769,111 @@ public sealed class ScreeningServiceTests
         Assert.AreEqual(ScreeningErrorCodes.UnresolvedConflict, error.Category);
     }
 
+    [TestMethod]
+    public void Conduct_single_review_replays_to_a_handoff_ready_projection()
+    {
+        var protocol = BuildVerifiedProtocol();
+        var dedup = BuildDedupResult("dedup-conduct-single", ["candidate-1"], []) with
+        {
+            PolicyId = DeduplicationService.PolicyId,
+            PolicyVersion = DeduplicationService.PolicyVersion
+        };
+        var policy = ScreeningConductPolicy.Create(
+            "conduct-policy-single", "candidate-set-single",
+            DeduplicationRehydrator.Rehydrate(new UnverifiedDeduplicationResult(dedup)), protocol,
+            BuildAuthorityCriteria(protocol), 1,
+            [new ScreeningConductRoleAssignment("reviewer-1", "reviewer")],
+            ["chair"], [new ScreeningExclusionReason("wrong-population", ScreeningStages.TitleAbstract)],
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), DateTimeOffset.UtcNow);
+        var header = ScreeningConductHeader.Create(
+            "conduct-single", policy,
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), DateTimeOffset.UtcNow);
+        var decision = ScreeningConductDecision.Create(
+            header, 1, header.Digest, "request-single", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"),
+            "Title and abstract meet the protocol criteria.", DateTimeOffset.UtcNow);
+
+        var journal = ScreeningConductJournal.Rehydrate(header, policy, [decision]);
+
+        Assert.IsTrue(journal.Projection.HandoffReady);
+        Assert.AreEqual(ScreeningVerdicts.Include, journal.Projection.Outcomes["candidate-1"].Verdict);
+        Assert.AreEqual(decision.Digest, journal.Projection.HeadDigest);
+        CollectionAssert.AreEqual(
+            CanonicalJsonSerializer.SerializeToUtf8Bytes(decision.ToCanonicalJson()),
+            CanonicalJsonSerializer.SerializeToUtf8Bytes(decision.ToCanonicalJson()));
+    }
+
+    [TestMethod]
+    public void Conduct_rejects_one_actor_satisfying_two_independent_reviews()
+    {
+        var (policy, header) = BuildConductAuthority("duplicate-reviewer", 2);
+        var actor = new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer");
+        var first = ScreeningConductDecision.Create(
+            header, 1, header.Digest, "request-first", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, actor, "First independent review.", DateTimeOffset.UtcNow);
+        var journal = ScreeningConductJournal.Rehydrate(header, policy, [first]);
+        var second = ScreeningConductDecision.Create(
+            header, 2, first.Digest, "request-second", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, actor, "Attempted duplicate review.", DateTimeOffset.UtcNow);
+
+        var error = Assert.ThrowsExactly<ScreeningRuleException>(() => journal.Append(second));
+
+        Assert.AreEqual(ScreeningErrorCodes.DuplicateIndependentReviewer, error.Category);
+    }
+
+    [TestMethod]
+    public void Conduct_conflict_blocks_handoff_until_authorized_adjudication()
+    {
+        var (policy, header) = BuildConductAuthority("adjudication", 2);
+        var first = ScreeningConductDecision.Create(
+            header, 1, header.Digest, "request-a", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Include, new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"),
+            "Include under the protocol criteria.", DateTimeOffset.UtcNow);
+        var second = ScreeningConductDecision.Create(
+            header, 2, first.Digest, "request-b", "candidate-1", ScreeningConductDecisionKind.Review,
+            ScreeningVerdicts.Exclude, new ScreeningConductActor("reviewer-2", ScreeningConductActorKinds.Human, "reviewer"),
+            "Population is outside scope.", DateTimeOffset.UtcNow, "wrong-population");
+        var journal = ScreeningConductJournal.Rehydrate(header, policy, [first, second]);
+        var conflict = journal.Projection.Conflicts.Single();
+        Assert.IsFalse(journal.Projection.HandoffReady);
+
+        var adjudication = ScreeningConductDecision.Create(
+            header, 3, second.Digest, "request-chair", "candidate-1", ScreeningConductDecisionKind.Adjudication,
+            ScreeningVerdicts.Include, new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"),
+            "Adjudicated after reviewing both source decisions.", DateTimeOffset.UtcNow,
+            resolvedConflictId: conflict.ConflictId, sourceDecisionIds: conflict.SourceDecisionIds);
+        journal.Append(adjudication);
+
+        Assert.IsTrue(journal.Projection.HandoffReady);
+        Assert.IsTrue(journal.Projection.Conflicts.Single().Resolved);
+        Assert.AreEqual(adjudication.DecisionId, journal.Projection.Outcomes["candidate-1"].DecisionId);
+    }
+
+    private static (ScreeningConductPolicy Policy, ScreeningConductHeader Header) BuildConductAuthority(string suffix, int reviewCount)
+    {
+        var protocol = BuildVerifiedProtocol();
+        var dedup = BuildDedupResult($"dedup-conduct-{suffix}", ["candidate-1"], []) with
+        {
+            PolicyId = DeduplicationService.PolicyId,
+            PolicyVersion = DeduplicationService.PolicyVersion
+        };
+        var policy = ScreeningConductPolicy.Create(
+            $"conduct-policy-{suffix}", $"candidate-set-{suffix}",
+            DeduplicationRehydrator.Rehydrate(new UnverifiedDeduplicationResult(dedup)), protocol,
+            BuildAuthorityCriteria(protocol), reviewCount,
+            [
+                new ScreeningConductRoleAssignment("reviewer-1", "reviewer"),
+                new ScreeningConductRoleAssignment("reviewer-2", "reviewer"),
+                new ScreeningConductRoleAssignment("chair-1", "chair")
+            ],
+            ["chair"], [new ScreeningExclusionReason("wrong-population", ScreeningStages.TitleAbstract)],
+            new ScreeningConductActor("chair-1", ScreeningConductActorKinds.Human, "chair"), DateTimeOffset.UtcNow);
+        var header = ScreeningConductHeader.Create(
+            $"conduct-{suffix}", policy,
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), DateTimeOffset.UtcNow);
+        return (policy, header);
+    }
+
     private static DeduplicationResult BuildDedupResult(
         string resultId,
         IReadOnlyList<string> candidateIds,
