@@ -17,7 +17,13 @@ public sealed record ResearchWorkspaceProject(
     string? GenerationManifestPath = null,
     string? CurrentAuthorityGenerationId = null,
     string? AuthorityGenerationManifestPath = null,
-    string? AuthorityGenerationManifestSha256 = null)
+    string? AuthorityGenerationManifestSha256 = null,
+    string? CurrentWorkflowExecutionJournalGenerationId = null,
+    string? WorkflowExecutionJournalManifestPath = null,
+    string? WorkflowExecutionJournalManifestSha256 = null,
+    string? CurrentScreeningConductGenerationId = null,
+    string? ScreeningConductManifestPath = null,
+    string? ScreeningConductManifestSha256 = null)
 {
     public const string CurrentSchema = "nexus.project.v0";
 
@@ -78,6 +84,45 @@ public sealed record ResearchWorkspaceProject(
             CurrentAuthorityGenerationId = authorityGenerationId,
             AuthorityGenerationManifestPath = manifestPath,
             AuthorityGenerationManifestSha256 = manifestSha256
+        };
+
+    public ResearchWorkspaceProject CommitWorkflowExecutionJournalGeneration(
+        string generationId,
+        string manifestPath,
+        string manifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentWorkflowExecutionJournalGenerationId = generationId,
+            WorkflowExecutionJournalManifestPath = manifestPath,
+            WorkflowExecutionJournalManifestSha256 = manifestSha256
+        };
+
+    public ResearchWorkspaceProject CommitScreeningConductGeneration(
+        string generationId,
+        string manifestPath,
+        string manifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentScreeningConductGenerationId = generationId,
+            ScreeningConductManifestPath = manifestPath,
+            ScreeningConductManifestSha256 = manifestSha256
+        };
+
+    public ResearchWorkspaceProject CommitScreeningAndWorkflowExecutionGenerations(
+        string screeningGenerationId,
+        string screeningManifestPath,
+        string screeningManifestSha256,
+        string workflowGenerationId,
+        string workflowManifestPath,
+        string workflowManifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentScreeningConductGenerationId = screeningGenerationId,
+            ScreeningConductManifestPath = screeningManifestPath,
+            ScreeningConductManifestSha256 = screeningManifestSha256,
+            CurrentWorkflowExecutionJournalGenerationId = workflowGenerationId,
+            WorkflowExecutionJournalManifestPath = workflowManifestPath,
+            WorkflowExecutionJournalManifestSha256 = workflowManifestSha256
         };
 
     private static string CreateWorkspaceId(string title)

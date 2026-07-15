@@ -11,9 +11,12 @@
     "NexusScholar.Protocol",
     "NexusScholar.Provenance",
     "NexusScholar.Screening",
+    "NexusScholar.Screening.WorkflowExecution",
     "NexusScholar.Search",
     "NexusScholar.Shared",
-    "NexusScholar.Workflow"
+    "NexusScholar.Workflow",
+    "NexusScholar.WorkflowExecution",
+    "NexusScholar.WorkflowExecution.Provenance"
   ],
   "smokeRoots": [
     "NexusScholar.Bundles",

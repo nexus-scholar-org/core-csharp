@@ -27,6 +27,12 @@ public static class ScreeningErrorCodes
     public const string AppProjectionNotCoreAuthority = "app-projection-not-core-authority";
     public const string FullTextArtifactRequired = "full-text-artifact-required";
     public const string LocalPathNotArtifactIdentity = "local-path-not-artifact-identity";
+    public const string UnverifiedConductAuthority = "unverified-conduct-authority";
+    public const string InvalidConductChain = "invalid-conduct-chain";
+    public const string UnauthorizedReviewer = "unauthorized-reviewer";
+    public const string DuplicateIndependentReviewer = "duplicate-independent-reviewer";
+    public const string InvalidExclusionReason = "invalid-exclusion-reason";
+    public const string InsufficientReview = "insufficient-review";
 }
 
 public static class ScreeningSchema

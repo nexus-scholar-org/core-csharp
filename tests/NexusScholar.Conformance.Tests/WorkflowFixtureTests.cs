@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Workflow;
+using NexusScholar.WorkflowExecution;
 
 namespace NexusScholar.Conformance.Tests;
 
@@ -243,6 +244,133 @@ public sealed class WorkflowFixtureTests
             var error = Assert.ThrowsExactly<WorkflowRuleException>(() => ReplayAuthorityScenario(scenario));
             Assert.AreEqual(fixtureCase.GetProperty("errorCategory").GetString(), error.Category, fixture);
         }
+    }
+
+    [TestMethod]
+    public void Workflow_execution_catalog_cases_execute_against_verified_authority()
+    {
+        using var document = JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(AppContext.BaseDirectory, "fixtures", "workflow-execution", "cases.json")));
+        foreach (var fixtureCase in document.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var id = fixtureCase.GetProperty("id").GetString()!;
+            var expected = fixtureCase.GetProperty("expected").GetString();
+            var error = ExecuteWorkflowExecutionCase(id);
+            if (expected == "accept") Assert.IsNull(error, $"{id}: {error}");
+            else Assert.IsNotNull(error, id);
+        }
+    }
+
+    private static Exception? ExecuteWorkflowExecutionCase(string id)
+    {
+        try
+        {
+            var state = BuildFixtureComputation("workflow-compile-rapid-review");
+            var protocol = ProtocolAuthorities.GetValue(state.Protocol, _ => throw new InvalidOperationException());
+            var templateMaterial = state.Template with
+            {
+                Nodes = state.Template.Nodes.Select(node => node.NodeId == "start" && id != "automation-human-authority"
+                    ? node with { Kind = WorkflowNodeKind.AutomatedTask, Mode = WorkflowNodeMode.Automated }
+                    : node).ToArray(),
+                TemplateDigest = ContentDigest.Sha256Utf8("placeholder")
+            };
+            var template = templateMaterial with
+            {
+                TemplateDigest = WorkflowCompiler.ComputeLocalTemplateDigest(templateMaterial)
+            };
+            var compiled = new WorkflowCompiler().Compile(BuildInput(state.Protocol, template));
+            var workflow = WorkflowRehydrator.Rehydrate(
+                WorkflowRehydrator.FromCompiled(compiled), new ReplayWorkflowResolver(protocol, template));
+            var human = new WorkflowExecutionActor("researcher-1", WorkflowExecutionActorKinds.Human, "methodologist");
+            var automation = new WorkflowExecutionActor("automation-1", WorkflowExecutionActorKinds.Automation, "methodologist");
+            var resolver = new FixtureExecutionRecordResolver(id == "unresolved-output-digest");
+            var policy = WorkflowExecutionAuthorityPolicy.Create(
+                "fixture-policy", FixtureRef("review", "fixture"), workflow,
+                new[]
+                {
+                    new WorkflowExecutionRoleAssignment(human.ActorId, human.Role),
+                    new WorkflowExecutionRoleAssignment(automation.ActorId, automation.Role)
+                }, human, Clock.UtcNow);
+            var header = WorkflowExecutionHeader.Create("fixture-execution", workflow, policy, human, Clock.UtcNow);
+            var journal = WorkflowExecutionJournal.Create(header, workflow, policy, resolver);
+            var start = WorkflowExecutionEvent.Create(
+                header, 1, header.Digest, "start", "start", WorkflowExecutionEventKind.WorkStarted,
+                WorkflowExecutionState.Ready, WorkflowExecutionState.Active,
+                id == "automation-human-authority" ? automation : human, Clock.UtcNow,
+                "fixture start", "attempt-1", 1);
+
+            switch (id)
+            {
+                case "canonical-record-roundtrip":
+                    journal.Append(start);
+                    var bytes = WorkflowExecutionCanonicalCodec.Serialize(start);
+                    var verified = WorkflowExecutionCanonicalCodec.RehydrateEvent(bytes, start.Digest, header);
+                    _ = WorkflowExecutionJournal.Rehydrate(header, new[] { verified }, workflow, policy, resolver);
+                    return null;
+                case "automation-human-authority":
+                    journal.Append(start);
+                    break;
+                case "conflicting-request-id":
+                    journal.Append(start);
+                    journal.Append(WorkflowExecutionEvent.Create(
+                        header, 1, header.Digest, "start", "start", WorkflowExecutionEventKind.WorkStarted,
+                        WorkflowExecutionState.Ready, WorkflowExecutionState.Active, human, Clock.UtcNow.AddSeconds(1),
+                        "fixture start", "attempt-1", 1));
+                    break;
+                case "noncanonical-event-bytes":
+                    _ = WorkflowExecutionCanonicalCodec.RehydrateEvent(
+                        WorkflowExecutionCanonicalCodec.Serialize(start).Append((byte)'\n').ToArray(), start.Digest, header);
+                    break;
+                case "partial-invalidation-propagation":
+                    var previous = header.Digest;
+                    var invalidations = workflow.Definition.Nodes.Select((node, index) =>
+                    {
+                        var item = WorkflowExecutionEvent.Create(
+                            header, index + 1, previous, $"invalidate-{node.NodeId}", node.NodeId,
+                            WorkflowExecutionEventKind.WorkInvalidated, journal.Projection.NodeStates[node.NodeId],
+                            WorkflowExecutionState.Invalidated, human, Clock.UtcNow, "fixture invalidation",
+                            invalidationSource: FixtureRef("protocol-amendment", "amendment-1"),
+                            invalidationPolicyRef: node.InvalidationPolicyRef);
+                        previous = item.Digest;
+                        return item;
+                    }).ToArray();
+                    journal.AppendInvalidationBatch("start", invalidations[..^1]);
+                    break;
+                case "stale-journal-head":
+                    journal.Append(start);
+                    journal.Append(WorkflowExecutionEvent.Create(
+                        header, 2, header.Digest, "stale", "start", WorkflowExecutionEventKind.WorkBlocked,
+                        WorkflowExecutionState.Active, WorkflowExecutionState.Blocked, human, Clock.UtcNow,
+                        "stale head", "attempt-1", 1));
+                    break;
+                case "unresolved-output-digest":
+                case "wrong-output-artifact-kind":
+                    journal.Append(start);
+                    journal.Append(WorkflowExecutionEvent.Create(
+                        header, 2, start.Digest, "complete", "start", WorkflowExecutionEventKind.WorkCompleted,
+                        WorkflowExecutionState.Active, WorkflowExecutionState.Completed, human, Clock.UtcNow,
+                        "fixture completion", "attempt-1", 1,
+                        outputs: new[] { FixtureRef(id == "wrong-output-artifact-kind" ? "wrong-kind" : "workflow-artifact", "search-plan") },
+                        decision: FixtureRef("human-task-record", "decision-1")));
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown Workflow execution fixture case '{id}'.");
+            }
+        }
+        catch (Exception exception) when (exception is WorkflowExecutionRuleException or InvalidOperationException)
+        {
+            return exception;
+        }
+        return new InvalidOperationException($"Workflow execution fixture case '{id}' unexpectedly succeeded.");
+    }
+
+    private static WorkflowExecutionRecordRef FixtureRef(string kind, string id) =>
+        new(kind, id, ContentDigest.Sha256Utf8($"{kind}:{id}"));
+
+    private sealed class FixtureExecutionRecordResolver(bool rejectOutput) : IWorkflowExecutionRecordResolver
+    {
+        public WorkflowExecutionRecordRef? Resolve(string kind, string id) =>
+            rejectOutput && kind == "workflow-artifact" ? null : FixtureRef(kind, id);
     }
 
     [TestMethod]

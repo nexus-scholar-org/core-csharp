@@ -10,12 +10,16 @@
     <ProjectReference Include="../../src/NexusScholar.Kernel/NexusScholar.Kernel.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Protocol/NexusScholar.Protocol.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Workflow/NexusScholar.Workflow.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.WorkflowExecution/NexusScholar.WorkflowExecution.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.WorkflowExecution.Provenance/NexusScholar.WorkflowExecution.Provenance.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Provenance/NexusScholar.Provenance.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.ResearchWorkspace/NexusScholar.ResearchWorkspace.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Shared/NexusScholar.Shared.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Search/NexusScholar.Search.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
     <ProjectReference Include="../../src/NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Screening/NexusScholar.Screening.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.Screening.WorkflowExecution/NexusScholar.Screening.WorkflowExecution.csproj" />
     <ProjectReference Include="../../src/NexusScholar.FullText/NexusScholar.FullText.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Bundles/NexusScholar.Bundles.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Extensibility/NexusScholar.Extensibility.csproj" />
