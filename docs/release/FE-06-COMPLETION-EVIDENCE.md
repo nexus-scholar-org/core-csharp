@@ -73,8 +73,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-package
 Result:
 
 - Release build: passed, 0 warnings, 0 errors;
-- tests: 791 passed, 0 failed, 0 skipped;
-- Core: 459;
+- tests: 790 passed, 0 failed, 0 skipped;
+- Core: 458;
 - Conformance: 139;
 - Architecture: 35;
 - CLI: 71;
