@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.CorpusSnapshots;
 using NexusScholar.Deduplication;
@@ -143,6 +145,19 @@ public sealed class ReportingTests
         var error = Assert.ThrowsExactly<ReportingRuleException>(() => PersistedReportingVerifier.VerifyReport(
             envelopeOnly.ToCanonicalJsonBytes(), envelopeOnly.ComputeDigest()));
         Assert.AreEqual(ReportingErrorCodes.NonCanonicalRecord, error.Category);
+
+        var malformed = JsonNode.Parse(reportBytes)!.AsObject();
+        malformed["content"]!["bindings"]!["full_text_cases"]!.AsArray()[0]!.AsObject().Remove("admission_digest");
+        var malformedBytes = CanonicalBytes(malformed);
+        var bindingError = Assert.ThrowsExactly<ReportingRuleException>(() =>
+            PersistedReportingVerifier.VerifyReport(malformedBytes, ContentDigest.Sha256(malformedBytes)));
+        Assert.AreEqual(ReportingErrorCodes.NonCanonicalRecord, bindingError.Category);
+    }
+
+    private static byte[] CanonicalBytes(JsonNode node)
+    {
+        using var document = JsonDocument.Parse(JsonSerializer.SerializeToUtf8Bytes(node));
+        return CanonicalJsonSerializer.SerializeToUtf8Bytes(CanonicalJsonValue.FromJsonElement(document.RootElement));
     }
 
     internal static ReviewSliceAuthorities BuildAuthorities(bool includeFullText)

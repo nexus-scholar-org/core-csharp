@@ -266,6 +266,7 @@ Status: complete locally; hosted CI and merge verification pending.
   by focused regression tests;
 - durable closeout evidence is recorded in
   `docs/release/FE-06-COMPLETION-EVIDENCE.md`;
-- final local validation passed with a zero-warning Release build, 790 tests,
-  format verification, release policy checks, deterministic package comparison,
+- final local validation passed with a zero-warning Release build, 791 tests,
+  strict persisted Full Text binding validation, format verification, release
+  policy checks, deterministic package comparison,
   and clean smoke loading of all 19 packages at `0.1.0-alpha.2`.

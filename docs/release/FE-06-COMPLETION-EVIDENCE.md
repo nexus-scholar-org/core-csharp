@@ -42,7 +42,7 @@ identified release blockers. The final implementation closes them as follows:
   and independently verifies exact inventory;
 - canonical but structurally invalid report bytes: the Reporting package now
   performs strict byte-only persisted shape, digest, reason-total, non-claim,
-  and conservation verification;
+  conservation, and exact Full Text authority-binding verification;
 - report/slice mismatch: report bindings, request digest, and persisted slice
   digest must agree;
 - human action ambiguity: actor id, human actor kind, and recorded time are part
@@ -73,8 +73,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-package
 Result:
 
 - Release build: passed, 0 warnings, 0 errors;
-- tests: 790 passed, 0 failed, 0 skipped;
-- Core: 458;
+- tests: 791 passed, 0 failed, 0 skipped;
+- Core: 459;
 - Conformance: 139;
 - Architecture: 35;
 - CLI: 71;

@@ -138,11 +138,15 @@ public static class PersistedReportingVerifier
         var candidates = new HashSet<string>(StringComparer.Ordinal);
         foreach (var item in values.EnumerateArray())
         {
-            var properties = item.EnumerateObject().ToArray();
-            if (properties.Length == 0 || !properties.Any(property => property.Name == "candidate_id") ||
-                properties.Where(property => property.Name.EndsWith("digest", StringComparison.Ordinal)).Any(property => !ContentDigest.TryParse(property.Value.GetString(), out _)))
-                throw Invalid("Full Text report binding is incomplete.");
+            Exact(item,
+            [
+                "admission_digest", "artifact_digest", "candidate_id", "conduct_policy_digest",
+                "extraction_attempt_digest", "handoff_digest"
+            ], optional: ["extraction_attempt_digest"]);
             if (!candidates.Add(RequiredText(item, "candidate_id"))) throw Invalid("Full Text report candidates are duplicated.");
+            foreach (var name in new[] { "admission_digest", "artifact_digest", "conduct_policy_digest", "handoff_digest" })
+                Digest(item, name);
+            if (item.TryGetProperty("extraction_attempt_digest", out var extraction)) _ = ContentDigest.Parse(extraction.GetString()!);
         }
     }
 

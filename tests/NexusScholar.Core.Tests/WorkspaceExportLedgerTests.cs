@@ -261,7 +261,8 @@ public sealed class WorkspaceExportLedgerTests
                 request["observed_inventory_digest"] = inventoryDigest.ToString();
                 entry["observed_inventory_digest"] = inventoryDigest.ToString();
             });
-            Assert.ThrowsExactly<WorkspaceExportException>(() => ResearchWorkspaceExportLedgerVerifier.Replay(workspace.Location));
+            var manifestError = Assert.ThrowsExactly<WorkspaceExportException>(() => ResearchWorkspaceExportLedgerVerifier.Replay(workspace.Location));
+            Assert.AreEqual(WorkspaceExportErrorCodes.InvalidLedger, manifestError.Category);
         }
 
         using (var workspace = CreateWorkspace())
@@ -275,7 +276,8 @@ public sealed class WorkspaceExportLedgerTests
             File.WriteAllBytes(slicePath, sliceBytes);
             RewriteRequestEntryAndHead(workspace.Location, root, (request, _) =>
                 request["slice_digest"] = ContentDigest.Sha256(sliceBytes).ToString());
-            Assert.ThrowsExactly<WorkspaceExportException>(() => ResearchWorkspaceExportLedgerVerifier.Replay(workspace.Location));
+            var sliceError = Assert.ThrowsExactly<WorkspaceExportException>(() => ResearchWorkspaceExportLedgerVerifier.Replay(workspace.Location));
+            Assert.AreEqual(WorkspaceExportErrorCodes.InvalidLedger, sliceError.Category);
         }
     }
 
