@@ -1,4 +1,5 @@
 using NexusScholar.Kernel;
+using System.Text.Json;
 
 namespace NexusScholar.FullText;
 
@@ -10,6 +11,69 @@ public static class FullTextEvidenceLocationKinds
     public const string Text = "text";
 
     public static bool IsAllowed(string value) => value is Page or Section or Table or Text;
+}
+
+public static class FullTextEvidenceLocationCodec
+{
+    private static readonly HashSet<string> Fields = new(StringComparer.Ordinal)
+    {
+        "location_id", "source_artifact_id", "source_raw_byte_digest", "extraction_id", "extraction_digest",
+        "representation_kind", "location_kind", "element_ordinal", "locator", "excerpt", "source_element_digest",
+        "excerpt_digest"
+    };
+
+    public static byte[] Serialize(FullTextEvidenceLocation location) =>
+        (location ?? throw new ArgumentNullException(nameof(location))).ToCanonicalBytes();
+
+    public static FullTextEvidenceLocation Rehydrate(
+        byte[] bytes,
+        ContentDigest expectedDigest,
+        VerifiedFullTextExtraction source)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        ArgumentNullException.ThrowIfNull(source);
+        try
+        {
+            using var document = JsonDocument.Parse(bytes);
+            var root = document.RootElement;
+            var canonical = CanonicalJsonSerializer.SerializeToUtf8Bytes(CanonicalJsonValue.FromJsonElement(root));
+            if (!bytes.SequenceEqual(canonical)) throw Invalid("Evidence location bytes must be canonical JSON.");
+            var verified = DigestEnvelope.RehydrateAndVerify(
+                root, expectedDigest, DigestScope.CanonicalJsonRecord,
+                FullTextSchemas.EvidenceLocationSchemaId, FullTextSchemas.SchemaVersion);
+            var content = root.GetProperty("content");
+            if (content.EnumerateObject().Select(item => item.Name).ToHashSet(StringComparer.Ordinal).SetEquals(Fields) is false)
+                throw Invalid("Evidence location contains missing or unknown fields.");
+
+            var result = FullTextEvidenceLocation.Create(
+                Text(content, "location_id"), source, Text(content, "location_kind"),
+                Integer(content, "element_ordinal"), Text(content, "locator"), Text(content, "excerpt"));
+            if (!result.ToCanonicalBytes().SequenceEqual(bytes) || result.Digest != verified.Digest)
+                throw Invalid("Evidence location does not match the verified Full Text source.");
+            return result;
+        }
+        catch (FullTextRuleException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException)
+        {
+            throw Invalid("Evidence location canonical record is invalid.");
+        }
+    }
+
+    private static string Text(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(value.GetString())
+            ? value.GetString()!
+            : throw Invalid($"Evidence location field '{name}' is invalid.");
+
+    private static int Integer(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.TryGetInt32(out var result)
+            ? result
+            : throw Invalid($"Evidence location field '{name}' is invalid.");
+
+    private static FullTextRuleException Invalid(string message) =>
+        new(FullTextEvidenceLocationErrorCodes.InvalidLocation, message);
 }
 
 public static class FullTextEvidenceLocationErrorCodes

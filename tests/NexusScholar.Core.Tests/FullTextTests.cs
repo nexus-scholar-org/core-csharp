@@ -658,7 +658,15 @@ public sealed class FullTextTests
         Assert.AreEqual(record.ExtractionId, location.ExtractionId);
         Assert.AreEqual(2, location.ElementOrdinal);
         Assert.AreEqual(ContentDigest.Parse(record.ExtractedTextDigest!), location.ExtractionDigest);
-        CollectionAssert.AreEqual(location.ToCanonicalBytes(), location.ToCanonicalBytes());
+        var reopened = FullTextEvidenceLocationCodec.Rehydrate(
+            FullTextEvidenceLocationCodec.Serialize(location), location.Digest, verified);
+        Assert.AreEqual(location.Digest, reopened.Digest);
+        var altered = FullTextEvidenceLocationCodec.Serialize(location).ToArray();
+        altered[^2] = altered[^2] == (byte)'1' ? (byte)'2' : (byte)'1';
+        Assert.AreEqual(
+            FullTextEvidenceLocationErrorCodes.InvalidLocation,
+            Assert.ThrowsExactly<FullTextRuleException>(() => FullTextEvidenceLocationCodec.Rehydrate(
+                altered, location.Digest, verified)).Category);
         Assert.AreEqual(
             FullTextEvidenceLocationErrorCodes.InvalidLocation,
             Assert.ThrowsExactly<FullTextRuleException>(() => FullTextEvidenceLocation.Create(
