@@ -98,7 +98,10 @@ public sealed class VerifiedReportingWorkflowAuthority
         string protocolVersionId,
         ContentDigest protocolContentDigest,
         IEnumerable<ReportingSupplementalBinding>? waiverBindings = null,
-        IEnumerable<ReportingSupplementalBinding>? amendmentBindings = null)
+        IEnumerable<ReportingSupplementalBinding>? amendmentBindings = null,
+        string? templateId = null,
+        string? templateVersion = null,
+        ContentDigest? templateDigest = null)
     {
         WorkflowId = !string.IsNullOrWhiteSpace(workflowId) ? workflowId : throw new ArgumentException("Workflow id is required.", nameof(workflowId));
         WorkflowDigest = workflowDigest.IsValid ? workflowDigest : throw new ArgumentException("Workflow digest is required.", nameof(workflowDigest));
@@ -106,6 +109,9 @@ public sealed class VerifiedReportingWorkflowAuthority
         ProtocolContentDigest = protocolContentDigest.IsValid ? protocolContentDigest : throw new ArgumentException("Protocol content digest is required.", nameof(protocolContentDigest));
         WaiverBindings = SnapshotBindings(waiverBindings);
         AmendmentBindings = SnapshotBindings(amendmentBindings);
+        TemplateId = templateId;
+        TemplateVersion = templateVersion;
+        TemplateDigest = templateDigest;
     }
 
     public string WorkflowId { get; }
@@ -114,6 +120,9 @@ public sealed class VerifiedReportingWorkflowAuthority
     public ContentDigest ProtocolContentDigest { get; }
     public IReadOnlyList<ReportingSupplementalBinding> WaiverBindings { get; }
     public IReadOnlyList<ReportingSupplementalBinding> AmendmentBindings { get; }
+    public string? TemplateId { get; }
+    public string? TemplateVersion { get; }
+    public ContentDigest? TemplateDigest { get; }
 
     public static VerifiedReportingWorkflowAuthority FromVerified(VerifiedWorkflowDefinition workflow)
     {
@@ -128,7 +137,8 @@ public sealed class VerifiedReportingWorkflowAuthority
             workflow.Definition.ResolvedInputBindings.Where(item => item.AmendmentId is not null)
                 .Select(item => new ReportingSupplementalBinding(item.AmendmentId!, item.SourceDigest))
                 .Concat(workflow.Definition.InvalidationPlanEntries.Select(item =>
-                    new ReportingSupplementalBinding(item.AmendmentId, item.AmendmentSourceDigest))));
+                    new ReportingSupplementalBinding(item.AmendmentId, item.AmendmentSourceDigest))),
+            workflow.Definition.TemplateId, workflow.Definition.TemplateVersion, workflow.Definition.TemplateDigest);
     }
 
     private static IReadOnlyList<ReportingSupplementalBinding> SnapshotBindings(IEnumerable<ReportingSupplementalBinding>? values)
@@ -154,7 +164,9 @@ public sealed record ReviewSliceAuthorities(
     IReadOnlyList<VerifiedProtocolWaiver> Waivers,
     IReadOnlyList<VerifiedProtocolAmendment> Amendments,
     IReadOnlyList<ResearchEvent> ProvenanceEvents,
-    VerifiedReviewWorkspaceCut WorkspaceCut);
+    IReadOnlyList<VerifiedProtocolDeviation> Deviations,
+    VerifiedReviewWorkspaceCut WorkspaceCut,
+    VerifiedRapidReviewProfile? RapidReviewProfile = null);
 
 public sealed record ReviewFlowCounts(
     int Identified, int DuplicatesConsolidated, int PostDedup,
@@ -171,7 +183,15 @@ public sealed class ReviewFlowProjection
         IReadOnlyList<ReviewReasonCount> titleAbstractReasons, IReadOnlyList<ReviewReasonCount> fullTextReasons,
         ReviewAuditCounts audit, IReadOnlyList<ReviewFlowGap> gaps, IReadOnlyList<string> disclosures, IReadOnlyList<string> nonClaims)
     {
-        Authorities = authorities; Counts = counts;
+        Authorities = authorities with
+        {
+            FullTextCases = Array.AsReadOnly(authorities.FullTextCases.ToArray()),
+            Waivers = Array.AsReadOnly(authorities.Waivers.ToArray()),
+            Amendments = Array.AsReadOnly(authorities.Amendments.ToArray()),
+            ProvenanceEvents = Array.AsReadOnly(authorities.ProvenanceEvents.ToArray()),
+            Deviations = Array.AsReadOnly(authorities.Deviations.ToArray())
+        };
+        Counts = counts;
         TitleAbstractReasons = Array.AsReadOnly(titleAbstractReasons.ToArray());
         FullTextReasons = Array.AsReadOnly(fullTextReasons.ToArray());
         Audit = audit; Gaps = Array.AsReadOnly(gaps.ToArray());

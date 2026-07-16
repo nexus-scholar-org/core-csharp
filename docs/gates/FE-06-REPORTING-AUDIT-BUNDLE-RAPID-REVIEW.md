@@ -158,3 +158,31 @@ Status: complete locally; final phase-wide review remains pending.
 - final local verification: Release build succeeded with zero warnings/errors;
   751 tests passed; format verification passed; package verification packed,
   restored, and smoke-loaded all 19 approved assemblies.
+
+### FE-06.2: Rapid Review And Verified Deviations
+
+Status: complete locally; final phase-wide fixture consolidation remains in
+FE-06.6.
+
+- `nexus.workflow-profile.rapid-review / 1.0.0` binds one verified Workflow,
+  approved Protocol, no-default scientific-conduct activation inputs, affected
+  requirements/nodes, consequence, mitigation artifacts, human approval,
+  disclosure, invalidation coverage, and the closed protected-invariant set;
+- `nexus.protocol.deviation / 1.0.0` is a new verified supplemental authority;
+  the historical `ProtocolDeviation` note remains non-authoritative. The new
+  record binds exact Protocol content, optional profile/shortcut, conduct,
+  consequence, mitigation evidence, disclosure, human recorder, approval set,
+  invalidation effects, and required successor amendment when applicable;
+- deviation approvals target the exact canonical deviation digest, automation
+  is prohibited, collections are canonical and immutable, and strict codecs
+  reject altered bytes or stale digests;
+- Reporting requires an explicit complete deviation set, binds profile and
+  deviation digests, matches the exact Workflow template, cross-checks shortcut
+  requirement/consequence/mitigation/disclosure/artifact refs, and rejects
+  `unresolved_inconsistency` at finalization;
+- independent reviews identified optional deviation membership, synthetic test
+  authority, unnormalized refs, null collection handling, and missing template
+  continuity. All were corrected with focused negative tests;
+- final local verification: Release build succeeded with zero warnings/errors;
+  761 tests passed; format verification passed; deterministic package
+  verification packed, restored, and smoke-loaded all 19 approved assemblies.

@@ -1,6 +1,7 @@
 using System.Text;
 using NexusScholar.FullText;
 using NexusScholar.Kernel;
+using NexusScholar.Protocol;
 using NexusScholar.Provenance;
 using NexusScholar.Screening;
 using NexusScholar.Screening.CorpusSnapshots;
@@ -48,7 +49,8 @@ public static class ReviewFlowProjector
             source.ScreeningJournal.Decisions.Count(item => item.SupersedesDecisionDigest is not null) + source.FullTextCases.Sum(item => item.Journal.Decisions.Count(decision => decision.SupersedesDecisionDigest is not null)),
             source.ScreeningJournal.Invalidations.Count + source.FullTextCases.Sum(item => item.Journal.Invalidations.Count));
         return new ReviewFlowProjection(source, counts, titleReasons, fullReasons, audit, gaps,
-            NormalizeText(disclosures), NormalizeText(nonClaims));
+            NormalizeText((disclosures ?? Array.Empty<string>()).Concat(Deviations(source).Select(item => item.Deviation.Disclosure))),
+            NormalizeText(nonClaims));
     }
 
     public static VerifiedReviewFlowReport Finalize(ReviewFlowProjection projection)
@@ -57,6 +59,8 @@ public static class ReviewFlowProjector
         if (projection.Gaps.Count != 0) throw Rule(ReportingErrorCodes.IncompleteSlice, "A final report requires one terminal Full Text case per title/abstract include.");
         if (projection.NonClaims.Count == 0)
             throw Rule(ReportingErrorCodes.IncompleteSlice, "A final report requires explicit non-claims.");
+        if (Deviations(projection.Authorities).Any(item => item.BlocksFinalReporting))
+            throw Rule(ReportingErrorCodes.IncompleteSlice, "An unresolved Protocol inconsistency blocks final reporting.");
         var c = projection.Counts;
         if (c.Identified != c.DuplicatesConsolidated + c.PostDedup ||
             c.PostDedup != c.TitleAbstractIncluded + c.TitleAbstractExcluded ||
@@ -104,6 +108,31 @@ public static class ReviewFlowProjector
             .OrderBy(item => item.Id, StringComparer.Ordinal).ToArray();
         if (!waiverBindings.SequenceEqual(source.Workflow.WaiverBindings) || !amendmentBindings.SequenceEqual(source.Workflow.AmendmentBindings))
             throw Rule(ReportingErrorCodes.InvalidAuthority, "Report supplemental authorities do not match the exact verified Workflow bindings.");
+        var deviations = Deviations(source);
+        if (deviations.Select(item => item.Deviation.DeviationId).Distinct(StringComparer.Ordinal).Count() != deviations.Count ||
+            deviations.Any(item => item.ProtocolVersion.Version.Id != protocol.Id || item.ProtocolVersion.Version.ContentDigest != protocol.ContentDigest))
+            throw Rule(ReportingErrorCodes.InvalidAuthority, "Protocol deviations must be unique and bind the report Protocol authority.");
+        if (source.RapidReviewProfile is not null &&
+            (source.RapidReviewProfile.Record.WorkflowId != workflow.WorkflowId || source.RapidReviewProfile.Record.WorkflowDigest != workflow.WorkflowDigest ||
+             source.RapidReviewProfile.Record.ProtocolVersionId != protocol.Id || source.RapidReviewProfile.Record.ProtocolContentDigest != protocol.ContentDigest))
+            throw Rule(ReportingErrorCodes.InvalidAuthority, "Rapid Review profile does not bind the report Workflow and Protocol authorities.");
+        if (source.RapidReviewProfile is not null &&
+            (source.Workflow.TemplateId is null || source.RapidReviewProfile.Record.TemplateId != source.Workflow.TemplateId ||
+             source.RapidReviewProfile.Record.TemplateVersion != source.Workflow.TemplateVersion ||
+             source.RapidReviewProfile.Record.TemplateDigest != source.Workflow.TemplateDigest))
+            throw Rule(ReportingErrorCodes.InvalidAuthority, "Rapid Review profile does not bind the exact report template authority.");
+        foreach (var deviation in deviations.Where(item => item.Deviation.ProfileId is not null))
+        {
+            var shortcut = source.RapidReviewProfile?.Shortcuts.SingleOrDefault(item => item.ShortcutId == deviation.Deviation.ShortcutId);
+            if (source.RapidReviewProfile is null || deviation.Deviation.ProfileId != source.RapidReviewProfile.Record.ProfileId ||
+                deviation.Deviation.ProfileDigest != source.RapidReviewProfile.RecordDigest || shortcut is null ||
+                !shortcut.AffectedRequirementRefs.Contains(deviation.Deviation.PlannedRequirementId, StringComparer.Ordinal) ||
+                deviation.Deviation.Consequence != shortcut.Consequence || deviation.Deviation.MitigationApplied != shortcut.Mitigation ||
+                deviation.Deviation.Disclosure != shortcut.ReportingDisclosure ||
+                shortcut.RequiredMitigationArtifactRefs.Any(reference => !deviation.Deviation.MitigationEvidenceReferences.Any(
+                    evidence => evidence.Kind == "mitigation-artifact" && evidence.Id == reference)))
+                throw Rule(ReportingErrorCodes.InvalidAuthority, "Deviation Rapid Review shortcut binding is missing or stale.");
+        }
         var generationRoles = source.WorkspaceCut.Generations.Where(item => item.CandidateId is null).Select(item => item.Role).ToArray();
         if (!generationRoles.OrderBy(item => item, StringComparer.Ordinal).SequenceEqual(
                 ReviewGenerationRoles.RequiredSingletons.OrderBy(item => item, StringComparer.Ordinal)))
@@ -186,6 +215,7 @@ public static class ReviewFlowProjector
             .Add("full_text_cases", FullTextBindings(source.FullTextCases))
             .Add("waiver_digests", DigestArray(source.Waivers.Select(item => item.WaiverDigest)))
             .Add("amendment_digests", DigestArray(source.Amendments.Select(item => item.AmendmentDigest)))
+            .Add("deviation_digests", DigestArray(Deviations(source).Select(item => item.DeviationDigest)))
             .Add("provenance_event_digests", DigestArray(source.ProvenanceEvents.Select(item => item.EventDigest)))
             .Add("workspace_id", source.WorkspaceCut.WorkspaceId).Add("project_revision", source.WorkspaceCut.ProjectRevision)
             .Add("workspace_generations", CanonicalJsonValue.Array(source.WorkspaceCut.Generations.Select(item =>
@@ -195,6 +225,7 @@ public static class ReviewFlowProjector
                 if (item.CandidateId is not null) value.Add("candidate_id", item.CandidateId);
                 return value;
             }).ToArray())).Add("workspace_cut_digest", source.WorkspaceCut.Digest.ToString());
+        if (source.RapidReviewProfile is not null) content.Add("rapid_review_profile_digest", source.RapidReviewProfile.RecordDigest.ToString());
         return new DigestEnvelope(DigestScope.CanonicalJsonRecord, ReportingSchemas.SliceBindingId, ReportingSchemas.Version, content);
     }
 
@@ -217,8 +248,10 @@ public static class ReviewFlowProjector
             .Add("full_text_cases", FullTextBindings(source.FullTextCases))
             .Add("waiver_digests", DigestArray(source.Waivers.Select(item => item.WaiverDigest)))
             .Add("amendment_digests", DigestArray(source.Amendments.Select(item => item.AmendmentDigest)))
+            .Add("deviation_digests", DigestArray(Deviations(source).Select(item => item.DeviationDigest)))
             .Add("provenance_event_digests", DigestArray(source.ProvenanceEvents.Select(item => item.EventDigest)))
             .Add("workspace_cut_digest", source.WorkspaceCut.Digest.ToString());
+        if (source.RapidReviewProfile is not null) bindings.Add("rapid_review_profile_digest", source.RapidReviewProfile.RecordDigest.ToString());
         var content = new CanonicalJsonObject().Add("bindings", bindings).Add("counts", counts)
             .Add("title_abstract_exclusion_reasons", ReasonArray(projection.TitleAbstractReasons))
             .Add("full_text_exclusion_reasons", ReasonArray(projection.FullTextReasons)).Add("audit_counts", audit)
@@ -239,6 +272,7 @@ public static class ReviewFlowProjector
         }).ToArray());
     private static CanonicalJsonValue DigestArray(IEnumerable<ContentDigest> values) => CanonicalJsonValue.Array(values.OrderBy(item => item.ToString(), StringComparer.Ordinal).Select(item => CanonicalJsonValue.From(item.ToString())).ToArray());
     private static CanonicalJsonValue TextArray(IEnumerable<string> values) => CanonicalJsonValue.Array(values.Select(CanonicalJsonValue.From).ToArray());
+    private static IReadOnlyList<VerifiedProtocolDeviation> Deviations(ReviewSliceAuthorities source) => source.Deviations;
     private static ReportingRuleException Rule(string category, string message) => new(category, message);
 }
 

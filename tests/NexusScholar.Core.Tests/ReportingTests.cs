@@ -96,6 +96,36 @@ public sealed class ReportingTests
         Assert.AreEqual(ReportingErrorCodes.InvalidAuthority, extractionError.Category);
     }
 
+    [TestMethod]
+    public void Verified_unresolved_protocol_inconsistency_blocks_final_report()
+    {
+        var source = BuildAuthorities(includeFullText: true);
+        var value = new ProtocolDeviationRecord(
+            "deviation-reporting", source.Protocol.Version.ProtocolId, source.Protocol.Version.Id, source.Protocol.Version.ContentDigest,
+            "scope", null, null, null, "Observed conduct.", "Rationale.", ProtocolDeviationConstants.UnresolvedInconsistency,
+            "Unknown consequence.", "Investigation pending.",
+            [new ProtocolDeviationEvidenceReference("audit-note", "note-1", ContentDigest.Sha256Utf8("note"))],
+            "Unresolved.", "limitations.unresolved", ActorId.From("reviewer-1"), Now, "deviation-policy", ["approval-1"],
+            [new ProtocolDeviationInvalidationEffect("review-report", "report-1", ContentDigest.Sha256Utf8("report"), "block-finalization")], null);
+        var digest = new DigestEnvelope(DigestScope.CanonicalJsonRecord, ProtocolDeviationConstants.SchemaId,
+            ProtocolDeviationConstants.SchemaVersion, value.ToCanonicalJson()).ComputeDigest();
+        var policy = ApprovalPolicy.ExplicitCustomSingleResearcher("deviation-policy");
+        var seed = new ProtocolSupplementalApproval("approval-1", ProtocolSupplementalTargetTypes.Deviation, value.DeviationId, digest,
+            policy.PolicyId, policy.PolicyVersion, policy.Mode, ProtocolApprovalDecision.Approved, value.RecordedBy, Now, null, "Approved.", null,
+            ContentDigest.Sha256Utf8("placeholder"));
+        var approval = new VerifiedProtocolSupplementalApproval(new ProtocolSupplementalApproval(
+            seed.ApprovalId, seed.TargetType, seed.TargetId, seed.TargetDigest, seed.PolicyId, seed.PolicyVersion, seed.PolicyMode,
+            seed.Decision, seed.ApprovedBy, seed.ApprovedAt, seed.Role, seed.Rationale, seed.SupersedesApprovalId,
+            seed.ToDigestEnvelope().ComputeDigest()));
+        var deviation = ProtocolSupplementalAuthorityRehydrator.RehydrateDeviation(
+            new UnverifiedProtocolDeviation(value, digest), new ReportingDeviationResolver(source.Protocol, policy, approval));
+        var projection = ReviewFlowProjector.Project(source with { Deviations = [deviation] }, nonClaims: ["No final claim."]);
+
+        Assert.IsTrue(projection.Disclosures.Contains(value.Disclosure, StringComparer.Ordinal));
+        var error = Assert.ThrowsExactly<ReportingRuleException>(() => ReviewFlowProjector.Finalize(projection));
+        Assert.AreEqual(ReportingErrorCodes.IncompleteSlice, error.Category);
+    }
+
     private static ReviewSliceAuthorities BuildAuthorities(bool includeFullText)
     {
         var protocol = BuildProtocol();
@@ -131,7 +161,7 @@ public sealed class ReportingTests
         var workflow = new VerifiedReportingWorkflowAuthority(
             "workflow-reporting", ContentDigest.Sha256Utf8("workflow-reporting"), protocol.Version.Id, protocol.Version.ContentDigest);
         return new ReviewSliceAuthorities(protocol, workflow, dedup, snapshot, snapshotPolicy, journal, handoff,
-            cases, [], [], [], cut);
+            cases, [], [], [], [], cut);
     }
 
     private static FullTextReviewCaseAuthorities BuildFullTextCase(
@@ -220,5 +250,14 @@ public sealed class ReportingTests
         currentProtocolContentDigest: protocol.Version.ContentDigest.ToString());
 
     private sealed class FixedClock : IClock { public DateTimeOffset UtcNow => Now; }
+    private sealed class ReportingDeviationResolver(VerifiedProtocolVersion protocol, ApprovalPolicy policy,
+        VerifiedProtocolSupplementalApproval approval) : IProtocolDeviationAuthorityResolver
+    {
+        public ApprovalPolicy ResolvePolicy(string targetType, string targetId) => policy;
+        public bool IsHumanActor(ActorId actorId) => actorId == ActorId.From("reviewer-1");
+        public VerifiedProtocolSupplementalApproval ResolveApproval(string approvalId) => approval;
+        public VerifiedProtocolVersion ResolveProtocolVersion(string protocolVersionId) => protocol;
+        public VerifiedProtocolAmendment ResolveProtocolAmendment(string amendmentId) => throw new KeyNotFoundException();
+    }
     private static readonly DateTimeOffset Now = new(2026, 7, 16, 8, 0, 0, TimeSpan.Zero);
 }

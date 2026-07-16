@@ -248,7 +248,7 @@ public sealed class ReportingFixtureTests
         var workflow = new VerifiedReportingWorkflowAuthority(
             "workflow-reporting", ContentDigest.Sha256Utf8("workflow-reporting"), protocol.Version.Id, protocol.Version.ContentDigest);
         return new ReviewSliceAuthorities(protocol, workflow, dedup, snapshot, snapshotPolicy, journal, handoff,
-            cases, [], [], [], cut);
+            cases, [], [], [], [], cut);
     }
 
     private static FullTextReviewCaseAuthorities BuildFullTextCase(
