@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Cli;
+using NexusScholar.ResearchWorkspace;
 
 namespace NexusScholar.Cli.Tests;
 
@@ -24,6 +25,22 @@ public sealed class ResearchWorkspacePolishCommandTests
         StringAssert.Contains(output, "Project location: parent workspace");
         AssertNoAbsoluteWorkspacePath(workspace.Root, output, error);
         Assert.AreEqual(string.Empty, error);
+    }
+
+    [TestMethod]
+    public void Status_reports_invalid_full_text_pointer_with_digest_exit_code()
+    {
+        using var workspace = TemporaryWorkspace.CreateInitialized();
+        var location = new ResearchWorkspaceLocation(workspace.Root, ResearchWorkspacePaths.ProjectFile(workspace.Root));
+        var project = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath).CommitFullTextGeneration(
+            "fulltext-test", "nexus-output/fulltext-generations/test/fulltext.manifest.json", "sha256:" + new string('0', 64));
+        ResearchWorkspaceStore.WriteProject(location, project);
+
+        var exitCode = RunCli(workspace.Root, ["status"], out var output, out var error);
+
+        Assert.AreEqual(ResearchWorkspaceExitCodes.DigestMismatch, exitCode, error);
+        StringAssert.Contains(output, "  full text generation: invalid");
+        StringAssert.Contains(output, "  Full Text integrity failures: 1");
     }
 
     [TestMethod]

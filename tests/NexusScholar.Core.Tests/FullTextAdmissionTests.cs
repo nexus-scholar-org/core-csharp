@@ -214,6 +214,12 @@ public sealed class FullTextAdmissionTests
             var verified = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(location, reopened, sourceJournal, sourceHandoff, 4096);
             Assert.AreEqual(commit.Manifest.GenerationId, verified.Manifest.GenerationId);
             Assert.AreEqual(admission.Digest, verified.Admission.Digest);
+            var manifestPath = ResearchWorkspacePaths.InProject(root, reopened.FullTextManifestPath!);
+            var extraPath = Path.Combine(Path.GetDirectoryName(manifestPath)!, "unmanifested.json");
+            File.WriteAllText(extraPath, "{}");
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
+                ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(location, reopened, sourceJournal, sourceHandoff, 4096));
+            File.Delete(extraPath);
             var rawPath = commit.Manifest.Artifacts.Single(item => item.Name == "raw-artifact").RelativePath;
             File.WriteAllText(ResearchWorkspacePaths.InProject(root, rawPath), "tampered");
             Assert.ThrowsExactly<InvalidOperationException>(() =>
@@ -222,6 +228,47 @@ public sealed class FullTextAdmissionTests
         finally
         {
             Directory.Delete(root, true);
+        }
+
+        var failureRoot = Path.Combine(Path.GetTempPath(), $"nexus-fulltext-failure-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(failureRoot);
+        try
+        {
+            var location = new ResearchWorkspaceLocation(failureRoot, ResearchWorkspacePaths.ProjectFile(failureRoot));
+            var project = ResearchWorkspaceProject.Create("Full Text failure", FixedTime, "workspace-fulltext-failure");
+            ResearchWorkspaceStore.WriteProject(location, project);
+            Assert.ThrowsExactly<InvalidOperationException>(() => ResearchWorkspaceFullTextTransaction.Commit(
+                location, project, sourceJournal, sourceHandoff, admission, authority, rawBytes, 4096,
+                faultInjector: point =>
+                {
+                    if (point == ResearchWorkspaceAuthorityFaultPoint.AfterPromotion)
+                        throw new InvalidOperationException("injected failure");
+                }));
+            var unchanged = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+            Assert.IsNull(unchanged.CurrentFullTextGenerationId);
+            var quarantine = ResearchWorkspacePaths.InProject(failureRoot, ResearchWorkspacePaths.GenerationQuarantine);
+            Assert.IsTrue(Directory.Exists(quarantine));
+            Assert.AreEqual(1, Directory.GetDirectories(quarantine).Length);
+        }
+        finally
+        {
+            Directory.Delete(failureRoot, true);
+        }
+
+        var staleRoot = Path.Combine(Path.GetTempPath(), $"nexus-fulltext-stale-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(staleRoot);
+        try
+        {
+            var location = new ResearchWorkspaceLocation(staleRoot, ResearchWorkspacePaths.ProjectFile(staleRoot));
+            var expected = ResearchWorkspaceProject.Create("Full Text stale", FixedTime, "workspace-fulltext-stale");
+            ResearchWorkspaceStore.WriteProject(location, expected with { Revision = 1 });
+            Assert.ThrowsExactly<ResearchWorkspaceConcurrencyException>(() => ResearchWorkspaceFullTextTransaction.Commit(
+                location, expected, sourceJournal, sourceHandoff, admission, authority, rawBytes, 4096));
+            Assert.IsNull(ResearchWorkspaceStore.ReadProject(location.ProjectFilePath).CurrentFullTextGenerationId);
+        }
+        finally
+        {
+            Directory.Delete(staleRoot, true);
         }
 
         var invalidation = FullTextScreeningConductInvalidation.Create(
