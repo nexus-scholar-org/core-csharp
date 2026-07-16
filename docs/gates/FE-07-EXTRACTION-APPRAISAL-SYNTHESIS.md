@@ -1,7 +1,7 @@
 # FE-07: Extraction, Appraisal, And Synthesis
 
-Status: implementation, independent local review, and hosted branch validation
-accepted under ADR 0034; protected merge validation remains open.
+Status: Complete. Implementation, independent review, protected merge, and
+post-merge hosted validation are accepted under ADR 0034.
 
 ## Goal
 
@@ -118,3 +118,5 @@ and package-smoke checks for all three new packages.
 - Release build passed with zero warnings/errors; 819 tests passed; format was
   clean; package policy, deterministic package comparison, and clean local
   package smoke passed for all 23 approved packages.
+- PR `#60` merged as `a8f89dc`; post-merge gate-01 run `29525464840` and
+  codeql run `29525464730` passed on that exact commit.

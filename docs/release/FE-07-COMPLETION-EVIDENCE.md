@@ -94,4 +94,11 @@ Branch validation for implementation commit `64b69fb` passed:
 - dependency-review run `29524787975`, job `87710394673`, passed;
 - codeql run `29524787944`, analyze job `87710394462`, passed.
 
-Protected merge and post-merge hosted validation remain pending.
+PR `#60` merged as `a8f89dc68efc63b2a2ac4f50d73672a1e80d1f33`.
+Post-merge validation for that exact commit passed:
+
+- gate-01 run `29525464840`: Windows job `87712686503` and Ubuntu job
+  `87712686523` passed;
+- codeql run `29525464730`, analyze job `87712686164`, passed.
+
+FE-07 is complete.
