@@ -480,9 +480,9 @@ the list below is retained as historical planning context.
 
 ## FE-07 - Extraction, Appraisal, And Synthesis
 
-Status: implementation, independent local review, and hosted branch validation
-accepted under ADR 0034; protected merge validation remains open under
-`docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md`.
+Status: complete under ADR 0034 and
+`docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md`; PR `#60` merged as
+`a8f89dc`, and post-merge gate-01 and CodeQL validation passed.
 
 ### Outcome
 
