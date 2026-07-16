@@ -231,3 +231,21 @@ Status: complete locally; independent CLI verification follows in FE-06.5.
   all publication fault points, idempotence, byte/extra-file tampering, empty
   heads, promotion-window replay, mismatched report authority, and an
   internally consistent false inventory digest.
+
+### FE-06.5: Independent CLI Verification And Status
+
+Status: complete locally; fixture consolidation and release closeout follow in
+FE-06.6.
+
+- `report verify <export-id>` reopens ledger-bound canonical report and slice
+  envelopes and explicitly does not claim full source-authority replay;
+- `bundle verify <export-id>` rehydrates Bundle v2 from persisted bytes and
+  verifies the exact observed inventory and ledger inventory digest;
+- `export verify <export-id>` requires successful full-history replay before
+  reporting one immutable export, while `export status` reports verified count,
+  head, and ordered history;
+- callers cannot supply report counts, authority ids, generation bindings,
+  digests, actors, or roles, and no CLI path creates reports or exports;
+- focused CLI tests cover all valid commands, empty and populated status,
+  tampered Bundle bytes, missing export identity, exact usage, and advertised
+  command surface.
