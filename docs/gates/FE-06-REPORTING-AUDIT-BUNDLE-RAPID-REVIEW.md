@@ -207,3 +207,27 @@ Status: complete locally; export transaction integration follows in FE-06.4.
 - independent review gaps for byte-only replay, duplicate observed paths,
   scoped semantic digests, candidate/source-cut binding, local file locators,
   credential queries, and observed-path validation were corrected.
+
+### FE-06.4: Append-Only Workspace Export Ledger
+
+Status: complete locally; independent CLI verification follows in FE-06.5.
+
+- AppServices prepares exports only from a verified final report, exact matching
+  workspace cut, valid Bundle v2 inventory, and an identified human actor;
+- ResearchWorkspace persists immutable export directories without writing or
+  incrementing `nexus.project.json`, and records canonical request, report,
+  Markdown, Bundle inventory, and hash-chained ledger entry bytes;
+- one workspace lock covers predecessor compare-and-swap, exact source-project
+  revalidation, promotion, and atomic pointer-last head publication;
+- replay verifies canonical entry/head/request bytes, contiguous ordinals,
+  predecessor digests, source bindings, actor kind, exact directory inventory,
+  path containment, reparse-point rejection, and independently reconstructed
+  Bundle inventory identity;
+- faults before head publication quarantine promoted output and preserve the old
+  ledger; a post-head retry is idempotent, while concurrent readers report the
+  workspace lock instead of observing the promotion window;
+- 11 focused tests cover verified orchestration, human authority, unchanged
+  project bytes/revision, multi-entry chaining, stale writers, source drift,
+  all publication fault points, idempotence, byte/extra-file tampering, empty
+  heads, promotion-window replay, mismatched report authority, and an
+  internally consistent false inventory digest.

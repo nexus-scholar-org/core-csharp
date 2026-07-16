@@ -219,4 +219,5 @@ public sealed class VerifiedReviewFlowReport
     public ContentDigest SliceDigest => SliceEnvelope.ComputeDigest();
     public DigestEnvelope ReportEnvelope { get; }
     public ContentDigest ReportDigest => ReportEnvelope.ComputeDigest();
+    public VerifiedReviewWorkspaceCut WorkspaceCut => Projection.Authorities.WorkspaceCut;
 }

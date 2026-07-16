@@ -13,6 +13,7 @@ using NexusScholar.FullText;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Provenance;
+using NexusScholar.Reporting;
 using NexusScholar.ResearchWorkspace;
 using NexusScholar.Screening;
 using NexusScholar.Screening.CorpusSnapshots;
@@ -534,7 +535,9 @@ public sealed class DependencyRulesTests
             typeof(WorkflowExecutionJournal).Assembly.GetName().Name,
             typeof(ScreeningConductJournal).Assembly.GetName().Name,
             typeof(VerifiedFullTextAdmission).Assembly.GetName().Name,
-            typeof(FullTextInput).Assembly.GetName().Name
+            typeof(FullTextInput).Assembly.GetName().Name,
+            typeof(VerifiedReviewFlowReport).Assembly.GetName().Name,
+            typeof(VerifiedReviewBundleV2).Assembly.GetName().Name
         };
         var disallowed = appServicesAssembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)
@@ -602,7 +605,8 @@ public sealed class DependencyRulesTests
             typeof(ScreeningWorkflowExecutionBridge).Assembly.GetName().Name,
             typeof(VerifiedFullTextAdmission).Assembly.GetName().Name,
             typeof(FullTextInput).Assembly.GetName().Name,
-            typeof(ProtocolVersion).Assembly.GetName().Name
+            typeof(ProtocolVersion).Assembly.GetName().Name,
+            typeof(VerifiedReviewBundleV2).Assembly.GetName().Name
         };
         var disallowed = researchWorkspaceAssembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)

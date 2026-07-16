@@ -126,7 +126,7 @@ public sealed class ReportingTests
         Assert.AreEqual(ReportingErrorCodes.IncompleteSlice, error.Category);
     }
 
-    private static ReviewSliceAuthorities BuildAuthorities(bool includeFullText)
+    internal static ReviewSliceAuthorities BuildAuthorities(bool includeFullText)
     {
         var protocol = BuildProtocol();
         var dedupPolicy = BuildDeduplicationPolicy();
