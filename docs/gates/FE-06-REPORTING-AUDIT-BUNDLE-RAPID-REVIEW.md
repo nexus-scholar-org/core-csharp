@@ -186,3 +186,24 @@ FE-06.6.
 - final local verification: Release build succeeded with zero warnings/errors;
   761 tests passed; format verification passed; deterministic package
   verification packed, restored, and smoke-loaded all 19 approved assemblies.
+
+### FE-06.3: Bundle V2 Exact Inventory
+
+Status: complete locally; export transaction integration follows in FE-06.4.
+
+- additive `nexus.review-bundle.manifest / 2.0.0` coexists with unchanged Bundle
+  v1 and has a strict byte-only canonical decoder;
+- scoped report, workspace-cut, source-generation, embedded-byte, and optional
+  external expected digests are explicit; source bindings preserve optional
+  Full Text candidate identity and reject foreign generations;
+- ordered embedded entries require contiguous ordinals, safe unique logical
+  paths, exact sizes and raw-byte digests, including an embedded canonical
+  report; external entries have no path or bytes and require safe non-secret
+  locators, availability notes, and stable ids;
+- verification compares the exact observed ordered inventory with fixed
+  `manifest.json` plus declared embedded paths, detects duplicate/missing/extra,
+  altered manifest/artifact bytes, traversal, mis-scoped digests, and marks
+  mixed external bundles non-self-contained;
+- independent review gaps for byte-only replay, duplicate observed paths,
+  scoped semantic digests, candidate/source-cut binding, local file locators,
+  credential queries, and observed-path validation were corrected.
