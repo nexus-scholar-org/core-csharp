@@ -1,5 +1,5 @@
-using NexusScholar.Kernel;
 using System.Text.Json;
+using NexusScholar.Kernel;
 
 namespace NexusScholar.FullText;
 

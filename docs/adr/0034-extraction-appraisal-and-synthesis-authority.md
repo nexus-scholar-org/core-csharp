@@ -35,6 +35,12 @@ runtime libraries. Workflow execution may bind their canonical records and
 invalidation effects, but the domain packages do not depend outward on
 Workflow.
 
+Create packable `NexusScholar.WorkflowExecution.ScientificRecords` as the
+outward FE-07E bridge. It depends on WorkflowExecution and the three FE-07
+owners, verifies that package-owned invalidations share one exact Protocol
+amendment, and emits one digest-bound `WorkflowExecutionRecordRef`. It owns no
+scientific record and cannot create or infer invalidations.
+
 ### Exact evidence locations
 
 The schema is:

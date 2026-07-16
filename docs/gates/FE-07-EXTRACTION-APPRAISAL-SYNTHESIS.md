@@ -1,6 +1,7 @@
 # FE-07: Extraction, Appraisal, And Synthesis
 
-Status: accepted under ADR 0034; implementation in progress.
+Status: implementation and independent local review accepted under ADR 0034;
+hosted merge validation remains open.
 
 ## Goal
 
@@ -87,3 +88,33 @@ and package-smoke checks for all three new packages.
 - amendment replay identifies every invalidated downstream record;
 - clean local and hosted validation passes and the branch merges;
 - no unsupported statistical, clinical, causal, or certainty claim is made.
+
+## Progress Evidence
+
+- FE-07D: `nexus.fulltext.evidence-location / 1.0.0` binds verified raw artifact
+  and derived-text identities, exact representation element, locator, source
+  element digest, and exact excerpt; strict canonical rehydration rejects
+  altered, noncanonical, unknown-field, or source-mismatched bytes.
+- FE-07A: the packable Extraction owner provides approved Protocol-bound forms,
+  typed fields, exact evidence values, proposal/review/correction/resolution
+  records, append-only journal replay, disagreement projection, and amendment
+  invalidation. Proposals are excluded from current scientific authority.
+- FE-07B: the packable Appraisal owner provides versioned method-domain
+  instruments, complete evidence-bound answers, human judgments and rationale,
+  corrections, and amendment invalidation. Unknown versions, incomplete
+  answers, missing evidence, and automation finalization fail closed.
+- FE-07C: the packable Synthesis owner provides plan-only authority over current
+  Extraction/Appraisal records, outcomes, effect measures, units, explicit
+  transformations, assumptions, missing-data policy, sensitivity analyses, and
+  calculation library/version/configuration declarations. It executes no
+  statistics and emits fixed non-claims.
+- FE-07E: the packable WorkflowExecution.ScientificRecords bridge admits only
+  package-owned invalidations from one exact Protocol amendment and exposes one
+  digest-bound Workflow execution source reference.
+- local fixtures identify all seven schemas, positive paths, required negative
+  cases, and explicit PHP/blueprint/statistical/clinical/causal non-claims.
+- independent manager, scientific-invariant, and test review found no remaining
+  blocking or high-severity findings.
+- Release build passed with zero warnings/errors; 819 tests passed; format was
+  clean; package policy, deterministic package comparison, and clean local
+  package smoke passed for all 23 approved packages.
