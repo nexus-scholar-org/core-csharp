@@ -145,6 +145,30 @@ public sealed class FullTextAdmissionTests
     }
 
     [TestMethod]
+    public void Local_full_text_source_rejects_network_references_and_enforces_byte_limit()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"nexus-fulltext-local-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var path = Path.Combine(root, "article.txt");
+            File.WriteAllText(path, "local full text");
+            CollectionAssert.AreEqual(System.Text.Encoding.UTF8.GetBytes("local full text"),
+                ResearchWorkspaceLocalFullTextSource.ReadBytes(path, 1024));
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
+                ResearchWorkspaceLocalFullTextSource.ReadBytes("https://example.test/article.pdf", 1024));
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
+                ResearchWorkspaceLocalFullTextSource.ReadBytes("\\\\server\\share\\article.pdf", 1024));
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
+                ResearchWorkspaceLocalFullTextSource.ReadBytes(path, 1));
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [TestMethod]
     public void Full_text_conduct_requires_human_authority_and_source_scoped_invalidation_blocks_handoff()
     {
         var (sourcePolicy, sourceHeader) = BuildConductAuthority("full-conduct", 1);
@@ -209,6 +233,58 @@ public sealed class FullTextAdmissionTests
         var artifact = FullTextArtifactEvidence.FromBytes(
             "artifact-full", admission.Input, acquisition, FullTextArtifactKinds.Text, "text/plain", rawBytes, 4096);
         var authority = FullTextRehydrator.Rehydrate(new UnverifiedFullTextChain(admission.Input, acquisition, artifact, rawBytes, 4096));
+        var unsupportedExtraction = FullTextExtractionAttempt.Create(
+            "unsupported-pdf", authority,
+            FullTextExtractionConfiguration.Create("pdf-parser", "1.0.0", FullTextExtractionRepresentations.PageText),
+            FixedTime, FullTextExtractionAttemptStatuses.Unsupported,
+            failureCategory: FullTextErrorCodes.UnsupportedFileType,
+            failureSummary: "No deterministic PDF parser is admitted.");
+        var extractionPolicy = FullTextScreeningConductPolicy.Create(
+            "full-policy-unsupported", admission.CandidateSetId, dedup, protocol, criteria, admission, 1,
+            [new ScreeningConductRoleAssignment("reviewer-1", "reviewer")], ["reviewer"],
+            [new ScreeningExclusionReason("wrong-population-full", ScreeningStages.FullText)],
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), FixedTime,
+            rawDigest, unsupportedExtraction.Digest);
+        var extractionHeader = FullTextScreeningConductHeader.Create(
+            "full-conduct-unsupported", extractionPolicy,
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"), FixedTime);
+        var rawEvidence = new ScreeningConductEvidenceRef(
+            FullTextScreeningConductEvidenceKinds.FullTextArtifact, "artifact-full", rawDigest);
+        Assert.ThrowsExactly<ScreeningRuleException>(() => FullTextScreeningConductDecision.Create(
+            extractionHeader, 1, extractionHeader.Digest, "unsupported-exclusion", "candidate-1",
+            ScreeningConductDecisionKind.Review, ScreeningVerdicts.Exclude,
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"),
+            "Exclude after parser failure", FixedTime, "wrong-population-full", evidence: [rawEvidence],
+            extractionAttempt: unsupportedExtraction));
+        var nonExcludingDecision = FullTextScreeningConductDecision.Create(
+            extractionHeader, 1, extractionHeader.Digest, "unsupported-needs-review", "candidate-1",
+            ScreeningConductDecisionKind.Review, ScreeningVerdicts.NeedsReview,
+            new ScreeningConductActor("reviewer-1", ScreeningConductActorKinds.Human, "reviewer"),
+            "Manual review remains required", FixedTime, evidence: [rawEvidence], extractionAttempt: unsupportedExtraction);
+        var forgedExclusion = Mutate(FullTextScreeningConductCanonicalCodec.Serialize(nonExcludingDecision), root =>
+        {
+            root["content"]!["verdict"] = ScreeningVerdicts.Exclude;
+            root["content"]!["exclusion_reason_code"] = "wrong-population-full";
+        });
+        Assert.ThrowsExactly<ScreeningRuleException>(() => FullTextScreeningConductCanonicalCodec.RehydrateDecision(
+            forgedExclusion, ContentDigest.Sha256(forgedExclusion), extractionHeader, unsupportedExtraction));
+
+        var mismatchedExtractionManifest = new ResearchWorkspaceFullTextManifest(
+            ResearchWorkspaceFullTextManifest.CurrentSchema, "generation", "workspace", 1, "candidate-1",
+            admission.Digest.ToString(), ContentDigest.Sha256Utf8("input").ToString(),
+            ContentDigest.Sha256Utf8("acquisition").ToString(), ContentDigest.Sha256Utf8("artifact").ToString(),
+            rawDigest.ToString(), null, null, null,
+            [
+                new("admission", "generation/admission.json", admission.Digest.ToString()),
+                new("input", "generation/input.json", ContentDigest.Sha256Utf8("input").ToString()),
+                new("acquisition", "generation/acquisition.json", ContentDigest.Sha256Utf8("acquisition").ToString()),
+                new("artifact-evidence", "generation/artifact.json", ContentDigest.Sha256Utf8("artifact").ToString()),
+                new("raw-artifact", "generation/raw.bin", rawDigest.ToString()),
+                new("extraction-attempt", "generation/extraction.json", unsupportedExtraction.Digest.ToString())
+            ]);
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
+            ResearchWorkspaceFullTextManifestCodec.Serialize(mismatchedExtractionManifest));
+
         var root = Path.Combine(Path.GetTempPath(), $"nexus-fulltext-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
         try
@@ -216,16 +292,22 @@ public sealed class FullTextAdmissionTests
             var location = new ResearchWorkspaceLocation(root, ResearchWorkspacePaths.ProjectFile(root));
             var project = ResearchWorkspaceProject.Create("Full Text", FixedTime, "workspace-fulltext");
             ResearchWorkspaceStore.WriteProject(location, project);
+            ResearchWorkspaceFullTextRecord[] conductRecords =
+            [
+                new("conduct-policy", CanonicalJsonSerializer.SerializeToUtf8Bytes(policy.ToCanonicalJson())),
+                new("conduct-header", CanonicalJsonSerializer.SerializeToUtf8Bytes(header.ToCanonicalJson())),
+                new("conduct-entry-000001", CanonicalJsonSerializer.SerializeToUtf8Bytes(decision.ToCanonicalJson())),
+                new("conduct-handoff", CanonicalJsonSerializer.SerializeToUtf8Bytes(fullTextHandoff.ToCanonicalJson()))
+            ];
             var commit = ResearchWorkspaceFullTextTransaction.Commit(
                 location, project, sourceJournal, sourceHandoff, admission, authority, rawBytes, 4096,
-                additionalRecords:
-                [
-                    new ResearchWorkspaceFullTextRecord("conduct-policy", CanonicalJsonSerializer.SerializeToUtf8Bytes(policy.ToCanonicalJson())),
-                    new ResearchWorkspaceFullTextRecord("conduct-header", CanonicalJsonSerializer.SerializeToUtf8Bytes(header.ToCanonicalJson())),
-                    new ResearchWorkspaceFullTextRecord("conduct-entry-000001", CanonicalJsonSerializer.SerializeToUtf8Bytes(decision.ToCanonicalJson())),
-                    new ResearchWorkspaceFullTextRecord("conduct-handoff", CanonicalJsonSerializer.SerializeToUtf8Bytes(fullTextHandoff.ToCanonicalJson()))
-                ], conductPolicy: policy);
+                additionalRecords: conductRecords, conductPolicy: policy);
             var reopened = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+            var reordered = ResearchWorkspaceFullTextTransaction.Commit(
+                location, reopened, sourceJournal, sourceHandoff, admission, authority, rawBytes, 4096,
+                additionalRecords: conductRecords.Reverse().ToArray(), conductPolicy: policy);
+            Assert.IsTrue(reordered.AlreadyApplied);
+            Assert.AreEqual(commit.Manifest.GenerationId, reordered.Manifest.GenerationId);
             var verified = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(location, reopened, sourceJournal, sourceHandoff, 4096, policy);
             Assert.AreEqual(commit.Manifest.GenerationId, verified.Manifest.GenerationId);
             Assert.AreEqual(admission.Digest, verified.Admission.Digest);

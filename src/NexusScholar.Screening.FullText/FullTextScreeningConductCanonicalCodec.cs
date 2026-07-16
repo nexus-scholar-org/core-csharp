@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using NexusScholar.Deduplication;
+using NexusScholar.FullText;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Screening;
@@ -59,7 +60,8 @@ public static class FullTextScreeningConductCanonicalCodec
     }
 
     public static FullTextScreeningConductDecision RehydrateDecision(
-        byte[] bytes, ContentDigest expectedDigest, FullTextScreeningConductHeader header)
+        byte[] bytes, ContentDigest expectedDigest, FullTextScreeningConductHeader header,
+        FullTextExtractionAttempt? extractionAttempt = null)
     {
         var content = Content(bytes, expectedDigest, FullTextScreeningConductSchema.DecisionSchemaId);
         Exact(content,
@@ -71,7 +73,8 @@ public static class FullTextScreeningConductCanonicalCodec
             Actor(Object(content, "actor")), Text(content, "rationale"), Timestamp(content, "decided_at"),
             OptionalText(content, "exclusion_reason_code"), OptionalText(content, "supersedes_decision_digest"),
             OptionalText(content, "resolved_conflict_id"), Digests(content, "source_decision_digests"),
-            Array(content, "evidence").Select(Evidence), extractionAttemptDigest: OptionalDigest(content, "full_text_extraction_attempt_digest"));
+            Array(content, "evidence").Select(Evidence), extractionAttempt: extractionAttempt,
+            extractionAttemptDigest: OptionalDigest(content, "full_text_extraction_attempt_digest"));
         RequireReproduction(bytes, Serialize(decision), decision.Digest, expectedDigest, "Full Text decision");
         return decision;
     }

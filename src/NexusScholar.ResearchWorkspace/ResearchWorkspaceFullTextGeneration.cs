@@ -96,12 +96,38 @@ public static class ResearchWorkspaceFullTextManifestCodec
     {
         if (value.Schema != ResearchWorkspaceFullTextManifest.CurrentSchema || value.ProjectRevision <= 0 || value.Artifacts.Count < 5 ||
             value.Artifacts.Select(item => item.Name).Distinct(StringComparer.Ordinal).Count() != value.Artifacts.Count ||
+            value.Artifacts.Select(item => item.RelativePath).Distinct(StringComparer.Ordinal).Count() != value.Artifacts.Count ||
             (value.PredecessorGenerationId is null) != (value.PredecessorManifestSha256 is null))
             throw new InvalidOperationException("Full Text workspace manifest shape is invalid.");
         foreach (var digest in new[] { value.AdmissionDigest, value.InputDigest, value.AcquisitionDigest, value.ArtifactDigest, value.RawArtifactDigest }
             .Concat(value.ExtractionAttemptDigest is null ? [] : [value.ExtractionAttemptDigest])
             .Concat(value.PredecessorManifestSha256 is null ? [] : [value.PredecessorManifestSha256])
             .Concat(value.Artifacts.Select(item => item.Sha256))) _ = ContentDigest.Parse(digest);
+
+        var artifacts = value.Artifacts.ToDictionary(item => item.Name, StringComparer.Ordinal);
+        RequireArtifactDigest(artifacts, "admission", value.AdmissionDigest);
+        RequireArtifactDigest(artifacts, "input", value.InputDigest);
+        RequireArtifactDigest(artifacts, "acquisition", value.AcquisitionDigest);
+        RequireArtifactDigest(artifacts, "artifact-evidence", value.ArtifactDigest);
+        RequireArtifactDigest(artifacts, "raw-artifact", value.RawArtifactDigest);
+        if (value.ExtractionAttemptDigest is null)
+        {
+            if (artifacts.ContainsKey("extraction-attempt"))
+                throw new InvalidOperationException("Full Text manifest cannot inventory an extraction attempt without its authority digest.");
+        }
+        else
+        {
+            RequireArtifactDigest(artifacts, "extraction-attempt", value.ExtractionAttemptDigest);
+        }
+    }
+
+    private static void RequireArtifactDigest(
+        IReadOnlyDictionary<string, ResearchWorkspaceFullTextArtifact> artifacts,
+        string name,
+        string digest)
+    {
+        if (!artifacts.TryGetValue(name, out var artifact) || !string.Equals(artifact.Sha256, digest, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Full Text manifest artifact '{name}' is missing or does not match its authority digest.");
     }
 
     private static ResearchWorkspaceFullTextArtifact ParseArtifact(CanonicalJsonValue value)
@@ -117,29 +143,18 @@ public static class ResearchWorkspaceFullTextManifestCodec
 
 public static class ResearchWorkspaceFullTextGenerationVerifier
 {
+    public static ResearchWorkspaceFullTextManifest VerifyCurrentIntegrity(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceProject project) => VerifyCurrentFiles(location, project).Manifest;
+
     public static VerifiedResearchWorkspaceFullTextGeneration VerifyCurrent(
         ResearchWorkspaceLocation location, ResearchWorkspaceProject project, ScreeningConductJournal journal,
         ScreeningConductHandoff handoff, long maximumBytes,
         FullTextScreeningConductPolicy? expectedConductPolicy = null)
     {
-        if (project.CurrentFullTextGenerationId is null || project.FullTextManifestPath is null || project.FullTextManifestSha256 is null)
-            throw new InvalidOperationException("The workspace has no current Full Text generation.");
-        var manifestPath = Resolve(location, project.FullTextManifestPath);
-        var manifestBytes = File.ReadAllBytes(manifestPath);
-        if (ContentDigest.Sha256(manifestBytes).ToString() != project.FullTextManifestSha256) throw new InvalidOperationException("Full Text manifest failed pointer digest verification.");
-        var manifest = ResearchWorkspaceFullTextManifestCodec.Rehydrate(manifestBytes);
-        if (manifest.GenerationId != project.CurrentFullTextGenerationId || manifest.WorkspaceId != project.WorkspaceId || manifest.ProjectRevision != project.Revision)
-            throw new InvalidOperationException("Full Text manifest is stale or bound to another workspace.");
-        var bytes = manifest.Artifacts.ToDictionary(item => item.Name, item =>
-        {
-            var payload = File.ReadAllBytes(Resolve(location, item.RelativePath));
-            if (ContentDigest.Sha256(payload).ToString() != item.Sha256) throw new InvalidOperationException($"Full Text artifact '{item.Name}' failed digest verification.");
-            return payload;
-        }, StringComparer.Ordinal);
-        var root = Path.GetDirectoryName(manifestPath)!;
-        var expectedFiles = manifest.Artifacts.Select(item => Path.GetFullPath(Resolve(location, item.RelativePath))).Append(Path.GetFullPath(manifestPath)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (Directory.GetFiles(root, "*", SearchOption.AllDirectories).Any(path => !expectedFiles.Contains(Path.GetFullPath(path))))
-            throw new InvalidOperationException("Full Text generation contains an unmanifested file.");
+        var verifiedFiles = VerifyCurrentFiles(location, project);
+        var manifest = verifiedFiles.Manifest;
+        var bytes = verifiedFiles.Bytes;
         var admission = VerifiedFullTextAdmissionCanonicalCodec.Rehydrate(bytes["admission"], ContentDigest.Parse(manifest.AdmissionDigest), journal, handoff);
         var authority = FullTextAuthorityCanonicalCodec.Rehydrate(bytes["input"], ContentDigest.Parse(manifest.InputDigest), bytes["acquisition"], ContentDigest.Parse(manifest.AcquisitionDigest),
             bytes["artifact-evidence"], ContentDigest.Parse(manifest.ArtifactDigest), bytes["raw-artifact"], maximumBytes);
@@ -175,7 +190,7 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
                 var digest = ContentDigest.Parse(entryArtifacts[index].Sha256);
                 entries.Add(schema switch
                 {
-                    FullTextScreeningConductSchema.DecisionSchemaId => FullTextScreeningConductCanonicalCodec.RehydrateDecision(payload, digest, header),
+                    FullTextScreeningConductSchema.DecisionSchemaId => FullTextScreeningConductCanonicalCodec.RehydrateDecision(payload, digest, header, extraction),
                     FullTextScreeningConductSchema.InvalidationSchemaId => FullTextScreeningConductCanonicalCodec.RehydrateInvalidation(payload, digest, header),
                     _ => throw new InvalidOperationException("Unknown Full Text conduct entry schema.")
                 });
@@ -194,6 +209,35 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
         }
         return new VerifiedResearchWorkspaceFullTextGeneration(manifest, admission, authority, extraction,
             additional, conductJournal, conductHandoff);
+    }
+
+    private static (ResearchWorkspaceFullTextManifest Manifest, IReadOnlyDictionary<string, byte[]> Bytes) VerifyCurrentFiles(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceProject project)
+    {
+        if (project.CurrentFullTextGenerationId is null || project.FullTextManifestPath is null || project.FullTextManifestSha256 is null)
+            throw new InvalidOperationException("The workspace has no current Full Text generation.");
+        var manifestPath = Resolve(location, project.FullTextManifestPath);
+        var manifestBytes = File.ReadAllBytes(manifestPath);
+        if (ContentDigest.Sha256(manifestBytes).ToString() != project.FullTextManifestSha256)
+            throw new InvalidOperationException("Full Text manifest failed pointer digest verification.");
+        var manifest = ResearchWorkspaceFullTextManifestCodec.Rehydrate(manifestBytes);
+        if (manifest.GenerationId != project.CurrentFullTextGenerationId || manifest.WorkspaceId != project.WorkspaceId || manifest.ProjectRevision != project.Revision)
+            throw new InvalidOperationException("Full Text manifest is stale or bound to another workspace.");
+        var bytes = manifest.Artifacts.ToDictionary(item => item.Name, item =>
+        {
+            var payload = File.ReadAllBytes(Resolve(location, item.RelativePath));
+            if (ContentDigest.Sha256(payload).ToString() != item.Sha256)
+                throw new InvalidOperationException($"Full Text artifact '{item.Name}' failed digest verification.");
+            return payload;
+        }, StringComparer.Ordinal);
+        var root = Path.GetDirectoryName(manifestPath)!;
+        var pathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+        var expectedFiles = manifest.Artifacts.Select(item => Path.GetFullPath(Resolve(location, item.RelativePath)))
+            .Append(Path.GetFullPath(manifestPath)).ToHashSet(pathComparer);
+        if (Directory.GetFiles(root, "*", SearchOption.AllDirectories).Any(path => !expectedFiles.Contains(Path.GetFullPath(path))))
+            throw new InvalidOperationException("Full Text generation contains an unmanifested file.");
+        return (manifest, bytes);
     }
 
     private static string Resolve(ResearchWorkspaceLocation location, string relative)
@@ -242,7 +286,8 @@ public static class ResearchWorkspaceFullTextTransaction
                 throw new InvalidOperationException("Additional Full Text record name is invalid or duplicated.");
             records.Add((record.Name, $"{record.Name}.json", record.CanonicalBytes));
         }
-        var stateDigest = ContentDigest.Sha256Utf8(string.Join("|", records.Select(item => $"{item.Name}:{ContentDigest.Sha256(item.Bytes)}")));
+        var stateDigest = ContentDigest.Sha256Utf8(string.Join("|", records.OrderBy(item => item.Name, StringComparer.Ordinal)
+            .Select(item => $"{item.Name}:{ContentDigest.Sha256(item.Bytes)}")));
         var generationId = $"fulltext-{stateDigest.Value[7..23]}";
         if (expectedProject.CurrentFullTextGenerationId == generationId)
         {

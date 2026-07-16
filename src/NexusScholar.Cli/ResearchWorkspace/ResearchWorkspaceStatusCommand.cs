@@ -182,11 +182,10 @@ internal static class ResearchWorkspaceStatusCommand
                 return ("invalid", 1);
             try
             {
-                return ContentDigest.Sha256(File.ReadAllBytes(path)).ToString() == project.FullTextManifestSha256
-                    ? ("present", 0)
-                    : ("invalid", 1);
+                _ = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrentIntegrity(location, project);
+                return ("present", 0);
             }
-            catch (IOException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or JsonException)
             {
                 return ("invalid", 1);
             }

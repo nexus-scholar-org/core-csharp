@@ -430,6 +430,10 @@ public sealed class FullTextScreeningConductDecision : IFullTextScreeningConduct
         var effectiveExtractionAttemptDigest = extractionAttemptDigest ?? extractionAttempt?.Digest;
         if (effectiveExtractionAttemptDigest != header.ExtractionAttemptDigest)
             throw new ScreeningRuleException(FullTextScreeningConductErrorCodes.InvalidAuthorityChain, "Decision extraction evidence must match the policy extraction digest.");
+        if (effectiveExtractionAttemptDigest.HasValue &&
+            (extractionAttempt is null || extractionAttempt.Digest != effectiveExtractionAttemptDigest.Value))
+            throw new ScreeningRuleException(FullTextScreeningConductErrorCodes.InvalidAuthorityChain,
+                "Decision extraction evidence requires the exact verified extraction attempt.");
 
         var evidenceValues = (evidence ?? Array.Empty<ScreeningConductEvidenceRef>()).ToArray();
         var normalizedEvidence = evidenceValues.Distinct().ToList();
@@ -444,15 +448,12 @@ public sealed class FullTextScreeningConductDecision : IFullTextScreeningConduct
                 normalizedEvidence.Add(attemptRef);
         }
 
-        if (effectiveExtractionAttemptDigest.HasValue &&
-            extractionAttempt is not null &&
+        if (extractionAttempt is not null &&
             IsExtractionFailure(extractionAttempt.Status) &&
-            normalizedEvidence.All(item => item.Kind == FullTextScreeningConductEvidenceKinds.FullTextExtractionAttempt))
+            string.Equals(verdict, ScreeningVerdicts.Exclude, StringComparison.Ordinal))
         {
-            if (ScreeningVerdicts.IsKnown(verdict) && verdict == ScreeningVerdicts.Exclude)
-            {
-                throw new ScreeningRuleException(FullTextErrorCodes.ExtractionFailure, "Extraction failure cannot be the only exclusion basis.");
-            }
+            throw new ScreeningRuleException(FullTextErrorCodes.ExtractionFailure,
+                "A failed or unsupported extraction attempt cannot support a final exclusion.");
         }
 
         if (!normalizedEvidence.Any(item =>
