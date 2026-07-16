@@ -11,10 +11,14 @@ try {
     $packageDirectory = Join-Path $root 'artifacts/packages'
     $repeatDirectory = Join-Path $root 'artifacts/packages-repeat'
     $smokePackages = Join-Path $root 'tests/NexusScholar.PackageSmoke/.packages'
+    $smokeBin = Join-Path $root 'tests/NexusScholar.PackageSmoke/bin'
+    $smokeObj = Join-Path $root 'tests/NexusScholar.PackageSmoke/obj'
 
     Remove-Item $packageDirectory -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $repeatDirectory -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $smokePackages -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $smokeBin -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $smokeObj -Recurse -Force -ErrorAction SilentlyContinue
     New-Item $packageDirectory -ItemType Directory -Force | Out-Null
     New-Item $repeatDirectory -ItemType Directory -Force | Out-Null
 

@@ -15,8 +15,8 @@ using NexusScholar.Protocol;
 using NexusScholar.Provenance;
 using NexusScholar.ResearchWorkspace;
 using NexusScholar.Screening;
-using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Screening.FullText;
+using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Search;
 using NexusScholar.Shared;
 using NexusScholar.UiContracts;
@@ -408,7 +408,9 @@ public sealed class DependencyRulesTests
         {
             typeof(IClock).Assembly.GetName().Name,
             typeof(ScreeningConductJournal).Assembly.GetName().Name,
-            typeof(FullTextInput).Assembly.GetName().Name
+            typeof(FullTextInput).Assembly.GetName().Name,
+            typeof(ProtocolVersion).Assembly.GetName().Name,
+            typeof(DeduplicationService).Assembly.GetName().Name
         };
         var disallowed = assembly.GetReferencedAssemblies()
             .Select(reference => reference.Name ?? string.Empty)
