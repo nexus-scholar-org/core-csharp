@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../assets/css/site.css">
 </head>
 <body>
-  <div class="release-status" role="status">Early alpha · 31 source projects · Implemented and planned boundaries are labeled separately</div>
+  <div class="release-status" role="status">Early alpha · 37 source projects · Implemented and planned boundaries are labeled separately</div>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="nav" aria-label="Primary navigation">
@@ -27,17 +27,17 @@
   </header>
   <main id="main" class="page wide">
     <div class="breadcrumbs"><a href="../../">Home</a><span>/</span><a href="../">Developers</a><span>/</span><span>Module atlas</span></div>
-    <p class="eyebrow">Developer reference · protected main <code>805f3d6</code></p>
+    <p class="eyebrow">Developer reference · protected main <code>ea665eb</code></p>
     <h1>Follow authority through the whole system</h1>
     <p class="lede">These guides explain who owns each record, what enters and leaves the boundary, which invariants fail closed, and where application convenience stops. Closely related projects are grouped when they implement one developer concept.</p>
 
     <section class="content-section">
       <h2>Read the repository by responsibility</h2>
       <div class="metric-grid">
-        <article class="metric"><strong>31</strong><span>source projects on protected main</span></article>
-        <article class="metric"><strong>27</strong><span>concept-oriented module guides</span></article>
-        <article class="metric"><strong>23</strong><span>packages in reproducibility smoke</span></article>
-        <article class="metric"><strong>13</strong><span>test projects plus focused fixtures</span></article>
+        <article class="metric"><strong>37</strong><span>source projects on protected main</span></article>
+        <article class="metric"><strong>28</strong><span>concept-oriented module guides</span></article>
+        <article class="metric"><strong>24</strong><span>packages in reproducibility smoke</span></article>
+        <article class="metric"><strong>21</strong><span>test projects plus focused fixtures</span></article>
       </div>
       <div class="callout"><strong>Dependency rule:</strong> domain and scientific-record projects own meaning. Application services, CLI, desktop, renderers, providers, plugins, and model clients may depend inward, but Core never reaches outward to them.</div>
     </section>
@@ -90,10 +90,10 @@
         <p>Each stage cites earlier evidence and adds bounded decisions; it does not rewrite the input history.</p>
       </header>
       <div class="module-grid">
-        <article class="module" data-module-card><div class="tag-row"><span class="tag">Acquisition</span><span class="tag">Implemented local import</span></div><h3>Search</h3><p>Search plans, source files, parsed records, warnings, stable identities, and reproducible import traces.</p><a href="search/">Search guide</a></article>
+        <article class="module" data-module-card><div class="tag-row"><span class="tag">Acquisition</span><span class="tag">FE-09</span></div><h3>Search</h3><p>Local imports, recorded provider parsing, bounded live adapters, credential-safe transport evidence, and policy-specific response caching.</p><a href="search/">Search guide</a></article>
         <article class="module" data-module-card><div class="tag-row"><span class="tag">Review</span><span class="tag">FE-02</span></div><h3>Deduplication</h3><p>Evidence graphs, exact and fuzzy candidates, human merge decisions, corrections, and successor snapshots.</p><a href="deduplication/">Deduplication guide</a></article>
         <article class="module" data-module-card><div class="tag-row"><span class="tag">Human authority</span><span class="tag">FE-04</span></div><h3>Screening</h3><p>Independent title/abstract decisions, criteria binding, conflicts, adjudication, invalidation, and replay.</p><a href="screening/">Screening guide</a></article>
-        <article class="module" data-module-card><div class="tag-row"><span class="tag">Local evidence</span><span class="tag">FE-05</span></div><h3>Full Text</h3><p>No-network intake, exact PDF bytes, derived extraction evidence, decisions, corrections, and verification.</p><a href="fulltext/">Full Text guide</a></article>
+        <article class="module" data-module-card><div class="tag-row"><span class="tag">Evidence</span><span class="tag">FE-05 + FE-09B</span></div><h3>Full Text</h3><p>Local intake plus rights-aware verification of recorded retrieval bytes, derived extraction evidence, decisions, corrections, and verification.</p><a href="fulltext/">Full Text guide</a></article>
         <article class="module" data-module-card><div class="tag-row"><span class="tag">Outputs</span><span class="tag">FE-06</span></div><h3>Reporting</h3><p>Conserved counts, deterministic reports, Rapid Review governance, export ledger, and persisted verification.</p><a href="reporting/">Reporting guide</a></article>
       </div>
     </section>
@@ -108,6 +108,7 @@
         <article class="module" data-module-card><div class="tag-row"><span class="tag">FE-07</span><span class="tag">Implemented</span></div><h3>Extraction</h3><p>Schema-bound fields, exact evidence locations, author and correction lineage, and amendment invalidation.</p><a href="extraction/">Extraction guide</a></article>
         <article class="module" data-module-card><div class="tag-row"><span class="tag">FE-07</span><span class="tag">Implemented</span></div><h3>Appraisal</h3><p>Instrument-bound quality judgments whose evidence, actor, scope, and corrections remain explicit.</p><a href="appraisal/">Appraisal guide</a></article>
         <article class="module" data-module-card><div class="tag-row"><span class="tag">FE-07</span><span class="tag">Plan-only</span></div><h3>Synthesis</h3><p>Deterministic synthesis plans and eligibility bindings without claiming that statistical analysis has run.</p><a href="synthesis/">Synthesis guide</a></article>
+        <article class="module" data-module-card><div class="tag-row"><span class="tag">FE-09C</span><span class="tag">Implemented</span></div><h3>Network</h3><p>Corpus-bound direct-citation snapshots, stable resolved nodes, unresolved targets, evidence-backed edges, and deterministic degree metrics.</p><a href="network/">Network guide</a></article>
       </div>
     </section>
 

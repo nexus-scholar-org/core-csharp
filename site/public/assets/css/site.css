@@ -495,6 +495,11 @@ h3 {
   align-items: start;
 }
 
+.doc-main,
+.doc-aside {
+  min-width: 0;
+}
+
 .doc-main > .content-section:first-of-type {
   margin-top: 2rem;
 }
@@ -548,6 +553,7 @@ h3 {
   border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
   padding: 1rem 1.05rem;
+  overflow-wrap: anywhere;
 }
 
 .doc-card h2,

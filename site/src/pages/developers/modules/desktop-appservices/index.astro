@@ -19,7 +19,7 @@
     </nav>
     <p class="eyebrow">FE-08 product boundary</p>
     <h1>Desktop.AppServices</h1>
-    <p class="lede">The structured command facade between Avalonia and ResearchWorkspace: immutable previews, canonical confirmation tokens, stale-safe execution, authority-aware deduplication review, and read-only Screening readiness.</p>
+    <p class="lede">The structured boundary between Avalonia and ResearchWorkspace: immutable previews, canonical confirmation tokens, stale-safe execution, and authority-checked Deduplication, Screening, Full Text, reporting, and export workflows.</p>
     <div class="doc-shell">
       <div class="doc-main">
         <section class="content-section">
@@ -57,9 +57,10 @@ immutable DesktopWorkspaceCommandPreview
         </section>
 
         <section class="content-section">
-          <h2>Screening authority readiness</h2>
+          <h2>Screening, Full Text, and export workflow facades</h2>
           <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Desktop.AppServices/DesktopScreeningAuthorityFacade.cs"><code>InspectScreeningAuthority</code></a> projects ready, unavailable, stale, invalid, or recovery-required state from the durable ResearchWorkspace package. The desktop sees immutable identifiers and digests, not verified Protocol or Screening domain objects.</p>
-          <p>FE-08 Slice 4 is readiness-only. This facade cannot initialize Screening conduct, submit a Screening decision, complete Workflow work, author a Protocol, or author criteria.</p>
+          <p><code>DesktopScreeningReviewFacade</code> previews and confirms title/abstract decisions. <code>DesktopScreeningResolutionFacade</code> handles correction, adjudication, and handoff closure. <code>DesktopFullTextWorkflowFacade</code> preserves candidate-local intake/review bindings. <code>DesktopReviewExportFacade</code> routes deterministic report, Bundle v2, export-ledger, and verification operations.</p>
+          <p>Each facade returns immutable product contracts while ResearchWorkspace reconstructs and revalidates the exact domain authority before commit. None can author a Protocol or criteria, complete work from display state, or bypass a stale/recovery outcome.</p>
         </section>
 
         <section class="content-section">
@@ -70,14 +71,17 @@ immutable DesktopWorkspaceCommandPreview
             <li><code>DesktopDeduplicationReviewQueue</code>: current policy, actor-role assignments, targets, evidence ids, and active decisions.</li>
             <li><code>DesktopDeduplicationReviewPreview</code>: the complete immutable confirmation material for the one admitted scientific action.</li>
             <li><code>DesktopScreeningAuthorityReadiness</code>: a non-mutating readiness projection with authority ids and digests.</li>
+            <li><code>DesktopScreeningReviewPreview</code> and resolution previews: exact candidate, actor/role, criteria, policy, journal, decision, supersession, and handoff bindings.</li>
+            <li><code>DesktopFullTextIntakePreview</code> and <code>DesktopFullTextReviewPreview</code>: candidate-local artifact, criteria, extraction, conduct, and expected-generation bindings.</li>
+            <li><code>DesktopReviewExportPreview</code>: deterministic report, Bundle v2 inventory, export actor/role, ledger, and replay material.</li>
           </ul>
           <p>Stale means the preview is no longer the command the user reviewed. Recovery-required means the facade cannot safely classify the state as an ordinary validation problem. Neither is rendered as success.</p>
         </section>
 
         <section class="content-section">
           <h2>Tests and accepted evidence</h2>
-          <p><a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/tests/NexusScholar.Desktop.AppServices.Tests">Desktop.AppServices tests</a> cover command previews, changed tokens, changed source bytes, revision drift, result mapping, deduplication queue/preview/commit behavior, actor policy, supersession, and Screening readiness.</p>
-          <p>The product boundary is defined by <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0035-local-product-desktop-shell-and-command-facade.md">ADR 0035</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0036-desktop-human-authorized-deduplication-review.md">ADR 0036</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0037-durable-screening-authority-resolution.md">ADR 0037</a>. See the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/docs/release">FE-08 completion evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/tests/NexusScholar.Desktop.AppServices.Tests">Desktop.AppServices tests</a> cover command previews, token/source/revision drift, deduplication, Screening review and resolution, candidate-specific Full Text routing, report/export actor bindings, and stale/recovery result mapping.</p>
+          <p>The product boundary is defined by <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0035-local-product-desktop-shell-and-command-facade.md">ADR 0035</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0036-desktop-human-authorized-deduplication-review.md">ADR 0036</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0037-durable-screening-authority-resolution.md">ADR 0037</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0038-complete-local-desktop-review-workflow.md">ADR 0038</a>. See the <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-08-REMAINING-SLICES-5-9-EVIDENCE.md">Slices 5–9 completion evidence</a>.</p>
         </section>
 
         <section class="content-section">
@@ -87,13 +91,13 @@ immutable DesktopWorkspaceCommandPreview
 
         <section class="content-section">
           <h2>Explicit nonclaims</h2>
-          <p>No authentication, identity provider, user session authority, Screening mutation, provider/network access, AI, plugin runtime, database, API, cloud, telemetry, or production-security boundary is implemented. A typed facade is not a security sandbox.</p>
+          <p>No authentication, identity provider, user-session authority, provider/network access, Protocol or criteria authoring, AI, plugin runtime, database, API, cloud, telemetry, or production-security boundary is implemented. A typed facade is not a security sandbox.</p>
         </section>
       </div>
       <aside class="doc-aside">
         <section class="doc-card"><h2>At a glance</h2><ul class="link-list">
-          <li>Status: FE-08 slices 1–4</li><li>UI framework: none</li>
-          <li>Scientific action: FE-02 review only</li><li>Screening: readiness only</li>
+          <li>Status: FE-08 slices 1–9</li><li>UI framework: none</li>
+          <li>Scientific action: accepted FE-08 local workflows</li><li>Screening: conduct and resolution</li>
         </ul></section>
         <section class="doc-card"><h2>Related</h2><ul class="link-list">
           <li><a href="../researchworkspace/">ResearchWorkspace</a></li>

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../assets/css/site.css">
 </head>
 <body>
-  <div class="release-status" role="status">Developer reference · Protected-main baseline <code>805f3d6</code></div>
+  <div class="release-status" role="status">Developer reference · Protected-main baseline <code>ea665eb</code></div>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="nav" aria-label="Primary navigation">
@@ -43,7 +43,7 @@
         <span class="flow-arrow" aria-hidden="true">←</span>
         <div class="flow-step"><strong>Application</strong><br>verified orchestration and commands</div>
         <span class="flow-arrow" aria-hidden="true">←</span>
-        <div class="flow-step"><strong>Infrastructure</strong><br>files, CLI, desktop, future providers</div>
+        <div class="flow-step"><strong>Infrastructure</strong><br>files, CLI, desktop, provider adapters</div>
       </div>
       <p>Dependencies point inward. Domain assemblies do not reference EF Core, ASP.NET Core, Avalonia, provider SDKs, storage SDKs, or concrete model clients. UI state, file paths, database rows, and URLs are references or projections—not scientific identity.</p>
       <div class="callout boundary">
@@ -58,6 +58,7 @@
         <article class="feature"><h3>Understand Workflow</h3><p>Separate the immutable compiled DAG from the FE-03 execution state machine.</p><p><a href="modules/workflow/">Compiler guide</a> · <a href="modules/workflow-execution/">Execution guide</a></p></article>
         <article class="feature"><h3>Integrate a workspace</h3><p>Use ResearchWorkspace and AppServices rather than making file paths or UI rows authoritative.</p><p><a href="modules/researchworkspace/">Workspace guide</a> · <a href="modules/appservices/">Application guide</a></p></article>
         <article class="feature"><h3>Build a surface</h3><p>Keep renderer-neutral contracts, desktop orchestration, and scientific modules in their correct layers.</p><p><a href="modules/uicontracts/">UI contracts</a> · <a href="modules/desktop/">Desktop host</a></p></article>
+        <article class="feature"><h3>Integrate acquisition</h3><p>Keep provider transport and cache storage outward while preserving sanitized request, exact-response, parser, rights, and citation evidence.</p><p><a href="modules/search/">Search providers</a> · <a href="modules/fulltext/">Full Text retrieval</a> · <a href="modules/network/">Citation network</a></p></article>
       </div>
     </section>
 
