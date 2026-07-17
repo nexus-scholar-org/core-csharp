@@ -23,6 +23,7 @@ using NexusScholar.Screening.CorpusSnapshots;
 using NexusScholar.Screening.FullText;
 using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Search;
+using NexusScholar.Search.Providers.Crossref;
 using NexusScholar.Shared;
 using NexusScholar.Synthesis;
 using NexusScholar.UiContracts;
@@ -289,6 +290,81 @@ public sealed class DependencyRulesTests
             0,
             disallowed.Length,
             $"NexusScholar.Search must depend only on Kernel and Shared inside the domain. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void Crossref_adapter_is_outward_nonpackable_and_cannot_become_a_search_dependency()
+    {
+        var adapterAssembly = typeof(CrossrefRecordedResponseAdapter).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(SearchTrace).Assembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name
+        };
+        var disallowed = adapterAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(0, disallowed.Length,
+            $"Crossref adapter has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
+        Assert.IsFalse(
+            typeof(SearchTrace).Assembly.GetReferencedAssemblies()
+                .Any(reference => string.Equals(reference.Name, adapterAssembly.GetName().Name, StringComparison.Ordinal)),
+            "NexusScholar.Search must not reference an outward provider adapter.");
+
+        var projectPath = Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "NexusScholar.Search.Providers.Crossref",
+            "NexusScholar.Search.Providers.Crossref.csproj");
+        var projectText = File.ReadAllText(projectPath);
+        StringAssert.Contains(projectText, "<IsPackable>false</IsPackable>");
+
+        var sourceRoot = Path.GetDirectoryName(projectPath)!;
+        var source = string.Join(
+            "\n",
+            Directory.EnumerateFiles(sourceRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
+                    !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                .Select(File.ReadAllText));
+        var forbiddenPrimitives = new[]
+        {
+            "HttpClient",
+            "HttpRequestMessage",
+            "System.Net.Http",
+            "File.",
+            "Directory.",
+            "DateTime.Now",
+            "DateTimeOffset.Now",
+            "Thread.Sleep",
+            "Task.Delay",
+            "Environment.",
+            "ILogger"
+        };
+        Assert.AreEqual(
+            0,
+            forbiddenPrimitives.Count(source.Contains),
+            "FE-09A Crossref adapter must not contain transport, filesystem, wall-clock, sleep, environment, or logging primitives.");
+
+        var credentialNames = new[] { "credential", "password", "apiKey", "authorization", "contactEmail", "token", "secret" };
+        var evidenceTypes = new[]
+        {
+            typeof(ProviderAcquisitionRequest),
+            typeof(ProviderPageRequest),
+            typeof(RecordedProviderFixtureEvidence),
+            typeof(ProviderRawResponseEvidence),
+            typeof(ProviderAttemptEvidence),
+            typeof(ProviderPageResult)
+        };
+        var credentialProperties = evidenceTypes
+            .SelectMany(type => type.GetProperties().Select(property => $"{type.Name}.{property.Name}"))
+            .Where(name => credentialNames.Any(term => name.Contains(term, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        Assert.AreEqual(0, credentialProperties.Length,
+            $"Provider evidence contracts contain credential-shaped properties: {string.Join(", ", credentialProperties)}");
     }
 
     [TestMethod]

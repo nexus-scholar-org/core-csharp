@@ -10,6 +10,7 @@
     <Project Path="src/NexusScholar.Provenance/NexusScholar.Provenance.csproj" />
     <Project Path="src/NexusScholar.Shared/NexusScholar.Shared.csproj" />
     <Project Path="src/NexusScholar.Search/NexusScholar.Search.csproj" />
+    <Project Path="src/NexusScholar.Search.Providers.Crossref/NexusScholar.Search.Providers.Crossref.csproj" />
     <Project Path="src/NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
     <Project Path="src/NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
     <Project Path="src/NexusScholar.Screening/NexusScholar.Screening.csproj" />
@@ -49,5 +50,6 @@
     <Project Path="tests/NexusScholar.Desktop.Preview.Tests/NexusScholar.Desktop.Preview.Tests.csproj" />
     <Project Path="tests/NexusScholar.Desktop.Tests/NexusScholar.Desktop.Tests.csproj" />
     <Project Path="tests/NexusScholar.Desktop.AppServices.Tests/NexusScholar.Desktop.AppServices.Tests.csproj" />
+    <Project Path="tests/NexusScholar.Search.Providers.Crossref.Tests/NexusScholar.Search.Providers.Crossref.Tests.csproj" />
   </Folder>
 </Solution>

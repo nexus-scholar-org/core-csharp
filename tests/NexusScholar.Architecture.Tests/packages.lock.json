@@ -528,6 +528,13 @@
           "NexusScholar.Shared": "[0.1.0-alpha.2, )"
         }
       },
+      "nexusscholar.search.providers.crossref": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
+        }
+      },
       "nexusscholar.shared": {
         "type": "Project",
         "dependencies": {

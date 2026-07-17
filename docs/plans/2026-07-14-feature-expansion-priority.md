@@ -2,12 +2,11 @@
 
 Status: active successor roadmap after Hardening 30.
 
-Current state: FE-01 through FE-07 and FE-08 slices 1 through 5 are complete locally.
-FE-08 Slice 6 is the next implementation slice under ADR 0038 and the accepted
-remaining-slices gate
-until its own ADR and gate are accepted.
-FE-09 through FE-12 remain sequenced future work and are not implementation-
-authorized by this roadmap.
+Current state: FE-01 through FE-08 are complete locally. FE-09A's retained-local-
+fixture contract and Crossref normalization adapter are complete locally under
+ADR 0039; hosted CI and merge remain pending on a stacked branch. Remaining
+FE-09 slices and FE-10 through FE-12 are sequenced future work and are not
+implementation-ready unless their stated prerequisites are accepted.
 
 ## Operating Decision
 
@@ -841,9 +840,10 @@ become compatibility obligations.
 
 ## Immediate Next Gate
 
-FE-08 Slice 5 local title/abstract Screening is complete under ADR 0038. Slice 6
-continues with correction, adjudication, and handoff over exact supersession and
-conflict authority under the accepted remaining-slices gate.
+Close FE-08 and the stacked FE-09A retained-fixture branch through hosted CI and
+merge. Live provider transport remains blocked until FE-09D accepts legal,
+network, credential, contact-identity, retry, and host policy and a successor
+FE-09A gate admits the concrete transport.
 
 ## Verification Baseline
 

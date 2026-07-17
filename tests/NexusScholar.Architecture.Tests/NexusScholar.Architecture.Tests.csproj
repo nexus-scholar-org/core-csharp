@@ -20,6 +20,7 @@
     <ProjectReference Include="../../src/NexusScholar.Provenance/NexusScholar.Provenance.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Shared/NexusScholar.Shared.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Search/NexusScholar.Search.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.Search.Providers.Crossref/NexusScholar.Search.Providers.Crossref.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Deduplication/NexusScholar.Deduplication.csproj" />
     <ProjectReference Include="../../src/NexusScholar.CorpusSnapshots/NexusScholar.CorpusSnapshots.csproj" />
     <ProjectReference Include="../../src/NexusScholar.Screening/NexusScholar.Screening.csproj" />
