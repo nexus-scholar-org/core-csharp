@@ -153,6 +153,39 @@ public static class ResearchWorkspaceStore
             throw new JsonException("Full Text generation pointer is incomplete or invalid.");
         }
 
+        if (project.FullTextCases is not null)
+        {
+            foreach (var item in project.FullTextCases)
+            {
+                if (string.IsNullOrWhiteSpace(item.Key) ||
+                    !IsSafeIdentifier(item.Value.GenerationId) ||
+                    !IsWorkspaceRelative(item.Value.ManifestPath) ||
+                    !TryValidateRawDigest(item.Value.ManifestSha256))
+                {
+                    throw new JsonException("A per-candidate Full Text generation pointer is invalid.");
+                }
+            }
+
+            if (project.CurrentFullTextGenerationId is not null &&
+                !project.FullTextCases.Values.Any(item =>
+                    item.GenerationId == project.CurrentFullTextGenerationId &&
+                    item.ManifestPath == project.FullTextManifestPath &&
+                    item.ManifestSha256 == project.FullTextManifestSha256))
+            {
+                throw new JsonException("The latest Full Text pointer must be represented in the per-candidate index.");
+            }
+        }
+
+        if ((project.CurrentReportingWorkflowGenerationId is null) != (project.ReportingWorkflowManifestPath is null) ||
+            (project.CurrentReportingWorkflowGenerationId is null) != (project.ReportingWorkflowManifestSha256 is null) ||
+            project.CurrentReportingWorkflowGenerationId is not null &&
+            (!IsSafeIdentifier(project.CurrentReportingWorkflowGenerationId) ||
+             !IsWorkspaceRelative(project.ReportingWorkflowManifestPath!) ||
+             !TryValidateRawDigest(project.ReportingWorkflowManifestSha256!)))
+        {
+            throw new JsonException("Reporting Workflow generation pointer is incomplete or invalid.");
+        }
+
         if (project.CurrentAuthorityGenerationId is not null &&
             (!IsSafeIdentifier(project.CurrentAuthorityGenerationId) ||
             !IsWorkspaceRelative(project.AuthorityGenerationManifestPath!) ||

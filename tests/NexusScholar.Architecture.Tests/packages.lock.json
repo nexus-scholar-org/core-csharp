@@ -436,6 +436,13 @@
       "nexusscholar.kernel": {
         "type": "Project"
       },
+      "nexusscholar.network": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
+        }
+      },
       "nexusscholar.protocol": {
         "type": "Project",
         "dependencies": {
@@ -475,6 +482,7 @@
           "NexusScholar.Provenance": "[0.1.0-alpha.2, )",
           "NexusScholar.Reporting": "[0.1.0-alpha.2, )",
           "NexusScholar.Screening": "[0.1.0-alpha.2, )",
+          "NexusScholar.Screening.CorpusSnapshots": "[0.1.0-alpha.2, )",
           "NexusScholar.Screening.FullText": "[0.1.0-alpha.2, )",
           "NexusScholar.Screening.WorkflowExecution": "[0.1.0-alpha.2, )",
           "NexusScholar.Search": "[0.1.0-alpha.2, )",
@@ -524,6 +532,42 @@
         "type": "Project",
         "dependencies": {
           "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.search.providers.cache": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Search": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.search.providers.crossref": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.search.providers.live": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Kernel": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.search.providers.openalex": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search.Providers.Live": "[0.1.0-alpha.2, )",
+          "NexusScholar.Shared": "[0.1.0-alpha.2, )"
+        }
+      },
+      "nexusscholar.search.providers.semanticscholar": {
+        "type": "Project",
+        "dependencies": {
+          "NexusScholar.Search": "[0.1.0-alpha.2, )",
+          "NexusScholar.Search.Providers.Live": "[0.1.0-alpha.2, )",
           "NexusScholar.Shared": "[0.1.0-alpha.2, )"
         }
       },

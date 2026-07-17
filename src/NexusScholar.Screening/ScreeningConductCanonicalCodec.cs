@@ -6,6 +6,21 @@ using NexusScholar.Protocol;
 
 namespace NexusScholar.Screening;
 
+public sealed record ScreeningConductPolicyMaterial(
+    string PolicyId,
+    string CandidateSetId,
+    ContentDigest CandidateSetDigest,
+    string CriteriaId,
+    ContentDigest CriteriaDigest,
+    string ProtocolVersionId,
+    ContentDigest ProtocolContentDigest,
+    int RequiredReviewCount,
+    IReadOnlyList<ScreeningConductRoleAssignment> Assignments,
+    IReadOnlyList<string> AdjudicatorRoles,
+    IReadOnlyList<ScreeningExclusionReason> ExclusionReasons,
+    ScreeningConductActor ApprovedBy,
+    DateTimeOffset ApprovedAt);
+
 public static class ScreeningConductCanonicalCodec
 {
     public static byte[] Serialize(ScreeningConductPolicy policy) =>
@@ -30,6 +45,19 @@ public static class ScreeningConductCanonicalCodec
         VerifiedProtocolVersion protocol,
         ScreeningCriteria criteria)
     {
+        var material = ReadPolicyMaterial(bytes, expectedDigest);
+        var policy = ScreeningConductPolicy.Create(
+            material.PolicyId, material.CandidateSetId, deduplication, protocol, criteria,
+            material.RequiredReviewCount, material.Assignments, material.AdjudicatorRoles,
+            material.ExclusionReasons, material.ApprovedBy, material.ApprovedAt);
+        RequireReproduction(bytes, policy.Digest, expectedDigest, Serialize(policy), "Screening conduct policy");
+        return policy;
+    }
+
+    public static ScreeningConductPolicyMaterial ReadPolicyMaterial(
+        byte[] bytes,
+        ContentDigest expectedDigest)
+    {
         var content = ParseEnvelope(bytes, expectedDigest, ScreeningConductPolicy.SchemaId);
         RequireExact(content,
         [
@@ -37,15 +65,20 @@ public static class ScreeningConductCanonicalCodec
             "criteria_digest", "criteria_id", "exclusion_reasons", "policy_id", "protocol_content_digest",
             "protocol_version_id", "required_review_count"
         ]);
-        var policy = ScreeningConductPolicy.Create(
-            Text(content, "policy_id"), Text(content, "candidate_set_id"), deduplication, protocol, criteria,
+        return new ScreeningConductPolicyMaterial(
+            Text(content, "policy_id"),
+            Text(content, "candidate_set_id"),
+            Digest(content, "candidate_set_digest"),
+            Text(content, "criteria_id"),
+            Digest(content, "criteria_digest"),
+            Text(content, "protocol_version_id"),
+            Digest(content, "protocol_content_digest"),
             Integer(content, "required_review_count"),
-            Array(content, "assignments").Select(ParseAssignment),
-            Array(content, "adjudicator_roles").Select(Text),
-            Array(content, "exclusion_reasons").Select(ParseReason),
-            ParseActor(Object(content, "approved_by")), Timestamp(content, "approved_at"));
-        RequireReproduction(bytes, policy.Digest, expectedDigest, Serialize(policy), "Screening conduct policy");
-        return policy;
+            Array(content, "assignments").Select(ParseAssignment).ToArray(),
+            Array(content, "adjudicator_roles").Select(Text).ToArray(),
+            Array(content, "exclusion_reasons").Select(ParseReason).ToArray(),
+            ParseActor(Object(content, "approved_by")),
+            Timestamp(content, "approved_at"));
     }
 
     public static ScreeningConductPolicy RehydratePolicy(
@@ -136,8 +169,33 @@ public static class ScreeningConductCanonicalCodec
         ScreeningConductJournal journal)
     {
         var content = ParseEnvelope(bytes, expectedDigest, ScreeningConductHandoff.SchemaId);
-        RequireExact(content, ["conduct_id", "created_at", "handoff_id", "journal_head_digest", "outcomes", "policy_digest"]);
-        var handoff = ScreeningConductHandoff.Create(Text(content, "handoff_id"), journal, Timestamp(content, "created_at"));
+        var hasPublicationEvidence = content.Properties.ContainsKey("published_by");
+        ScreeningConductHandoff handoff;
+        if (hasPublicationEvidence)
+        {
+            RequireExact(content,
+            [
+                "conduct_id", "confirmation_material_digest", "created_at", "handoff_id",
+                "journal_head_digest", "outcomes", "policy_digest", "published_by", "rationale"
+            ]);
+            handoff = ScreeningConductHandoff.Create(
+                Text(content, "handoff_id"),
+                journal,
+                ParseActor(Object(content, "published_by")),
+                Text(content, "rationale"),
+                Digest(content, "confirmation_material_digest"),
+                Timestamp(content, "created_at"));
+        }
+        else
+        {
+            RequireExact(content,
+            [
+                "conduct_id", "created_at", "handoff_id", "journal_head_digest",
+                "outcomes", "policy_digest"
+            ]);
+            handoff = ScreeningConductHandoff.Create(
+                Text(content, "handoff_id"), journal, Timestamp(content, "created_at"));
+        }
         RequireReproduction(bytes, handoff.Digest, expectedDigest, Serialize(handoff), "Screening conduct handoff");
         return handoff;
     }

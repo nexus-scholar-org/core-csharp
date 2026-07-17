@@ -70,6 +70,12 @@ public sealed class VerifiedReviewWorkspaceCut
     public IReadOnlyList<ReviewGenerationBinding> Generations { get; }
     public ContentDigest Digest { get; }
 
+    public static VerifiedReviewWorkspaceCut FromVerifiedGenerations(
+        string workspaceId,
+        long projectRevision,
+        IEnumerable<ReviewGenerationBinding> generations) =>
+        new(workspaceId, projectRevision, generations);
+
     internal DigestEnvelope Envelope() => new(DigestScope.CanonicalJsonRecord, ReportingSchemas.SliceBindingId, ReportingSchemas.Version,
         new CanonicalJsonObject().Add("workspace_id", WorkspaceId).Add("project_revision", ProjectRevision)
             .Add("generations", CanonicalJsonValue.Array(Generations.Select(item =>

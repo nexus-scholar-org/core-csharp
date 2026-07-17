@@ -1,7 +1,9 @@
 using System.Text.Json;
 using NexusScholar.AppServices;
+using NexusScholar.Deduplication;
 using NexusScholar.FullText;
 using NexusScholar.Kernel;
+using NexusScholar.Protocol;
 using NexusScholar.Screening;
 using NexusScholar.Screening.FullText;
 
@@ -147,12 +149,34 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
         ResearchWorkspaceLocation location,
         ResearchWorkspaceProject project) => VerifyCurrentFiles(location, project).Manifest;
 
+    public static ResearchWorkspaceFullTextManifest VerifyCandidateIntegrity(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceProject project,
+        string candidateId) => VerifyCurrentFiles(location, project, candidateId).Manifest;
+
     public static VerifiedResearchWorkspaceFullTextGeneration VerifyCurrent(
         ResearchWorkspaceLocation location, ResearchWorkspaceProject project, ScreeningConductJournal journal,
         ScreeningConductHandoff handoff, long maximumBytes,
-        FullTextScreeningConductPolicy? expectedConductPolicy = null)
+        FullTextScreeningConductPolicy? expectedConductPolicy = null,
+        VerifiedDeduplicationResult? deduplication = null,
+        VerifiedProtocolVersion? protocol = null)
     {
-        var verifiedFiles = VerifyCurrentFiles(location, project);
+        if (project.CurrentFullTextGenerationId is null)
+            throw new InvalidOperationException("The workspace has no current Full Text generation.");
+        var candidateId = project.FullTextCases?.SingleOrDefault(item =>
+            item.Value.GenerationId == project.CurrentFullTextGenerationId).Key;
+        return VerifyCurrent(location, project, candidateId, journal, handoff, maximumBytes,
+            expectedConductPolicy, deduplication, protocol);
+    }
+
+    public static VerifiedResearchWorkspaceFullTextGeneration VerifyCurrent(
+        ResearchWorkspaceLocation location, ResearchWorkspaceProject project, string? candidateId,
+        ScreeningConductJournal journal, ScreeningConductHandoff handoff, long maximumBytes,
+        FullTextScreeningConductPolicy? expectedConductPolicy = null,
+        VerifiedDeduplicationResult? deduplication = null,
+        VerifiedProtocolVersion? protocol = null)
+    {
+        var verifiedFiles = VerifyCurrentFiles(location, project, candidateId);
         var manifest = verifiedFiles.Manifest;
         var bytes = verifiedFiles.Bytes;
         var admission = VerifiedFullTextAdmissionCanonicalCodec.Rehydrate(bytes["admission"], ContentDigest.Parse(manifest.AdmissionDigest), journal, handoff);
@@ -169,11 +193,30 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
         FullTextScreeningConductHandoff? conductHandoff = null;
         if (additional.Count > 0)
         {
-            if (expectedConductPolicy is null || !additional.ContainsKey("conduct-policy") || !additional.ContainsKey("conduct-header"))
-                throw new InvalidOperationException("Full Text conduct records require the exact verified conduct policy and header.");
+            if (!additional.ContainsKey("conduct-policy") || !additional.ContainsKey("conduct-header"))
+                throw new InvalidOperationException("Full Text conduct records require the exact conduct policy and header.");
             var policyArtifact = manifest.Artifacts.Single(item => item.Name == "conduct-policy");
-            var policy = FullTextScreeningConductCanonicalCodec.RehydratePolicy(
-                additional["conduct-policy"], ContentDigest.Parse(policyArtifact.Sha256), expectedConductPolicy);
+            FullTextScreeningConductPolicy policy;
+            if (expectedConductPolicy is not null)
+            {
+                policy = FullTextScreeningConductCanonicalCodec.RehydratePolicy(
+                    additional["conduct-policy"], ContentDigest.Parse(policyArtifact.Sha256), expectedConductPolicy);
+            }
+            else
+            {
+                if (deduplication is null || protocol is null || !additional.TryGetValue("criteria", out var criteriaBytes))
+                    throw new InvalidOperationException(
+                        "Independent Full Text conduct replay requires persisted criteria and verified Deduplication and Protocol authority.");
+                using var policyDocument = JsonDocument.Parse(additional["conduct-policy"]);
+                var expectedCriteriaDigest = ContentDigest.Parse(policyDocument.RootElement
+                    .GetProperty("content").GetProperty("criteria_digest").GetString()!);
+                var criteria = ScreeningCriteriaCanonicalCodec.Rehydrate(
+                    criteriaBytes, expectedCriteriaDigest, protocol);
+                policy = FullTextScreeningConductCanonicalCodec.RehydratePolicy(
+                    additional["conduct-policy"], ContentDigest.Parse(policyArtifact.Sha256),
+                    deduplication, protocol, criteria, admission,
+                    ContentDigest.Parse(authority.Artifact.RawByteDigest), extraction?.Digest);
+            }
             var headerArtifact = manifest.Artifacts.Single(item => item.Name == "conduct-header");
             var header = FullTextScreeningConductCanonicalCodec.RehydrateHeader(
                 additional["conduct-header"], ContentDigest.Parse(headerArtifact.Sha256), policy);
@@ -203,6 +246,7 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
                     conductHandoffBytes, ContentDigest.Parse(handoffArtifact.Sha256), conductJournal);
             }
             var allowedConduct = entryArtifacts.Select(item => item.Name).Append("conduct-policy").Append("conduct-header")
+                .Append("criteria")
                 .Concat(conductHandoff is null ? [] : ["conduct-handoff"]).ToHashSet(StringComparer.Ordinal);
             if (additional.Keys.Any(key => !allowedConduct.Contains(key)))
                 throw new InvalidOperationException("Full Text generation contains an unknown conduct record.");
@@ -213,25 +257,42 @@ public static class ResearchWorkspaceFullTextGenerationVerifier
 
     private static (ResearchWorkspaceFullTextManifest Manifest, IReadOnlyDictionary<string, byte[]> Bytes) VerifyCurrentFiles(
         ResearchWorkspaceLocation location,
-        ResearchWorkspaceProject project)
+        ResearchWorkspaceProject project,
+        string? candidateId = null)
     {
-        if (project.CurrentFullTextGenerationId is null || project.FullTextManifestPath is null || project.FullTextManifestSha256 is null)
+        var pointer = candidateId is not null && project.FullTextCases?.TryGetValue(candidateId, out var candidatePointer) == true
+            ? candidatePointer
+            : project.CurrentFullTextGenerationId is not null && project.FullTextManifestPath is not null && project.FullTextManifestSha256 is not null
+                ? new ResearchWorkspaceFullTextPointer(project.CurrentFullTextGenerationId, project.FullTextManifestPath, project.FullTextManifestSha256)
+                : null;
+        if (pointer is null)
             throw new InvalidOperationException("The workspace has no current Full Text generation.");
-        var manifestPath = Resolve(location, project.FullTextManifestPath);
+        var manifestPath = Resolve(location, pointer.ManifestPath);
         var manifestBytes = File.ReadAllBytes(manifestPath);
-        if (ContentDigest.Sha256(manifestBytes).ToString() != project.FullTextManifestSha256)
+        if (ContentDigest.Sha256(manifestBytes).ToString() != pointer.ManifestSha256)
             throw new InvalidOperationException("Full Text manifest failed pointer digest verification.");
         var manifest = ResearchWorkspaceFullTextManifestCodec.Rehydrate(manifestBytes);
-        if (manifest.GenerationId != project.CurrentFullTextGenerationId || manifest.WorkspaceId != project.WorkspaceId || manifest.ProjectRevision != project.Revision)
+        if (manifest.GenerationId != pointer.GenerationId || manifest.WorkspaceId != project.WorkspaceId ||
+            manifest.ProjectRevision > project.Revision ||
+            candidateId is not null && manifest.CandidateId != candidateId)
             throw new InvalidOperationException("Full Text manifest is stale or bound to another workspace.");
+        var root = Path.GetDirectoryName(manifestPath)!;
+        var rootPrefix = Path.GetFullPath(root).TrimEnd(
+            Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var pathComparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
         var bytes = manifest.Artifacts.ToDictionary(item => item.Name, item =>
         {
-            var payload = File.ReadAllBytes(Resolve(location, item.RelativePath));
+            var artifactPath = Path.GetFullPath(Resolve(location, item.RelativePath));
+            if (!artifactPath.StartsWith(rootPrefix, pathComparison))
+                throw new InvalidOperationException(
+                    $"Full Text artifact '{item.Name}' is outside its generation root.");
+            var payload = File.ReadAllBytes(artifactPath);
             if (ContentDigest.Sha256(payload).ToString() != item.Sha256)
                 throw new InvalidOperationException($"Full Text artifact '{item.Name}' failed digest verification.");
             return payload;
         }, StringComparer.Ordinal);
-        var root = Path.GetDirectoryName(manifestPath)!;
         var pathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         var expectedFiles = manifest.Artifacts.Select(item => Path.GetFullPath(Resolve(location, item.RelativePath)))
             .Append(Path.GetFullPath(manifestPath)).ToHashSet(pathComparer);
@@ -289,9 +350,12 @@ public static class ResearchWorkspaceFullTextTransaction
         var stateDigest = ContentDigest.Sha256Utf8(string.Join("|", records.OrderBy(item => item.Name, StringComparer.Ordinal)
             .Select(item => $"{item.Name}:{ContentDigest.Sha256(item.Bytes)}")));
         var generationId = $"fulltext-{stateDigest.Value[7..23]}";
-        if (expectedProject.CurrentFullTextGenerationId == generationId)
+        var predecessor = expectedProject.FullTextCases?.GetValueOrDefault(admission.CandidateId);
+        if (predecessor?.GenerationId == generationId ||
+            predecessor is null && expectedProject.CurrentFullTextGenerationId == generationId)
         {
-            var current = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(location, expectedProject, journal, handoff, maximumBytes, conductPolicy);
+            var current = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(
+                location, expectedProject, admission.CandidateId, journal, handoff, maximumBytes, conductPolicy);
             return new ResearchWorkspaceFullTextCommit(expectedProject, current.Manifest, true);
         }
         var relativeRoot = ResearchWorkspacePaths.FullTextGenerationRoot(admission.CandidateId, generationId);
@@ -307,18 +371,24 @@ public static class ResearchWorkspaceFullTextTransaction
             }).OrderBy(item => item.Name, StringComparer.Ordinal).ToArray();
             var manifestPath = $"{relativeRoot}/fulltext.manifest.json";
             var placeholder = "sha256:" + new string('0', 64);
-            var committed = expectedProject.CommitFullTextGeneration(generationId, manifestPath, placeholder);
+            var committed = expectedProject.CommitFullTextGeneration(admission.CandidateId, generationId, manifestPath, placeholder);
             var manifest = new ResearchWorkspaceFullTextManifest(ResearchWorkspaceFullTextManifest.CurrentSchema, generationId, expectedProject.WorkspaceId, committed.Revision,
                 admission.CandidateId, admission.Digest.ToString(), ContentDigest.Sha256(inputBytes).ToString(), ContentDigest.Sha256(acquisitionBytes).ToString(), ContentDigest.Sha256(artifactBytes).ToString(),
-                authority.Artifact.RawByteDigest, extractionAttempt?.Digest.ToString(), expectedProject.CurrentFullTextGenerationId, expectedProject.FullTextManifestSha256, artifacts);
+                authority.Artifact.RawByteDigest, extractionAttempt?.Digest.ToString(), predecessor?.GenerationId, predecessor?.ManifestSha256, artifacts);
             var manifestBytes = ResearchWorkspaceFullTextManifestCodec.Serialize(manifest);
-            committed = committed with { FullTextManifestSha256 = ContentDigest.Sha256(manifestBytes).ToString() };
+            var manifestDigest = ContentDigest.Sha256(manifestBytes).ToString();
+            var cases = new Dictionary<string, ResearchWorkspaceFullTextPointer>(committed.FullTextCases!, StringComparer.Ordinal)
+            {
+                [admission.CandidateId] = new(generationId, manifestPath, manifestDigest)
+            };
+            committed = committed with { FullTextManifestSha256 = manifestDigest, FullTextCases = cases };
             File.WriteAllBytes(Path.Combine(stagingRoot, "fulltext.manifest.json"), manifestBytes);
             faultInjector?.Invoke(ResearchWorkspaceAuthorityFaultPoint.AfterStaging);
             Directory.CreateDirectory(Path.GetDirectoryName(finalRoot)!);
             using var workspaceLock = new FileStream(Path.Combine(location.RootDirectory, ResearchWorkspacePaths.ProjectLockFileName), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             var currentProject = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
-            if (currentProject.Revision != expectedProject.Revision || currentProject.CurrentFullTextGenerationId != expectedProject.CurrentFullTextGenerationId || currentProject.FullTextManifestSha256 != expectedProject.FullTextManifestSha256)
+            if (currentProject.Revision != expectedProject.Revision ||
+                !Equals(currentProject.FullTextCases?.GetValueOrDefault(admission.CandidateId), predecessor))
                 throw new ResearchWorkspaceConcurrencyException(expectedProject.Revision, currentProject.Revision);
             try
             {
@@ -337,7 +407,8 @@ public static class ResearchWorkspaceFullTextTransaction
                 }
                 throw;
             }
-            _ = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(location, committed, journal, handoff, maximumBytes, conductPolicy);
+            _ = ResearchWorkspaceFullTextGenerationVerifier.VerifyCurrent(
+                location, committed, admission.CandidateId, journal, handoff, maximumBytes, conductPolicy);
             return new ResearchWorkspaceFullTextCommit(committed, manifest, false);
         }
         finally

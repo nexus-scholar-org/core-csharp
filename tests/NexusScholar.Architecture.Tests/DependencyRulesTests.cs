@@ -14,6 +14,7 @@ using NexusScholar.Extensibility;
 using NexusScholar.Extraction;
 using NexusScholar.FullText;
 using NexusScholar.Kernel;
+using NexusScholar.Network;
 using NexusScholar.Protocol;
 using NexusScholar.Provenance;
 using NexusScholar.Reporting;
@@ -23,6 +24,11 @@ using NexusScholar.Screening.CorpusSnapshots;
 using NexusScholar.Screening.FullText;
 using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.Search;
+using NexusScholar.Search.Providers.Cache;
+using NexusScholar.Search.Providers.Crossref;
+using NexusScholar.Search.Providers.Live;
+using NexusScholar.Search.Providers.OpenAlex;
+using NexusScholar.Search.Providers.SemanticScholar;
 using NexusScholar.Shared;
 using NexusScholar.Synthesis;
 using NexusScholar.UiContracts;
@@ -69,6 +75,7 @@ public sealed class DependencyRulesTests
             typeof(SearchTrace).Assembly,
             typeof(ScreeningService).Assembly,
             typeof(FullTextInput).Assembly,
+            typeof(CitationNetworkSnapshot).Assembly,
             typeof(ReviewBundleManifest).Assembly,
             typeof(ExtensionManifest).Assembly,
             typeof(AiTaskPolicy).Assembly,
@@ -88,6 +95,27 @@ public sealed class DependencyRulesTests
                 forbidden.Length,
                 $"{assembly.GetName().Name} has forbidden references: {string.Join(", ", forbidden)}");
         }
+    }
+
+    [TestMethod]
+    public void Network_project_depends_only_on_kernel_and_shared()
+    {
+        var assembly = typeof(CitationNetworkSnapshot).Assembly;
+        var allowed = new[]
+        {
+            typeof(ContentDigest).Assembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name
+        };
+        var disallowed = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(
+            0,
+            disallowed.Length,
+            $"NexusScholar.Network has disallowed dependencies: {string.Join(", ", disallowed)}");
     }
 
     [TestMethod]
@@ -289,6 +317,185 @@ public sealed class DependencyRulesTests
             0,
             disallowed.Length,
             $"NexusScholar.Search must depend only on Kernel and Shared inside the domain. Found: {string.Join(", ", disallowed)}");
+    }
+
+    [TestMethod]
+    public void Crossref_adapter_is_outward_nonpackable_and_cannot_become_a_search_dependency()
+    {
+        var adapterAssembly = typeof(CrossrefRecordedResponseAdapter).Assembly;
+        var allowed = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            typeof(SearchTrace).Assembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name
+        };
+        var disallowed = adapterAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+
+        Assert.AreEqual(0, disallowed.Length,
+            $"Crossref adapter has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
+        Assert.IsFalse(
+            typeof(SearchTrace).Assembly.GetReferencedAssemblies()
+                .Any(reference => string.Equals(reference.Name, adapterAssembly.GetName().Name, StringComparison.Ordinal)),
+            "NexusScholar.Search must not reference an outward provider adapter.");
+
+        var projectPath = Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "NexusScholar.Search.Providers.Crossref",
+            "NexusScholar.Search.Providers.Crossref.csproj");
+        var projectText = File.ReadAllText(projectPath);
+        StringAssert.Contains(projectText, "<IsPackable>false</IsPackable>");
+
+        var sourceRoot = Path.GetDirectoryName(projectPath)!;
+        var source = string.Join(
+            "\n",
+            Directory.EnumerateFiles(sourceRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
+                    !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal))
+                .Select(File.ReadAllText));
+        var forbiddenPrimitives = new[]
+        {
+            "HttpClient",
+            "HttpRequestMessage",
+            "System.Net.Http",
+            "File.",
+            "Directory.",
+            "DateTime.Now",
+            "DateTimeOffset.Now",
+            "Thread.Sleep",
+            "Task.Delay",
+            "Environment.",
+            "ILogger"
+        };
+        Assert.AreEqual(
+            0,
+            forbiddenPrimitives.Count(source.Contains),
+            "FE-09A Crossref adapter must not contain transport, filesystem, wall-clock, sleep, environment, or logging primitives.");
+
+        var credentialNames = new[] { "credential", "password", "apiKey", "authorization", "contactEmail", "token", "secret" };
+        var evidenceTypes = new[]
+        {
+            typeof(ProviderAcquisitionRequest),
+            typeof(ProviderPageRequest),
+            typeof(RecordedProviderFixtureEvidence),
+            typeof(ProviderRawResponseEvidence),
+            typeof(ProviderAttemptEvidence),
+            typeof(ProviderPageResult)
+        };
+        var credentialProperties = evidenceTypes
+            .SelectMany(type => type.GetProperties().Select(property => $"{type.Name}.{property.Name}"))
+            .Where(name => credentialNames.Any(term => name.Contains(term, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        Assert.AreEqual(0, credentialProperties.Length,
+            $"Provider evidence contracts contain credential-shaped properties: {string.Join(", ", credentialProperties)}");
+    }
+
+    [TestMethod]
+    public void Live_provider_projects_are_outward_nonpackable_and_transport_is_isolated()
+    {
+        var liveAssembly = typeof(ProviderLiveHost).Assembly;
+        var providerAssemblies = new[]
+        {
+            typeof(OpenAlexRecordedResponseAdapter).Assembly,
+            typeof(SemanticScholarRecordedResponseAdapter).Assembly
+        };
+        var outwardAssemblies = providerAssemblies.Append(liveAssembly).ToArray();
+        var searchAssembly = typeof(SearchTrace).Assembly;
+
+        Assert.IsFalse(
+            searchAssembly.GetReferencedAssemblies().Any(reference =>
+                outwardAssemblies.Any(outward =>
+                    string.Equals(reference.Name, outward.GetName().Name, StringComparison.Ordinal))),
+            "NexusScholar.Search must not reference any outward live provider project.");
+
+        Assert.IsTrue(
+            liveAssembly.GetReferencedAssemblies().Any(reference =>
+                string.Equals(reference.Name, "System.Net.Http", StringComparison.Ordinal)),
+            "The admitted live host must own the HTTP transport reference.");
+
+        foreach (var adapterAssembly in providerAssemblies)
+        {
+            Assert.IsFalse(
+                adapterAssembly.GetReferencedAssemblies().Any(reference =>
+                    string.Equals(reference.Name, "System.Net.Http", StringComparison.Ordinal)),
+                $"{adapterAssembly.GetName().Name} must not own HTTP transport.");
+        }
+
+        var allowedAdapterDependencies = new[]
+        {
+            typeof(IClock).Assembly.GetName().Name,
+            searchAssembly.GetName().Name,
+            typeof(WorkId).Assembly.GetName().Name,
+            liveAssembly.GetName().Name
+        };
+        foreach (var adapterAssembly in providerAssemblies)
+        {
+            var disallowed = adapterAssembly.GetReferencedAssemblies()
+                .Select(reference => reference.Name ?? string.Empty)
+                .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+                .Where(name => !allowedAdapterDependencies.Contains(name, StringComparer.Ordinal))
+                .ToArray();
+            Assert.AreEqual(
+                0,
+                disallowed.Length,
+                $"{adapterAssembly.GetName().Name} has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
+        }
+
+        var root = FindRepositoryRoot();
+        foreach (var projectName in new[]
+        {
+            "NexusScholar.Search.Providers.Live",
+            "NexusScholar.Search.Providers.OpenAlex",
+            "NexusScholar.Search.Providers.SemanticScholar"
+        })
+        {
+            var project = File.ReadAllText(Path.Combine(root, "src", projectName, $"{projectName}.csproj"));
+            StringAssert.Contains(project, "<IsPackable>false</IsPackable>");
+        }
+
+        var credentialShapedProperties = typeof(RuntimeProviderResponseEvidence)
+            .GetProperties()
+            .Select(property => property.Name)
+            .Where(name => new[] { "credential", "secret", "apiKey", "authorization" }
+                .Any(fragment => name.Contains(fragment, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
+        Assert.AreEqual(
+            0,
+            credentialShapedProperties.Length,
+            $"Runtime evidence exposes credential-shaped properties: {string.Join(", ", credentialShapedProperties)}");
+    }
+
+    [TestMethod]
+    public void Provider_cache_is_outward_nonpackable_and_search_does_not_depend_on_it()
+    {
+        var cacheAssembly = typeof(ProviderEvidenceCacheStore).Assembly;
+        var searchAssembly = typeof(ProviderEvidenceCacheEntry).Assembly;
+        Assert.IsFalse(searchAssembly.GetReferencedAssemblies().Any(reference =>
+            string.Equals(reference.Name, cacheAssembly.GetName().Name, StringComparison.Ordinal)));
+
+        var allowed = new[]
+        {
+            typeof(ContentDigest).Assembly.GetName().Name,
+            searchAssembly.GetName().Name
+        };
+        var disallowed = cacheAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .Where(name => name.StartsWith("NexusScholar.", StringComparison.Ordinal))
+            .Where(name => !allowed.Contains(name, StringComparer.Ordinal))
+            .ToArray();
+        Assert.AreEqual(0, disallowed.Length,
+            $"Provider cache has disallowed Nexus dependencies: {string.Join(", ", disallowed)}");
+
+        var project = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "NexusScholar.Search.Providers.Cache",
+            "NexusScholar.Search.Providers.Cache.csproj"));
+        StringAssert.Contains(project, "<IsPackable>false</IsPackable>");
     }
 
     [TestMethod]
@@ -607,6 +814,7 @@ public sealed class DependencyRulesTests
             typeof(WorkflowDefinition).Assembly.GetName().Name,
             typeof(WorkflowExecutionJournal).Assembly.GetName().Name,
             typeof(ScreeningConductJournal).Assembly.GetName().Name,
+            typeof(VerifiedScreeningCorpusBinding).Assembly.GetName().Name,
             typeof(ScreeningWorkflowExecutionBridge).Assembly.GetName().Name,
             typeof(VerifiedFullTextAdmission).Assembly.GetName().Name,
             typeof(FullTextInput).Assembly.GetName().Name,

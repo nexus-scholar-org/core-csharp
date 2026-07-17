@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/NexusScholar.Kernel/NexusScholar.Kernel.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.Search/NexusScholar.Search.csproj" />
+    <ProjectReference Include="../../src/NexusScholar.Search.Providers.Crossref/NexusScholar.Search.Providers.Crossref.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../fixtures/conformance/search/search-crossref-*.response.json">
+      <Link>fixtures/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

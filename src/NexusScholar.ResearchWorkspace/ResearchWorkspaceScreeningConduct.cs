@@ -1,10 +1,12 @@
 using System.Globalization;
 using System.Text.Json;
 using NexusScholar.AppServices;
+using NexusScholar.CorpusSnapshots;
 using NexusScholar.Deduplication;
 using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.Screening;
+using NexusScholar.Screening.CorpusSnapshots;
 using NexusScholar.Screening.WorkflowExecution;
 using NexusScholar.WorkflowExecution;
 
@@ -86,7 +88,9 @@ public static class ResearchWorkspaceScreeningConductManifestCodec
     {
         if (value.Schema != ResearchWorkspaceScreeningConductManifest.CurrentSchema || value.ProjectRevision <= 0 ||
             value.EntryCount < 0 || value.DecisionCount < 0 || value.InvalidationCount < 0 ||
-            value.DecisionCount + value.InvalidationCount != value.EntryCount || value.Artifacts.Count != value.EntryCount + 2 + (value.HandoffId is null ? 0 : 1) ||
+            value.DecisionCount + value.InvalidationCount != value.EntryCount ||
+            value.Artifacts.Count != value.EntryCount + 2 + (value.HandoffId is null ? 0 : 1) +
+                (value.Artifacts.Any(item => item.Name == "corpus-binding") ? 1 : 0) ||
             value.Artifacts.Select(item => item.Name).Distinct(StringComparer.Ordinal).Count() != value.Artifacts.Count ||
             (value.HandoffId is null) != (value.HandoffDigest is null) ||
             (value.WorkflowGenerationId is null) != (value.WorkflowManifestSha256 is null) ||
@@ -121,7 +125,8 @@ public sealed record VerifiedResearchWorkspaceScreeningConduct(
     ScreeningConductHeader Header,
     IReadOnlyList<IScreeningConductEntry> Entries,
     ScreeningConductJournal Journal,
-    ScreeningConductHandoff? Handoff);
+    ScreeningConductHandoff? Handoff,
+    VerifiedScreeningCorpusBinding? CorpusBinding);
 
 public static class ResearchWorkspaceScreeningConductVerifier
 {
@@ -130,7 +135,9 @@ public static class ResearchWorkspaceScreeningConductVerifier
         ResearchWorkspaceProject project,
         VerifiedDeduplicationResult deduplication,
         VerifiedProtocolVersion protocol,
-        ScreeningCriteria criteria)
+        ScreeningCriteria criteria,
+        VerifiedDeduplicationAuthorityResultDigest? sourceAuthority = null,
+        VerifiedCorpusSnapshot? corpusSnapshot = null)
     {
         if (project.CurrentScreeningConductGenerationId is null || project.ScreeningConductManifestPath is null || project.ScreeningConductManifestSha256 is null)
             throw new InvalidOperationException("The workspace has no current Screening conduct generation.");
@@ -139,7 +146,9 @@ public static class ResearchWorkspaceScreeningConductVerifier
         if (ContentDigest.Sha256(manifestBytes).ToString() != project.ScreeningConductManifestSha256)
             throw new InvalidOperationException("Screening conduct manifest failed project-pointer digest verification.");
         var manifest = ResearchWorkspaceScreeningConductManifestCodec.Rehydrate(manifestBytes);
-        if (manifest.GenerationId != project.CurrentScreeningConductGenerationId || manifest.WorkspaceId != project.WorkspaceId || manifest.ProjectRevision != project.Revision)
+        if (manifest.GenerationId != project.CurrentScreeningConductGenerationId ||
+            manifest.WorkspaceId != project.WorkspaceId ||
+            manifest.ProjectRevision > project.Revision)
             throw new InvalidOperationException("Screening conduct manifest is stale or bound to another workspace.");
         if (manifest.WorkflowGenerationId is not null &&
             (manifest.WorkflowGenerationId != project.CurrentWorkflowExecutionJournalGenerationId ||
@@ -151,7 +160,39 @@ public static class ResearchWorkspaceScreeningConductVerifier
             if (ContentDigest.Sha256(bytes).ToString() != item.Sha256) throw new InvalidOperationException($"Screening artifact '{item.Name}' failed digest verification.");
             return bytes;
         }, StringComparer.Ordinal);
-        var policy = ScreeningConductCanonicalCodec.RehydratePolicy(bytesByName["conduct-policy"], ContentDigest.Parse(manifest.PolicyDigest), deduplication, protocol, criteria);
+        VerifiedScreeningCorpusBinding? corpusBinding = null;
+        ScreeningConductPolicy policy;
+        if (bytesByName.TryGetValue("corpus-binding", out var bindingBytes))
+        {
+            if (sourceAuthority is null || corpusSnapshot is null)
+                throw new InvalidOperationException(
+                    "Snapshot-bound Screening conduct requires verified source authority and corpus snapshot.");
+            corpusBinding = ScreeningCorpusBindingCanonicalCodec.Rehydrate(
+                bindingBytes, ContentDigest.Sha256(bindingBytes), sourceAuthority, corpusSnapshot);
+            var material = ScreeningConductCanonicalCodec.ReadPolicyMaterial(
+                bytesByName["conduct-policy"], ContentDigest.Parse(manifest.PolicyDigest));
+            var snapshotPolicy = ScreeningCorpusBindingAuthority.CreateConductPolicy(
+                corpusBinding, sourceAuthority, material.PolicyId, material.CandidateSetId,
+                protocol, criteria, material.RequiredReviewCount, material.Assignments,
+                material.AdjudicatorRoles, material.ExclusionReasons, material.ApprovedBy,
+                material.ApprovedAt);
+            policy = ScreeningConductCanonicalCodec.RehydratePolicy(
+                bytesByName["conduct-policy"], ContentDigest.Parse(manifest.PolicyDigest),
+                snapshotPolicy.Policy);
+            if (material.CandidateSetDigest != policy.CandidateSetDigest ||
+                material.CriteriaId != policy.Criteria.CriteriaId ||
+                material.CriteriaDigest != policy.CriteriaDigest ||
+                material.ProtocolVersionId != policy.ProtocolVersionId ||
+                material.ProtocolContentDigest != policy.ProtocolContentDigest)
+                throw new InvalidOperationException(
+                    "Snapshot-bound Screening policy authority does not reproduce.");
+        }
+        else
+        {
+            policy = ScreeningConductCanonicalCodec.RehydratePolicy(
+                bytesByName["conduct-policy"], ContentDigest.Parse(manifest.PolicyDigest),
+                deduplication, protocol, criteria);
+        }
         var header = ScreeningConductCanonicalCodec.RehydrateHeader(bytesByName["header"], ContentDigest.Parse(manifest.HeaderDigest), policy);
         var entries = new List<IScreeningConductEntry>();
         for (var index = 1; index <= manifest.EntryCount; index++)
@@ -174,7 +215,8 @@ public static class ResearchWorkspaceScreeningConductVerifier
         ScreeningConductHandoff? handoff = null;
         if (manifest.HandoffDigest is not null)
             handoff = ScreeningConductCanonicalCodec.RehydrateHandoff(bytesByName["handoff"], ContentDigest.Parse(manifest.HandoffDigest), journal);
-        return new VerifiedResearchWorkspaceScreeningConduct(manifest, policy, header, entries.AsReadOnly(), journal, handoff);
+        return new VerifiedResearchWorkspaceScreeningConduct(
+            manifest, policy, header, entries.AsReadOnly(), journal, handoff, corpusBinding);
     }
 
     private static string Resolve(ResearchWorkspaceLocation location, string relative)
@@ -200,8 +242,17 @@ public static class ResearchWorkspaceScreeningConductTransaction
         ResearchWorkspacePreparedWorkflowExecutionGeneration? preparedWorkflow = null,
         ScreeningConductDecision? matchingDecision = null,
         WorkflowExecutionEvent? matchingWorkflowEvent = null,
-        Action<ResearchWorkspaceAuthorityFaultPoint>? faultInjector = null)
+        Action<ResearchWorkspaceAuthorityFaultPoint>? faultInjector = null,
+        VerifiedScreeningCorpusBinding? corpusBinding = null,
+        VerifiedDeduplicationAuthorityResultDigest? sourceAuthority = null,
+        VerifiedCorpusSnapshot? corpusSnapshot = null)
     {
+        if ((corpusBinding is null) != (sourceAuthority is null) ||
+            (corpusBinding is null) != (corpusSnapshot is null))
+            throw new InvalidOperationException(
+                "Snapshot-bound Screening conduct requires its binding, source authority, and corpus snapshot together.");
+        if (corpusBinding is not null)
+            _ = ScreeningCorpusBindingAuthority.VerifyConductPolicyBinding(corpusBinding, policy);
         var journal = ScreeningConductJournal.RehydrateEntries(header, policy, entries);
         if (handoff is not null) _ = ScreeningConductCanonicalCodec.RehydrateHandoff(ScreeningConductCanonicalCodec.Serialize(handoff), handoff.Digest, journal);
         if (preparedWorkflow is not null)
@@ -216,7 +267,9 @@ public static class ResearchWorkspaceScreeningConductTransaction
         VerifiedResearchWorkspaceScreeningConduct? predecessor = null;
         if (expectedProject.CurrentScreeningConductGenerationId is not null)
         {
-            predecessor = ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(location, expectedProject, deduplication, protocol, criteria);
+            predecessor = ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(
+                location, expectedProject, deduplication, protocol, criteria,
+                sourceAuthority, corpusSnapshot);
             if (predecessor.Journal.Projection.HeadDigest == journal.Projection.HeadDigest && predecessor.Handoff?.Digest == handoff?.Digest &&
                 (preparedWorkflow is null ||
                 expectedProject.CurrentWorkflowExecutionJournalGenerationId == preparedWorkflow.Manifest.GenerationId &&
@@ -238,6 +291,9 @@ public static class ResearchWorkspaceScreeningConductTransaction
                 ("conduct-policy", "conduct-policy.json", ScreeningConductCanonicalCodec.Serialize(policy)),
                 ("header", "header.json", ScreeningConductCanonicalCodec.Serialize(header))
             };
+            if (corpusBinding is not null)
+                records.Add(("corpus-binding", "corpus-binding.json",
+                    ScreeningCorpusBindingCanonicalCodec.Serialize(corpusBinding)));
             records.AddRange(entries.Select((entry, index) => ($"entry-{index + 1:D6}", $"entry-{index + 1:D6}.json", Serialize(entry))));
             if (handoff is not null) records.Add(("handoff", "handoff.json", ScreeningConductCanonicalCodec.Serialize(handoff)));
             var artifacts = records.Select(record =>
@@ -305,7 +361,9 @@ public static class ResearchWorkspaceScreeningConductTransaction
                     Quarantine(location, preparedWorkflow!.FinalRoot, preparedWorkflow.Manifest.GenerationId);
                 throw;
             }
-            var verified = ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(location, committed, deduplication, protocol, criteria);
+            var verified = ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(
+                location, committed, deduplication, protocol, criteria,
+                sourceAuthority, corpusSnapshot);
             if (preparedWorkflow is not null)
                 _ = ResearchWorkspaceWorkflowExecutionJournalVerifier.VerifyCurrent(
                     location, committed, preparedWorkflow.Workflow, preparedWorkflow.RecordResolver);

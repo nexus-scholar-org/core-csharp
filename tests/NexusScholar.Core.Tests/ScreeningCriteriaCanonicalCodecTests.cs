@@ -50,9 +50,9 @@ public sealed class ScreeningCriteriaCanonicalCodecTests
         var criteria = BuildTitleAbstractCriteria(protocol);
         var bytes = ScreeningCriteriaCanonicalCodec.Serialize(criteria);
 
-        var wrongStage = Mutate(bytes, root => root["stage"] = "full_text");
+        var wrongStage = Mutate(bytes, root => root["stage"] = "unknown");
         AssertInvalid(() => ScreeningCriteriaCanonicalCodec.Rehydrate(wrongStage, criteria.ComputeDigest(), protocol),
-            ScreeningErrorCodes.InvalidCriteriaCanonicalRecord);
+            ScreeningErrorCodes.UnknownScreeningStage);
 
         var wrongProtocol = Mutate(bytes, root => root["approved_protocol_binding"] = "protocol-other");
         AssertInvalid(() => ScreeningCriteriaCanonicalCodec.Rehydrate(wrongProtocol, criteria.ComputeDigest(), protocol),

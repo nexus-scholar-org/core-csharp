@@ -1,0 +1,1 @@
+{"status":"ok","message-type":"work-list","message-version":"1.0.0","message":{"total-results":3,"items-per-page":2,"query":{"start-index":0},"items":[{"DOI":"10.1234/shared","title":["Recorded Crossref work"]},{"DOI":"10.1234/shared","title":["Duplicate provider sighting"]}]}}
