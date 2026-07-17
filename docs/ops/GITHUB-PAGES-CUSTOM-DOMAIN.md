@@ -1,6 +1,6 @@
-# GitHub Pages Custom Domain Plan
+# GitHub Pages Custom Domain Configuration
 
-Status: prepared, not activated.
+Status: active and verified on 2026-07-17.
 
 Recommended hostname:
 
@@ -20,37 +20,36 @@ nexus.mouadh.org
 `mouadh.info` remains a good personal-profile or documentation domain.
 `mouadh.shop` should be reserved for a commercial storefront if one is needed.
 
-## Required Activation Order
+## Active Configuration
 
-The repository is owned by the `nexus-scholar` GitHub organization. Domain
-verification therefore belongs at the organization level.
+The repository is owned by the `nexus-scholar-org` GitHub organization. Domain
+verification therefore belongs at the organization level. The current
+configuration is:
 
-1. In the `nexus-scholar` organization settings, start Pages-domain
-   verification for `mouadh.org`.
-2. Add the exact TXT verification record supplied by GitHub to the DNS zone.
-3. Wait for DNS propagation, verify the domain in GitHub, and retain the TXT
-   record to prevent takeover.
-4. In this repository's **Settings → Pages**, set the custom domain to
+1. The `mouadh.org` domain is verified in the `nexus-scholar-org`
+   organization.
+2. The organization-verification TXT record remains in DNS.
+3. This repository's **Settings → Pages** custom domain is
    `nexus.mouadh.org`.
-5. At the DNS provider, create:
+4. The DNS provider must expose:
 
    ```text
    Type:   CNAME
    Name:   nexus
-   Target: nexus-scholar.github.io
+   Target: nexus-scholar-org.github.io
    ```
 
    The target must not include `/core-csharp`.
-6. Verify with PowerShell:
+5. Verify with PowerShell:
 
    ```powershell
    Resolve-DnsName nexus.mouadh.org -Type CNAME
    ```
 
-7. Wait for GitHub to provision TLS, then enable **Enforce HTTPS**.
-8. Confirm both the custom hostname and the existing project URL resolve as
-   GitHub documents, then update canonical, Open Graph, and sitemap URLs in
-   `site/`.
+6. GitHub Pages reports the protected domain as verified, the deployment as
+   built, and **Enforce HTTPS** as enabled.
+7. Canonical, Open Graph, robots, and sitemap URLs in `site/` use the custom
+   hostname.
 
 ## Actions-Workflow Detail
 
@@ -67,13 +66,16 @@ domain must be configured in repository settings.
 - Do not claim the custom domain is active until DNS, TLS, redirects, and the
   Pages deployment have been checked from outside the local network.
 
-## Current State
-
-Until activation is explicitly approved and completed, the canonical public
-site remains:
+## Canonical Public Site
 
 ```text
-https://nexus-scholar.github.io/core-csharp/
+https://nexus.mouadh.org/
+```
+
+The organization project URL redirects to the custom hostname:
+
+```text
+https://nexus-scholar-org.github.io/core-csharp/
 ```
 
 ## GitHub References

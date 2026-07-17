@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Provenance</span></nav>
@@ -35,7 +35,7 @@
             <li><code>ResearchEvent</code> is the immutable event with actor, activity, UTC timestamp, subject, inputs, outputs, optional bindings, and event digest.</li>
             <li><code>ResearchEventFactory</code> constructs and validates records. <code>IProvenanceStore</code> exposes append/read semantics; <code>InMemoryProvenanceStore</code> is the local reference store.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Provenance">NexusScholar.Provenance</a>. Contract: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0008-provenance-ledger.md">ADR 0008</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Provenance">NexusScholar.Provenance</a>. Contract: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0008-provenance-ledger.md">ADR 0008</a>.</p>
         </section>
         <section class="content-section" id="identity">
           <h2>Canonical identity and append authority</h2>
@@ -64,7 +64,7 @@ event digest</code></pre>
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, bridges, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProvenanceTests.cs">ProvenanceTests</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/Fe01ProvenanceTests.cs">FE-01 Provenance tests</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ProvenanceFixtureTests.cs">ProvenanceFixtureTests</a> cover creation, immutable append, authority binding, duplicates, and canonical exclusions. Fixtures live under <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/provenance">fixtures/conformance/provenance</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProvenanceTests.cs">ProvenanceTests</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/Fe01ProvenanceTests.cs">FE-01 Provenance tests</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ProvenanceFixtureTests.cs">ProvenanceFixtureTests</a> cover creation, immutable append, authority binding, duplicates, and canonical exclusions. Fixtures live under <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/provenance">fixtures/conformance/provenance</a>.</p>
           <p>Outward bridge packages may deterministically project accepted domain events—such as Workflow Execution transitions—into Provenance. Provenance itself remains Kernel-only. It provides no database, distributed ledger, signature, cryptographic non-repudiation, workflow state, decision authorization, bundle completeness, or guarantee that an external action actually occurred beyond the accepted record.</p>
         </section>
       </div>

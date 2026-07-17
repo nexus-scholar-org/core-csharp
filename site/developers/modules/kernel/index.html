@@ -17,7 +17,7 @@
       <div class="nav-links" id="nav-links">
         <a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a>
         <a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a>
-        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+        <a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a>
       </div>
     </nav>
   </header>
@@ -45,7 +45,7 @@
             <li><code>EntityId&lt;TTag&gt;</code>, <code>IIdGenerator</code>, <code>GuidV7IdGenerator</code>, <code>IClock</code>, and <code>SystemClock</code> keep identity and time explicit at record-creation boundaries.</li>
             <li><code>NdjsonCanonicalizer</code> rejects BOM and carriage returns unless CRLF normalization is explicitly enabled.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Kernel">NexusScholar.Kernel</a>. The profile correction is recorded in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0017-canonical-json-profile-correction.md">ADR 0017</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Kernel">NexusScholar.Kernel</a>. The profile correction is recorded in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0017-canonical-json-profile-correction.md">ADR 0017</a>.</p>
         </section>
 
         <section class="content-section" id="identity">
@@ -85,7 +85,7 @@ var digest = envelope.ComputeDigest();</code></pre>
 
         <section class="content-section" id="evidence">
           <h2>Tests and evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/DeterministicKernelTests.cs">DeterministicKernelTests</a> cover direct behavior. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/KernelFixtureTests.cs">KernelFixtureTests</a> replay the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/kernel">Kernel conformance pack</a>, including RFC 8785 Appendix B vectors and adversarial rehydration records. Hardening evidence is recorded in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/HARDENING-01-CANONICAL-JSON-EVIDENCE.md">HARDENING-01</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/HARDENING-02-KERNEL-REHYDRATION-EVIDENCE.md">HARDENING-02</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/DeterministicKernelTests.cs">DeterministicKernelTests</a> cover direct behavior. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/KernelFixtureTests.cs">KernelFixtureTests</a> replay the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/kernel">Kernel conformance pack</a>, including RFC 8785 Appendix B vectors and adversarial rehydration records. Hardening evidence is recorded in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/HARDENING-01-CANONICAL-JSON-EVIDENCE.md">HARDENING-01</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/HARDENING-02-KERNEL-REHYDRATION-EVIDENCE.md">HARDENING-02</a>.</p>
         </section>
 
         <section class="content-section" id="extension">

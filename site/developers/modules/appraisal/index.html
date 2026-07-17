@@ -20,7 +20,7 @@
         <a href="../../../tutorials/">Tutorials</a>
         <a href="../../../roadmap/">Roadmap</a>
         <a href="../../../about/">About</a>
-        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+        <a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a>
       </div>
     </nav>
   </header>
@@ -62,11 +62,11 @@
         <section class="content-section">
           <h2>Key API surface</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Appraisal/AppraisalModels.cs"><code>AppraisalInstrument.Create</code></a> validates a stable id, supported version, method domain, ordered unique questions, allowed answers, and judgment vocabulary.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Appraisal/AppraisalModels.cs"><code>AppraisalInstrument.Create</code></a> validates a stable id, supported version, method domain, ordered unique questions, allowed answers, and judgment vocabulary.</li>
             <li><code>AppraisalRecord.CreateProposal</code> admits partial automation output without making it current authority.</li>
             <li><code>AppraisalRecord.CreateFinal</code> requires every instrument question, exact per-answer evidence, record-level evidence, a vocabulary-approved judgment, rationale, approved Protocol, human actor, and UTC clock.</li>
             <li><code>AppraisalRecord.CreateCorrection</code> additionally binds the exact superseded record id and digest.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Appraisal/AppraisalJournal.cs"><code>AppraisalJournal.Append</code></a> enforces unique identities and current correction targets.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Appraisal/AppraisalJournal.cs"><code>AppraisalJournal.Append</code></a> enforces unique identities and current correction targets.</li>
             <li><code>AppraisalAmendmentInvalidation.Create</code> binds exact current appraisal digests to one verified Protocol amendment.</li>
           </ul>
           <p>The canonical schemas are <code>nexus.appraisal.instrument</code>, <code>nexus.appraisal.record</code>, and <code>nexus.appraisal.invalidation</code>, version <code>1.0.0</code>.</p>
@@ -93,8 +93,8 @@
 
         <section class="content-section">
           <h2>Tests and accepted evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/AppraisalTests.cs">AppraisalTests</a> cover instrument validation, evidence requirements, proposals, final authority, corrections, and invalidation. Canonical and cross-package cases live in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">FE-07 fixture tests</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">authority replay tests</a>.</p>
-          <p>See <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, the <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">FE-07 gate</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">FE-07 completion evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/AppraisalTests.cs">AppraisalTests</a> cover instrument validation, evidence requirements, proposals, final authority, corrections, and invalidation. Canonical and cross-package cases live in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">FE-07 fixture tests</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">authority replay tests</a>.</p>
+          <p>See <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, the <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">FE-07 gate</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">FE-07 completion evidence</a>.</p>
         </section>
 
         <section class="content-section">

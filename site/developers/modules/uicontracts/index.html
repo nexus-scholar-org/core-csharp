@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main id="main" class="page doc-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -40,7 +40,7 @@
         +-- ValidationRef[]
         +-- BlockActionDescriptor[]
         +-- optional object-root PayloadJson</code></pre>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.UiContracts/BlockContracts.cs">BlockContracts.cs</a> contains the complete public surface. Constructors trim required strings, copy incoming collections into read-only collections, reject null list elements, and require optional payload JSON to have an object root.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.UiContracts/BlockContracts.cs">BlockContracts.cs</a> contains the complete public surface. Constructors trim required strings, copy incoming collections into read-only collections, reject null list elements, and require optional payload JSON to have an object root.</p>
         </section>
 
         <section class="content-section">
@@ -69,8 +69,8 @@
 
         <section class="content-section">
           <h2>Tests and evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.UiContracts.Tests/UiContractTests.cs">UiContractTests</a> cover guards, immutability, payload validation, and serialization. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.UiContracts.Tests/SampleBlockPlanTests.cs">SampleBlockPlanTests</a> verify illustrative plans. Architecture tests enforce the framework-free dependency boundary.</p>
-          <p>The design boundary is documented in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/ui/UI-CONTRACTS-v0.md">UI-CONTRACTS-v0</a>; the first real AppServices composition is accepted by <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0015-app-services-readonly-workspace-composition.md">ADR 0015</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.UiContracts.Tests/UiContractTests.cs">UiContractTests</a> cover guards, immutability, payload validation, and serialization. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.UiContracts.Tests/SampleBlockPlanTests.cs">SampleBlockPlanTests</a> verify illustrative plans. Architecture tests enforce the framework-free dependency boundary.</p>
+          <p>The design boundary is documented in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/ui/UI-CONTRACTS-v0.md">UI-CONTRACTS-v0</a>; the first real AppServices composition is accepted by <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0015-app-services-readonly-workspace-composition.md">ADR 0015</a>.</p>
         </section>
 
         <section class="content-section">

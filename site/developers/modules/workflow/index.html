@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Workflow</span></nav>
@@ -51,7 +51,7 @@ normalized WorkflowDefinition
             <li><code>VerifiedWorkflowDefinition.ResolvedTemplate</code> exposes the digest-verified template so execution can enforce roles, gates, approval shape, and output declarations.</li>
             <li><code>RapidReviewProfileAuthority</code> verifies an explicitly approved profile of declared shortcuts and consequences; it does not create a looser compiler.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Workflow">NexusScholar.Workflow</a>. Contracts: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0005-workflow-template-contract.md">ADR 0005</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0006-workflow-compiler-semantics.md">ADR 0006</a>, and authority hardening in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0018-workflow-authority-hardening-sequence.md">ADR 0018</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Workflow">NexusScholar.Workflow</a>. Contracts: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0005-workflow-template-contract.md">ADR 0005</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0006-workflow-compiler-semantics.md">ADR 0006</a>, and authority hardening in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0018-workflow-authority-hardening-sequence.md">ADR 0018</a>.</p>
         </section>
 
         <section class="content-section" id="identity">
@@ -84,7 +84,7 @@ normalized WorkflowDefinition
 
         <section class="content-section" id="evidence">
           <h2>Tests, extension points, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/WorkflowCompilerTests.cs">WorkflowCompilerTests</a> cover compilation, graph validation, authority, and ordering. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/WorkflowFixtureTests.cs">WorkflowFixtureTests</a> replay the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/workflow">workflow fixtures</a>. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/RapidReviewProfileTests.cs">RapidReviewProfileTests</a> cover the governed FE-06 profile.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/WorkflowCompilerTests.cs">WorkflowCompilerTests</a> cover compilation, graph validation, authority, and ordering. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/WorkflowFixtureTests.cs">WorkflowFixtureTests</a> replay the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/workflow">workflow fixtures</a>. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/RapidReviewProfileTests.cs">RapidReviewProfileTests</a> cover the governed FE-06 profile.</p>
           <p>New workflow families extend the versioned template/schema surface and must retain deterministic compilation and explicit authority. This package is not a scheduler, job queue, plugin host, model runner, storage engine, UI framework, or claim that executing a graph produces scientifically correct work.</p>
         </section>
       </div>

@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Screening</span></nav>
@@ -51,7 +51,7 @@
             <li><code>ScreeningConductHandoff</code> binds terminal included/excluded outcomes, reason codes, supporting decisions, and current journal head.</li>
             <li><code>ScreeningConductCanonicalCodec</code> strictly round-trips policy, header, entries, and handoff.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Screening">NexusScholar.Screening</a>. Semantics: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0013-screening-decision-and-conflict-contract.md">ADR 0013</a> and durable conduct in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0031-title-abstract-screening-conduct.md">ADR 0031</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Screening">NexusScholar.Screening</a>. Semantics: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0013-screening-decision-and-conflict-contract.md">ADR 0013</a> and durable conduct in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0031-title-abstract-screening-conduct.md">ADR 0031</a>.</p>
         </section>
         <section class="content-section" id="chain">
           <h2>Identity, replay, and conflicts</h2>
@@ -76,7 +76,7 @@
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, integration, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ScreeningServiceTests.cs">ScreeningServiceTests</a>, conduct tests in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ScreeningConductFixtureTests.cs">ScreeningConductFixtureTests</a>, and the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/screening-conduct">conduct fixture pack</a> cover single/dual review, conflicts, same-actor refusal, adjudication, invalidation, and handoff. Gate closure is recorded in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/FE-04-TITLE-ABSTRACT-SCREENING-EVIDENCE.md">FE-04 completion evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ScreeningServiceTests.cs">ScreeningServiceTests</a>, conduct tests in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ScreeningConductFixtureTests.cs">ScreeningConductFixtureTests</a>, and the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/screening-conduct">conduct fixture pack</a> cover single/dual review, conflicts, same-actor refusal, adjudication, invalidation, and handoff. Gate closure is recorded in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-04-TITLE-ABSTRACT-SCREENING-EVIDENCE.md">FE-04 completion evidence</a>.</p>
           <p>AppServices/ResearchWorkspace can commit Screening and its matching Workflow event under one lock and revision. CLI exposes integrity/status only because process entry cannot yet resolve full Protocol/Workflow authority. The module makes no reviewer-assignment UI authority, AI-quality, database, API, cloud, multi-user, production, or broad PHP compatibility claim.</p>
         </section>
       </div>

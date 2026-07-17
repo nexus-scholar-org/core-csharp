@@ -12,7 +12,7 @@
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main id="main" class="page doc-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -32,13 +32,13 @@
         <section class="content-section">
           <h2>Service families</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/SearchDedupWorkspacePlanComposer.cs"><code>SearchDedupWorkspacePlanComposer</code></a> maps Search import and Deduplication evidence into deterministic, renderer-neutral <code>WorkspacePlan</code> blocks. Every block is <code>AppProjection</code>, not Core authority.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/DecisionSnapshotAuthorityProjection.cs"><code>DecisionSnapshotAuthorityProjectionService</code></a> exposes authority-generation health, policy identity, snapshot identity, unresolved count, and policy-binding consistency.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/DeduplicationReviewApplicationService.cs"><code>DeduplicationReviewApplicationService.Preview</code></a> derives membership effects, representative selection, invalidations, and unresolved status from a verified FE-02 command.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/WorkflowExecutionJournalApplicationService.cs"><code>WorkflowExecutionJournalApplicationService</code></a> rehydrates current and proposed event chains, then requires the commit port to return the previewed execution id, head digest, and event count.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/ScreeningConductApplicationService.cs"><code>ScreeningConductApplicationService</code></a> previews title/abstract outcomes, conflicts, and handoff readiness.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/FullTextScreeningConductApplicationService.cs"><code>FullTextScreeningConductApplicationService</code></a> applies the same replay/commit contract to Full Text conduct.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AppServices/ReviewExportOrchestrator.cs"><code>ReviewExportOrchestrator</code></a> verifies exact report, workspace cut, Bundle v2 manifest, and observed inventory before allowing a human-recorded export request.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/SearchDedupWorkspacePlanComposer.cs"><code>SearchDedupWorkspacePlanComposer</code></a> maps Search import and Deduplication evidence into deterministic, renderer-neutral <code>WorkspacePlan</code> blocks. Every block is <code>AppProjection</code>, not Core authority.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/DecisionSnapshotAuthorityProjection.cs"><code>DecisionSnapshotAuthorityProjectionService</code></a> exposes authority-generation health, policy identity, snapshot identity, unresolved count, and policy-binding consistency.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/DeduplicationReviewApplicationService.cs"><code>DeduplicationReviewApplicationService.Preview</code></a> derives membership effects, representative selection, invalidations, and unresolved status from a verified FE-02 command.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/WorkflowExecutionJournalApplicationService.cs"><code>WorkflowExecutionJournalApplicationService</code></a> rehydrates current and proposed event chains, then requires the commit port to return the previewed execution id, head digest, and event count.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/ScreeningConductApplicationService.cs"><code>ScreeningConductApplicationService</code></a> previews title/abstract outcomes, conflicts, and handoff readiness.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/FullTextScreeningConductApplicationService.cs"><code>FullTextScreeningConductApplicationService</code></a> applies the same replay/commit contract to Full Text conduct.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AppServices/ReviewExportOrchestrator.cs"><code>ReviewExportOrchestrator</code></a> verifies exact report, workspace cut, Bundle v2 manifest, and observed inventory before allowing a human-recorded export request.</li>
           </ul>
         </section>
 
@@ -76,8 +76,8 @@
 
         <section class="content-section">
           <h2>Tests and evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/tree/main/tests/NexusScholar.AppServices.Tests">AppServices tests</a> cover deterministic composition and serialization, generated local bundles, authority health projection, and application-service behavior. Domain and conformance tests cover journal refusal logic.</p>
-          <p>The initial projection boundary is accepted in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0015-app-services-readonly-workspace-composition.md">ADR 0015</a>; FE-02 through FE-06 ADRs authorize the later preview/commit surfaces.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/tests/NexusScholar.AppServices.Tests">AppServices tests</a> cover deterministic composition and serialization, generated local bundles, authority health projection, and application-service behavior. Domain and conformance tests cover journal refusal logic.</p>
+          <p>The initial projection boundary is accepted in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0015-app-services-readonly-workspace-composition.md">ADR 0015</a>; FE-02 through FE-06 ADRs authorize the later preview/commit surfaces.</p>
         </section>
 
         <section class="content-section">

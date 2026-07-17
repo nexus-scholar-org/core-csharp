@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Workflow Execution</span></nav>
@@ -51,7 +51,7 @@ pending | ready | active | blocked | completed | failed
             <li><code>WorkflowExecutionProjection</code> derives current node states and complete attempt history; it is not separately persisted scientific authority.</li>
             <li><code>WorkflowExecutionCanonicalCodec</code> strictly rehydrates canonical records against a verified Workflow and <code>IWorkflowExecutionRecordResolver</code>.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.WorkflowExecution">NexusScholar.WorkflowExecution</a>. Accepted design: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0030-workflow-execution-journal.md">ADR 0030</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.WorkflowExecution">NexusScholar.WorkflowExecution</a>. Accepted design: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0030-workflow-execution-journal.md">ADR 0030</a>.</p>
         </section>
 
         <section class="content-section" id="chain">
@@ -90,7 +90,7 @@ pending | ready | active | blocked | completed | failed
 
         <section class="content-section" id="evidence">
           <h2>Tests, bridges, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/WorkflowExecutionFixtureTests.cs">WorkflowExecutionFixtureTests</a> and the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/workflow-execution">FE-03 fixture pack</a> exercise replay and adversarial transitions. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/FE-03-WORKFLOW-EXECUTION-JOURNAL-EVIDENCE.md">FE-03 completion evidence</a> records focused validation.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/WorkflowExecutionFixtureTests.cs">WorkflowExecutionFixtureTests</a> and the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/workflow-execution">FE-03 fixture pack</a> exercise replay and adversarial transitions. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-03-WORKFLOW-EXECUTION-JOURNAL-EVIDENCE.md">FE-03 completion evidence</a> records focused validation.</p>
           <p><code>NexusScholar.WorkflowExecution.Provenance</code> projects accepted events outward; <code>NexusScholar.Screening.WorkflowExecution</code> binds conduct completion without reversing dependencies. The package provides no scheduler, queue, database, API, distributed lock, plugin host, AI runner, or guarantee of external side effects. A standalone CLI mutation remains outside the accepted authority path until durable verified Workflow resolution is available.</p>
         </section>
       </div>

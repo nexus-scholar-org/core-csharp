@@ -20,7 +20,7 @@
         <a href="../../../tutorials/">Tutorials</a>
         <a href="../../../roadmap/">Roadmap</a>
         <a href="../../../about/">About</a>
-        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+        <a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a>
       </div>
     </nav>
   </header>
@@ -63,10 +63,10 @@ ExtractionForm --digest--&gt; ExtractionJournal
         <section class="content-section">
           <h2>Key API surface</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionForm.cs"><code>ExtractionForm.Create</code></a> verifies approved Protocol status, question references, field uniqueness, field types, human approval, and UTC time.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionTypes.cs"><code>ExtractionFieldValue</code></a> couples a canonical JSON value to a <code>FullTextEvidenceLocation</code>; supported types are string, integer, number, boolean, object, and array.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionRecord.cs"><code>ExtractionRecord.Create</code></a> creates proposal, review, correction, or resolution entries and validates kind-specific source bindings.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionJournal.cs"><code>ExtractionJournal.Append</code></a> attaches the digest chain, validates current-state constraints, and recomputes current records and disagreements.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionForm.cs"><code>ExtractionForm.Create</code></a> verifies approved Protocol status, question references, field uniqueness, field types, human approval, and UTC time.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionTypes.cs"><code>ExtractionFieldValue</code></a> couples a canonical JSON value to a <code>FullTextEvidenceLocation</code>; supported types are string, integer, number, boolean, object, and array.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionRecord.cs"><code>ExtractionRecord.Create</code></a> creates proposal, review, correction, or resolution entries and validates kind-specific source bindings.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Extraction/ExtractionJournal.cs"><code>ExtractionJournal.Append</code></a> attaches the digest chain, validates current-state constraints, and recomputes current records and disagreements.</li>
             <li><code>ExtractionAmendmentInvalidation.Create</code> binds a verified Protocol amendment to exact current record digests and requires a human actor.</li>
           </ul>
           <p>The canonical schemas are <code>nexus.extraction.form</code>, <code>nexus.extraction.record</code>, and <code>nexus.extraction.invalidation</code>, all version <code>1.0.0</code>.</p>
@@ -93,8 +93,8 @@ ExtractionForm --digest--&gt; ExtractionJournal
 
         <section class="content-section">
           <h2>Tests and accepted evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ExtractionTests.cs">ExtractionTests</a> cover forms, typed values, proposals, corrections, disagreement resolution, evidence, and invalidation. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">FE-07 fixtures</a> exercise canonical records and negative cases; <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">authority replay tests</a> cover downstream invalidation binding.</p>
-          <p>Scope and claims are accepted by <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">the FE-07 gate</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">completion evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ExtractionTests.cs">ExtractionTests</a> cover forms, typed values, proposals, corrections, disagreement resolution, evidence, and invalidation. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">FE-07 fixtures</a> exercise canonical records and negative cases; <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">authority replay tests</a> cover downstream invalidation binding.</p>
+          <p>Scope and claims are accepted by <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">the FE-07 gate</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">completion evidence</a>.</p>
         </section>
 
         <section class="content-section">

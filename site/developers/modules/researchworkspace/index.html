@@ -18,7 +18,7 @@
         <a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a>
         <a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a>
         <a href="../../../about/">About</a>
-        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+        <a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a>
       </div>
     </nav>
   </header>
@@ -58,15 +58,15 @@ nexus-output/quarantine/           promoted but uncommitted recovery</code></pre
         <section class="content-section">
           <h2>Major API families</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceLocalOperations.cs"><code>ResearchWorkspaceLocalOperations</code></a>: initialize a folder and import local CSV, RIS, or BibTeX Search evidence with source digest, parser trace, warnings, and skipped-record counts.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceVerifier.cs"><code>ResearchWorkspaceVerifier</code></a>: verify inputs, reject absolute/escaping/reparse-point paths, reparse evidence, and report missing or changed bytes.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceTransaction.cs"><code>ResearchWorkspaceTransaction</code></a>: atomic analysis, FE-01 authority initialization, and FE-02 successor decision commits.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceAuthorityChainVerifier.cs"><code>ResearchWorkspaceAuthorityChainVerifier</code></a>: replay baseline and successor authority generations into verified policy, snapshots, decisions, invalidations, and provenance.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceDeduplicationReview.cs"><code>ResearchWorkspaceDeduplicationReview</code></a>: inspect queue, preview exact effects, and commit a verified human deduplication decision.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceScreeningAuthorityPackage.cs"><code>ResearchWorkspaceScreeningAuthorityPackage</code></a>: persist and reconstruct the exact approved Protocol, title/abstract criteria, Deduplication result, decision set, and corpus snapshot needed for future Screening conduct.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceLocalOperations.cs"><code>ResearchWorkspaceLocalOperations</code></a>: initialize a folder and import local CSV, RIS, or BibTeX Search evidence with source digest, parser trace, warnings, and skipped-record counts.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceVerifier.cs"><code>ResearchWorkspaceVerifier</code></a>: verify inputs, reject absolute/escaping/reparse-point paths, reparse evidence, and report missing or changed bytes.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceTransaction.cs"><code>ResearchWorkspaceTransaction</code></a>: atomic analysis, FE-01 authority initialization, and FE-02 successor decision commits.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceAuthorityChainVerifier.cs"><code>ResearchWorkspaceAuthorityChainVerifier</code></a>: replay baseline and successor authority generations into verified policy, snapshots, decisions, invalidations, and provenance.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceDeduplicationReview.cs"><code>ResearchWorkspaceDeduplicationReview</code></a>: inspect queue, preview exact effects, and commit a verified human deduplication decision.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceScreeningAuthorityPackage.cs"><code>ResearchWorkspaceScreeningAuthorityPackage</code></a>: persist and reconstruct the exact approved Protocol, title/abstract criteria, Deduplication result, decision set, and corpus snapshot needed for future Screening conduct.</li>
             <li><code>ResearchWorkspaceWorkflowExecutionJournal*</code>, <code>ResearchWorkspaceScreeningConduct*</code>, and <code>ResearchWorkspaceFullText*</code>: verified generation transactions for later workflow stages.</li>
             <li><code>ResearchWorkspaceExportLedger*</code>: digest-linked, human-recorded local export history with exact report/bundle inventory.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceReadModelBuilder.cs"><code>ResearchWorkspaceReadModelBuilder</code></a>: framework-neutral status, imports, evidence rows, duplicate clusters, review queues, and attention items.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.ResearchWorkspace/ResearchWorkspaceReadModelBuilder.cs"><code>ResearchWorkspaceReadModelBuilder</code></a>: framework-neutral status, imports, evidence rows, duplicate clusters, review queues, and attention items.</li>
           </ul>
         </section>
 
@@ -89,8 +89,8 @@ nexus-output/quarantine/           promoted but uncommitted recovery</code></pre
 
         <section class="content-section">
           <h2>Tests and accepted evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/tree/main/tests/NexusScholar.ResearchWorkspace.Tests">ResearchWorkspace tests</a> cover local services, generation verification, authority artifacts, authority transitions, Screening authority packages, concurrency, fault injection, stale writes, quarantine, path safety, read models, Full Text, Screening conduct, workflow journals, and exports.</p>
-          <p>The key architecture contracts are <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0016-desktop-shell-and-researchworkspace-boundary.md">ADR 0016</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0023-transactional-research-workspace-generations.md">ADR 0023</a>, and the FE-08 authority decisions <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0035-local-product-desktop-shell-and-command-facade.md">0035</a>–<a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0037-durable-screening-authority-resolution.md">0037</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/tests/NexusScholar.ResearchWorkspace.Tests">ResearchWorkspace tests</a> cover local services, generation verification, authority artifacts, authority transitions, Screening authority packages, concurrency, fault injection, stale writes, quarantine, path safety, read models, Full Text, Screening conduct, workflow journals, and exports.</p>
+          <p>The key architecture contracts are <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0016-desktop-shell-and-researchworkspace-boundary.md">ADR 0016</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0023-transactional-research-workspace-generations.md">ADR 0023</a>, and the FE-08 authority decisions <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0035-local-product-desktop-shell-and-command-facade.md">0035</a>–<a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0037-durable-screening-authority-resolution.md">0037</a>.</p>
         </section>
 
         <section class="content-section">

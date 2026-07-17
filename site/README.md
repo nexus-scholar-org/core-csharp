@@ -22,8 +22,9 @@ Repository Pages build type is GitHub Actions. The historical `gh-pages` branch 
 
 ## Custom Domain
 
-The recommended public hostname is `nexus.mouadh.org`. Because this repository
+The canonical public hostname is `nexus.mouadh.org`. Because this repository
 publishes through a custom GitHub Actions workflow, GitHub stores the custom
 domain in repository settings and ignores a checked-in `CNAME` file. Do not add
-one to this directory. Follow `docs/ops/GITHUB-PAGES-CUSTOM-DOMAIN.md` after the
-domain has been verified for the `nexus-scholar` GitHub organization.
+one to this directory. The domain is verified for the `nexus-scholar-org`
+GitHub organization; configuration and verification commands are documented in
+`docs/ops/GITHUB-PAGES-CUSTOM-DOMAIN.md`.

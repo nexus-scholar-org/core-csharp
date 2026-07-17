@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main id="main" class="page doc-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -43,17 +43,17 @@ WorkspacePlanViewModel
        |
        v
 WorkspacePlanView and child Avalonia controls</code></pre>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/WorkspacePlanViewModels.cs"><code>WorkspacePlanViewModel.FromJson</code></a> deserializes through the shared options. <code>FromWorkspacePlan</code> preserves input order and projects each action into a <code>BlockActionInvocation</code>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/WorkspacePlanViewModels.cs"><code>WorkspacePlanViewModel.FromJson</code></a> deserializes through the shared options. <code>FromWorkspacePlan</code> preserves input order and projects each action into a <code>BlockActionInvocation</code>.</p>
         </section>
 
         <section class="content-section">
           <h2>Public controls and callbacks</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/WorkspacePlanView.cs"><code>WorkspacePlanView.Render</code></a>: plan header, authority-status label, context evidence, and ordered blocks.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/WorkspacePlanView.cs"><code>WorkspacePlanView.Render</code></a>: plan header, authority-status label, context evidence, and ordered blocks.</li>
             <li><code>ResearchBlockView</code>: block badges, summary, evidence, validation, actions, and optional payload.</li>
             <li><code>EvidenceRefListView</code> and <code>ValidationRefListView</code>: readable projections of traceability and findings.</li>
             <li><code>PayloadJsonView</code>: displays supplied JSON; it does not interpret scientific meaning.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/BlockActionInvocation.cs"><code>BlockActionCallback</code></a>: optional callback with workspace, block, action, command, target, confirmation, and destructive metadata.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Avalonia.Blocks/BlockActionInvocation.cs"><code>BlockActionCallback</code></a>: optional callback with workspace, block, action, command, target, confirmation, and destructive metadata.</li>
           </ul>
           <p class="section-note">Invoking an action calls only the supplied callback. The control itself never confirms, authorizes, or executes a Core command. Current action UI explicitly labels this as placeholder behavior.</p>
         </section>
@@ -66,7 +66,7 @@ WorkspacePlanView and child Avalonia controls</code></pre>
 
         <section class="content-section">
           <h2>Tests and extension points</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Avalonia.Blocks.Tests/WorkspacePlanViewModelTests.cs">WorkspacePlanViewModelTests</a> cover contract projection, authority labels, callbacks, and payloads. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Avalonia.Blocks.SampleHost.Tests/SampleWorkspaceLoaderTests.cs">sample-host tests</a> cover illustrative plan loading. Architecture tests prove the package does not reference domain modules.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Avalonia.Blocks.Tests/WorkspacePlanViewModelTests.cs">WorkspacePlanViewModelTests</a> cover contract projection, authority labels, callbacks, and payloads. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Avalonia.Blocks.SampleHost.Tests/SampleWorkspaceLoaderTests.cs">sample-host tests</a> cover illustrative plan loading. Architecture tests prove the package does not reference domain modules.</p>
           <p>New visual treatments belong here when they remain general renderings of UiContracts. Workspace workflows, file pickers, actor policy, and command confirmation belong in Desktop and Desktop.AppServices.</p>
         </section>
 

@@ -12,7 +12,7 @@
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Protocol</span></nav>
@@ -55,7 +55,7 @@ approved immutable version
             <li><code>VerifiedProtocolDeviation</code> records actual conduct, cited evidence, invalidation effects, approvals, and disclosure mapping without mutating the approved version.</li>
             <li><code>ProtocolAuthorityPackageCanonicalCodec</code> and deviation codecs provide canonical persistence boundaries.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Protocol">NexusScholar.Protocol</a>. Decisions: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0003-protocol-record-contract.md">ADR 0003</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0004-protocol-approval-semantics.md">ADR 0004</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0019-protocol-supplemental-authority-records.md">ADR 0019</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Protocol">NexusScholar.Protocol</a>. Decisions: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0003-protocol-record-contract.md">ADR 0003</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0004-protocol-approval-semantics.md">ADR 0004</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0019-protocol-supplemental-authority-records.md">ADR 0019</a>.</p>
         </section>
 
         <section class="content-section" id="identity">
@@ -84,7 +84,7 @@ approved immutable version
 
         <section class="content-section" id="evidence">
           <h2>Tests and evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProtocolTests.cs">ProtocolTests</a>, <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProtocolDeviationAuthorityTests.cs">ProtocolDeviationAuthorityTests</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ProtocolFixtureTests.cs">ProtocolFixtureTests</a> cover construction, approval, immutable rehydration, supplemental authority, and adversarial records. The <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/protocol">Protocol fixture pack</a> includes valid single/dual approval, amendment, waiver, deviation, stale digest, automation, duplicate approval, policy downgrade, and lineage cases.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProtocolTests.cs">ProtocolTests</a>, <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ProtocolDeviationAuthorityTests.cs">ProtocolDeviationAuthorityTests</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ProtocolFixtureTests.cs">ProtocolFixtureTests</a> cover construction, approval, immutable rehydration, supplemental authority, and adversarial records. The <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/protocol">Protocol fixture pack</a> includes valid single/dual approval, amendment, waiver, deviation, stale digest, automation, duplicate approval, policy downgrade, and lineage cases.</p>
         </section>
 
         <section class="content-section" id="nonclaims">

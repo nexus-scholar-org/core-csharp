@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main id="main" class="page doc-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -25,7 +25,7 @@
         <section class="content-section">
           <h2>Boundary</h2>
           <p><code>NexusScholar.Cli</code> parses arguments and renders structured application results. Domain rules live in Core packages; local-folder orchestration lives in <a href="../researchworkspace/">ResearchWorkspace</a>. The CLI does not become scientific authority merely because it is the process entry point.</p>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Cli/CliApplication.cs"><code>CliApplication.Run</code></a> is the authoritative command dispatcher. <code>Program.cs</code> delegates directly to it, which keeps handlers testable with explicit output, error, working directory, and clock inputs.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Cli/CliApplication.cs"><code>CliApplication.Run</code></a> is the authoritative command dispatcher. <code>Program.cs</code> delegates directly to it, which keeps handlers testable with explicit output, error, working directory, and clock inputs.</p>
         </section>
 
         <section class="content-section">
@@ -78,7 +78,7 @@ nexus dedup decide --target dedup-target-... \
         <section class="content-section">
           <h2>Dependencies, tests, and extension rules</h2>
           <p>The CLI references the modules needed for the smoke commands plus ResearchWorkspace, AppServices, Reporting, UiContracts, AI, and Extensibility contracts. A project reference does not imply a runtime: the CLI does not execute plugins or models.</p>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/tree/main/tests/NexusScholar.Cli.Tests">CLI tests</a> cover process behavior, workspace lifecycle, import, verification, analysis, review/clusters, deduplication decisions, local demo, and persisted artifact verification. The local workflow is documented in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/cli/RESEARCH-WORKSPACE-CLI-v0.md">RESEARCH-WORKSPACE-CLI-v0</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/tests/NexusScholar.Cli.Tests">CLI tests</a> cover process behavior, workspace lifecycle, import, verification, analysis, review/clusters, deduplication decisions, local demo, and persisted artifact verification. The local workflow is documented in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/cli/RESEARCH-WORKSPACE-CLI-v0.md">RESEARCH-WORKSPACE-CLI-v0</a>.</p>
           <p>New commands should remain thin adapters over typed operations. Do not parse another adapter’s console output or reimplement transaction/authority logic in command handlers.</p>
         </section>
 

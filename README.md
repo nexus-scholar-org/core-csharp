@@ -305,12 +305,12 @@ application commands; they do not create scientific authority from UI state.
 
 ## Public Walkthrough and Feedback
 
-- [First-tester walkthrough](https://nexus-scholar.github.io/core-csharp/tutorials/getting-started/)
+- [First-tester walkthrough](https://nexus.mouadh.org/tutorials/getting-started/)
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
-- [First tester run](https://github.com/nexus-scholar/core-csharp/issues/new?template=first-tester-run.yml)
-- [Architecture boundary review](https://github.com/nexus-scholar/core-csharp/issues/new?template=architecture-boundary-review.yml)
-- [Documentation confusion](https://github.com/nexus-scholar/core-csharp/issues/new?template=documentation-confusion.yml)
+- [First tester run](https://github.com/nexus-scholar-org/core-csharp/issues/new?template=first-tester-run.yml)
+- [Architecture boundary review](https://github.com/nexus-scholar-org/core-csharp/issues/new?template=architecture-boundary-review.yml)
+- [Documentation confusion](https://github.com/nexus-scholar-org/core-csharp/issues/new?template=documentation-confusion.yml)
 
 ## Non-Claims
 

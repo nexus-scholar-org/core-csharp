@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Reporting</span></nav>
@@ -52,7 +52,7 @@ VerifiedReviewFlowReport</code></pre>
             <li><code>PersistedReportingVerifier</code> performs strict byte-only shape, digest, count, reason, binding, and nonclaim verification at CLI/import boundaries.</li>
             <li><code>ReviewFlowMarkdownRenderer</code> produces deterministic LF-only human-readable output from the verified report.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Reporting">NexusScholar.Reporting</a>. Accepted FE-06 design: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0033-reporting-audit-bundle-and-rapid-review-profile.md">ADR 0033</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Reporting">NexusScholar.Reporting</a>. Accepted FE-06 design: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0033-reporting-audit-bundle-and-rapid-review-profile.md">ADR 0033</a>.</p>
         </section>
         <section class="content-section" id="conservation">
           <h2>Count conservation and gaps</h2>
@@ -87,7 +87,7 @@ sum(full-text reason counts)      = full_text_excluded</code></pre>
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, extension points, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ReportingTests.cs">ReportingTests</a> cover conserved finalization, gaps, authority drift, deviations, strict persisted shape, and deterministic rendering. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ReportingFixtureTests.cs">ReportingFixtureTests</a> replay <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/reporting">reporting fixtures</a>. Independent closure and full validation are recorded in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/release/FE-06-COMPLETION-EVIDENCE.md">FE-06 Completion Evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/ReportingTests.cs">ReportingTests</a> cover conserved finalization, gaps, authority drift, deviations, strict persisted shape, and deterministic rendering. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/ReportingFixtureTests.cs">ReportingFixtureTests</a> replay <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/reporting">reporting fixtures</a>. Independent closure and full validation are recorded in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/release/FE-06-COMPLETION-EVIDENCE.md">FE-06 Completion Evidence</a>.</p>
           <p>New reporting standards should be separate versioned projections over the verified slice. The current module does not claim PRISMA certification, journal-submission conformance, statistical synthesis, narrative truth, archive identity, signatures, full CLI source replay, provider coverage, database/cloud behavior, or broad PHP compatibility.</p>
         </section>
       </div>

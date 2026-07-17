@@ -20,7 +20,7 @@
         <a href="../../../tutorials/">Tutorials</a>
         <a href="../../../roadmap/">Roadmap</a>
         <a href="../../../about/">About</a>
-        <a href="https://github.com/nexus-scholar/core-csharp">GitHub</a>
+        <a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a>
       </div>
     </nav>
   </header>
@@ -59,12 +59,12 @@ transformations + assumptions + calculations -------+
         <section class="content-section">
           <h2>Key API surface</h2>
           <ul class="link-list">
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisEligibleRecordFactories.cs"><code>SynthesisEligibleRecord.FromExtraction</code> / <code>FromAppraisal</code></a> establish source provenance and currentness.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisPlan.cs"><code>SynthesisOutcome</code></a> declares outcome id, name, target effect measure, unit, and timepoint.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisEligibleRecordFactories.cs"><code>SynthesisEligibleRecord.FromExtraction</code> / <code>FromAppraisal</code></a> establish source provenance and currentness.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisPlan.cs"><code>SynthesisOutcome</code></a> declares outcome id, name, target effect measure, unit, and timepoint.</li>
             <li><code>SynthesisTransformation</code> makes every effect-measure or unit conversion explicit, method-named, and rationale-bound.</li>
             <li><code>SynthesisCalculationDeclaration</code> freezes canonical configuration and stores its digest beside library id and version.</li>
             <li><code>SynthesisPlanAuthority.Create</code> performs the full authority and compatibility validation and returns a <code>VerifiedSynthesisPlan</code>.</li>
-            <li><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisPlanJournal.cs"><code>SynthesisPlanJournal</code></a> retains plans and append-only invalidations while projecting current plans.</li>
+            <li><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Synthesis/SynthesisPlanJournal.cs"><code>SynthesisPlanJournal</code></a> retains plans and append-only invalidations while projecting current plans.</li>
           </ul>
           <p>The canonical schemas are <code>nexus.synthesis.plan</code> and <code>nexus.synthesis.invalidation</code>, version <code>1.0.0</code>.</p>
         </section>
@@ -90,8 +90,8 @@ transformations + assumptions + calculations -------+
 
         <section class="content-section">
           <h2>Tests and accepted evidence</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SynthesisTests.cs">SynthesisTests</a> cover eligible-record factories, stale and invalid sources, plan authority, unit/effect mismatches, transformations, automation refusal, and invalidation. Cross-module canonical fixtures and amendment replay are in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">Fe07FixtureTests</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">Fe07AuthorityReplayTests</a>.</p>
-          <p>See <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, the <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">FE-07 gate</a>, and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">completion evidence</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SynthesisTests.cs">SynthesisTests</a> cover eligible-record factories, stale and invalid sources, plan authority, unit/effect mismatches, transformations, automation refusal, and invalidation. Cross-module canonical fixtures and amendment replay are in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07FixtureTests.cs">Fe07FixtureTests</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/Fe07AuthorityReplayTests.cs">Fe07AuthorityReplayTests</a>.</p>
+          <p>See <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0034-extraction-appraisal-and-synthesis-authority.md">ADR 0034</a>, the <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-07-EXTRACTION-APPRAISAL-SYNTHESIS.md">FE-07 gate</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/release/FE-07-COMPLETION-EVIDENCE.md">completion evidence</a>.</p>
         </section>
 
         <section class="content-section">

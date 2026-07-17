@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Shared identity</span></nav>
@@ -34,7 +34,7 @@
             <li><code>ScholarlyWork</code> carries an immutable identifier set plus bibliographic metadata. Metadata enriches display and comparison but does not replace identifiers.</li>
             <li><code>CorpusSlice</code> closes over transitive identifier overlap: if A shares with B and B shares with C, all three belong to one identity component even when A and C do not directly overlap.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Shared/SharedIdentity.cs">SharedIdentity.cs</a>. Contract: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0007-shared-scientific-identity.md">ADR 0007</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Shared/SharedIdentity.cs">SharedIdentity.cs</a>. Contract: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0007-shared-scientific-identity.md">ADR 0007</a>.</p>
         </section>
         <section class="content-section" id="model">
           <h2>Transitive identity model</h2>
@@ -63,7 +63,7 @@ No stable ID ⇒ unresolved candidate, not title-derived membership</code></pre>
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, extension points, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SharedIdentityTests.cs">SharedIdentityTests</a> exercise normalization, immutable sets, transitive membership, and bridge rejection. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/SharedIdentityFixtureTests.cs">SharedIdentityFixtureTests</a> replay the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/shared-identity">shared identity fixtures</a>. Narrow PHP comparator evidence, where present, is fixture-scoped rather than a broad compatibility claim.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SharedIdentityTests.cs">SharedIdentityTests</a> exercise normalization, immutable sets, transitive membership, and bridge rejection. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/SharedIdentityFixtureTests.cs">SharedIdentityFixtureTests</a> replay the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/shared-identity">shared identity fixtures</a>. Narrow PHP comparator evidence, where present, is fixture-scoped rather than a broad compatibility claim.</p>
           <p>Adding a namespace requires explicit normalization, canonical rendering, precedence, collisions, and fixtures. Shared provides no fuzzy matching, DOI resolution, provider lookup, title similarity, deduplication decision, corpus snapshot publication, or guarantee that two provider identifiers truly describe the same real-world work beyond the accepted evidence.</p>
         </section>
       </div>

@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main id="main" class="page doc-page">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -24,8 +24,8 @@
       <div class="doc-main">
         <section class="content-section">
           <h2>Implemented surface</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AI/AiTaskPolicy.cs"><code>AiTaskPolicy</code></a> records task type, authority class, whether human approval and evidence are required, and whether external data transfer is allowed. <code>Create</code> refuses a scientific-decision or external-action proposal when human approval is not required.</p>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.AI/AiProposal.cs"><code>AiProposal&lt;T&gt;</code></a> carries the policy, a typed value, evidence digests, and a non-default UTC creation time. It rejects invalid evidence digests and rejects an empty evidence set when the policy requires evidence.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AI/AiTaskPolicy.cs"><code>AiTaskPolicy</code></a> records task type, authority class, whether human approval and evidence are required, and whether external data transfer is allowed. <code>Create</code> refuses a scientific-decision or external-action proposal when human approval is not required.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.AI/AiProposal.cs"><code>AiProposal&lt;T&gt;</code></a> carries the policy, a typed value, evidence digests, and a non-default UTC creation time. It rejects invalid evidence digests and rejects an empty evidence set when the policy requires evidence.</p>
           <p class="section-note">There is no <code>AcceptedAiProposal</code> type in the current code. Human acceptance, rejection, partial acceptance, resulting domain command, and provenance are FE-11 work—not an implicit property of <code>AiProposal&lt;T&gt;</code>.</p>
         </section>
 
@@ -61,7 +61,7 @@ no domain mutation</code></pre>
           <h2>FE-11 target—planned, not implemented</h2>
           <p>The roadmap places governed AI after plugin staging and provider/privacy boundaries. It calls for task-specific accepted schemas, exact context manifests, provider/model/version/parameter records, prompt/template digests, transfer and retention policy, cost and output digests, untrusted-output parsing, evidence citations, uncertainty, immutable proposals, and separate human acceptance or rejection.</p>
           <p>CI must remain model-free and use recorded fixtures. The first target is a low-risk protocol clarification proposal, not autonomous Screening, Extraction, Appraisal, Synthesis, or external action.</p>
-          <p>See <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/plans/2026-07-14-feature-expansion-priority.md#fe-11---governed-ai">the FE-11 roadmap</a>.</p>
+          <p>See <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/plans/2026-07-14-feature-expansion-priority.md#fe-11---governed-ai">the FE-11 roadmap</a>.</p>
         </section>
 
         <section class="content-section">

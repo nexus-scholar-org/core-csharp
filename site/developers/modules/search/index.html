@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Search</span></nav>
@@ -35,7 +35,7 @@
             <li><code>SearchPlanParser</code> parses the schema-closed local plan and an explicitly separate legacy-import profile.</li>
             <li><code>SearchImportService</code> parses user-supplied RIS, BibTeX, and Scopus-like CSV bytes into <code>SearchImportTrace</code> with source-file/raw-record digests and parser notices.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar/core-csharp/tree/main/src/NexusScholar.Search">NexusScholar.Search</a>. Contracts: <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0010-search-trace-and-plan-contract.md">ADR 0010</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0011-search-import-source-contract.md">ADR 0011</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Search">NexusScholar.Search</a>. Contracts: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0010-search-trace-and-plan-contract.md">ADR 0010</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0011-search-import-source-contract.md">ADR 0011</a>.</p>
         </section>
         <section class="content-section" id="trace">
           <h2>Trace and import model</h2>
@@ -72,7 +72,7 @@ user export bytes
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, extension points, and nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SearchServiceTests.cs">SearchServiceTests</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SearchImportServiceTests.cs">SearchImportServiceTests</a> cover provider selection, failure, cache identity, imports, warnings, and raw evidence. <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/SearchFixtureTests.cs">SearchFixtureTests</a> replay the <a href="https://github.com/nexus-scholar/core-csharp/tree/main/fixtures/conformance/search">Search fixtures</a>.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SearchServiceTests.cs">SearchServiceTests</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/SearchImportServiceTests.cs">SearchImportServiceTests</a> cover provider selection, failure, cache identity, imports, warnings, and raw evidence. <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Conformance.Tests/SearchFixtureTests.cs">SearchFixtureTests</a> replay the <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/fixtures/conformance/search">Search fixtures</a>.</p>
           <p>Future providers implement <code>ISearchProvider</code>, but live HTTP, credentials, retries, rate limits, API terms, and CI cassette policy need a later gate. Future import formats require explicit parser/version/source contracts. Current code makes no live-provider, Google Scholar scraping, coverage/completeness, deduplication, corpus membership, API, cloud, or broad PHP compatibility claim.</p>
         </section>
       </div>

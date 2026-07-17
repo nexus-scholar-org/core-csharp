@@ -11,7 +11,7 @@
   <div class="release-status" role="status">Early alpha. Not production-ready. No package publication or broad PHP compatibility claim.</div>
   <header class="site-header"><nav class="nav" aria-label="Primary navigation">
     <a class="brand" href="../../../"><span class="brand-mark">NS</span><span>Nexus Scholar Core</span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar/core-csharp">GitHub</a></div>
+    <div class="nav-links" id="nav-links"><a href="../../../status/">Status</a><a href="../../../developers/" aria-current="page">Developers</a><a href="../../../tutorials/">Tutorials</a><a href="../../../roadmap/">Roadmap</a><a href="../../../about/">About</a><a href="https://github.com/nexus-scholar-org/core-csharp">GitHub</a></div>
   </nav></header>
   <main class="page doc-page" id="main">
     <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../developers/">Developers</a><span aria-hidden="true">/</span><a href="../">Modules</a><span aria-hidden="true">/</span><span aria-current="page">Artifacts</span></nav>
@@ -33,7 +33,7 @@
             <li><code>SizeBytes</code> and <code>RawByteDigest</code> bind the exact content.</li>
             <li>Optional <code>SourceRecordDigest</code>, workflow node, provenance event id/digest, and <code>RequiredFor</code> preserve lineage and intended use.</li>
           </ul>
-          <p>The complete implementation is <a href="https://github.com/nexus-scholar/core-csharp/blob/main/src/NexusScholar.Artifacts/Artifacts.cs">Artifacts.cs</a>. The broader portable-artifact contract is in <a href="https://github.com/nexus-scholar/core-csharp/blob/main/docs/adr/0009-portable-bundle-and-artifact-contract.md">ADR 0009</a>.</p>
+          <p>The complete implementation is <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/src/NexusScholar.Artifacts/Artifacts.cs">Artifacts.cs</a>. The broader portable-artifact contract is in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0009-portable-bundle-and-artifact-contract.md">ADR 0009</a>.</p>
         </section>
         <section class="content-section" id="identity">
           <h2>Identity and path rules</h2>
@@ -60,7 +60,7 @@ These three values are not interchangeable.</code></pre>
         </section>
         <section class="content-section" id="evidence">
           <h2>Tests, extension points, and nonclaims</h2>
-          <p>Artifact behavior is exercised with Bundle and Full Text tests, including path traversal, raw digest mismatch, changed bytes, duplicate content, and source-record binding: see <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/BundleTests.cs">BundleTests</a> and <a href="https://github.com/nexus-scholar/core-csharp/blob/main/tests/NexusScholar.Core.Tests/FullTextTests.cs">FullTextTests</a>.</p>
+          <p>Artifact behavior is exercised with Bundle and Full Text tests, including path traversal, raw digest mismatch, changed bytes, duplicate content, and source-record binding: see <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/BundleTests.cs">BundleTests</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Core.Tests/FullTextTests.cs">FullTextTests</a>.</p>
           <p>New artifact kinds extend schema/media vocabularies in their owning domains. This package does not provide storage, retention, access control, malware scanning, MIME sniffing, signatures, encryption, legal/redistribution assessment, archive identity, or safe import commit by itself.</p>
         </section>
       </div>
