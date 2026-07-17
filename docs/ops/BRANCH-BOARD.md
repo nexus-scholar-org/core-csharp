@@ -4,10 +4,11 @@ Status date: 2026-07-17
 
 ## Protected Main
 
-- `origin/main`: `ea665eb` (PR #69 FE-09 protected-main closeout).
+- `origin/main`: `bdd0d82` (PR #70 Astro Pages and FE-09 public baseline).
 - `gh-pages`: retained as historical static-site source; deployments use
   `site/` on `main`.
-- Active feature branch: none; FE-10 design has not started.
+- Active remediation branch: `cdx/fe-09-deep-review-remediation`.
+- FE-10 design has not started.
 - Active roadmap: `docs/plans/2026-07-14-feature-expansion-priority.md`.
 
 ## Verified Baseline
@@ -16,7 +17,11 @@ Status date: 2026-07-17
 - FE-01 through FE-08: complete within accepted local scopes.
 - FE-09A through FE-09F: complete within accepted scope and merged through
   PR #69.
+- Public Astro Pages baseline: merged through PR #70.
 - Full solution: 1,011 passed, 0 failed, 2 opt-in live smokes skipped.
+- Remediation candidate: 1,024 passed, 0 failed, 2 opt-in live smokes skipped;
+  OpenAlex live smoke passed separately and Semantic Scholar remained
+  credential-skipped.
 - Package graph: 24 validation-only packages with reproducible pack and clean
   local-source restore/load.
 - Release build and formatting: green.

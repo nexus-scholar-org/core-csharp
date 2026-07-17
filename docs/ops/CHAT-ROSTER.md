@@ -4,7 +4,9 @@ Status date: 2026-07-17
 
 ## Active Lanes
 
-- Main integration lane: protected `main` at `ea665eb`.
+- Main integration lane: protected `main` at `bdd0d82`.
+- Active implementation lane: `cdx/fe-09-deep-review-remediation`, governed by
+  ADR 0044 and not yet merged.
 - Product planning lane: FE-10 plugin-runtime design and capability security;
   no runtime implementation yet.
 - Public documentation lane: current project docs and `site/` on `main`.

@@ -11,6 +11,7 @@ public static class ProviderEvidenceCacheErrorCodes
     public const string InvalidResponseEvidence = "provider-evidence-cache-invalid-response-evidence";
     public const string DigestMismatch = "provider-evidence-cache-digest-mismatch";
     public const string StoreIndexCorrupt = "provider-evidence-cache-index-corrupt";
+    public const string StoreBusy = "provider-evidence-cache-store-busy";
 }
 
 public enum ProviderEvidenceCacheRetentionMode

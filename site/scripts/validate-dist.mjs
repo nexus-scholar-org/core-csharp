@@ -129,6 +129,15 @@ for (const relative of actualHtml) {
       continue;
     }
 
+    if (
+      relative === "404.html" &&
+      !reference.startsWith("/") &&
+      !reference.startsWith("#")
+    ) {
+      issues.push(`404.html -> fallback reference must be root-relative: ${reference}`);
+      continue;
+    }
+
     const { target, fragment } = resolveLocalReference(absolute, reference);
     if (!target.startsWith(distRoot + path.sep) && target !== distRoot) {
       issues.push(`${relative} -> reference escapes dist: ${reference}`);

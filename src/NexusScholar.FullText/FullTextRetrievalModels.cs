@@ -98,6 +98,9 @@ public sealed class FullTextRecordedRetrievalPolicy
 
 public sealed class FullTextRecordedRetrievalEvidence
 {
+    public const string SchemaId = "nexus.fulltext.recorded-retrieval-evidence";
+    public const string SchemaVersion = "1.0.0";
+
     private FullTextRecordedRetrievalEvidence(
         string evidenceId,
         FullTextInput input,
@@ -122,6 +125,7 @@ public sealed class FullTextRecordedRetrievalEvidence
     {
         EvidenceId = Guard.NotBlank(evidenceId, nameof(evidenceId));
         Input = input ?? throw new ArgumentNullException(nameof(input));
+        InputDigest = ContentDigest.Sha256(FullTextAuthorityCanonicalCodec.Serialize(Input));
         SourceAlias = Guard.NotBlank(sourceAlias, nameof(sourceAlias));
         SourceReference = Guard.NotBlank(sourceReference, nameof(sourceReference));
         FullTextRetrievalUriPolicy.RejectCredentialBearingReference(SourceReference, nameof(sourceReference));
@@ -182,6 +186,7 @@ public sealed class FullTextRecordedRetrievalEvidence
 
     public string EvidenceId { get; }
     public FullTextInput Input { get; }
+    public ContentDigest InputDigest { get; }
     public string SourceAlias { get; }
     public string SourceReference { get; }
     public string AccessRoute { get; }
@@ -201,6 +206,7 @@ public sealed class FullTextRecordedRetrievalEvidence
     public ReadOnlyCollection<FullTextRecordedRedirect> RedirectChain { get; }
     public string? TerminalFailureCategory { get; }
     public string? TerminalFailureSummary { get; }
+    public ContentDigest Digest => Envelope().ComputeDigest();
 
     public static FullTextRecordedRetrievalEvidence Record(
         string evidenceId,
@@ -246,21 +252,58 @@ public sealed class FullTextRecordedRetrievalEvidence
             terminalFailureCategory,
             terminalFailureSummary);
     }
+
+    public CanonicalJsonObject ToCanonicalJson() => Envelope().ToCanonicalJsonObject();
+
+    public byte[] ToCanonicalBytes() => Envelope().ToCanonicalJsonBytes();
+
+    private DigestEnvelope Envelope()
+    {
+        var content = new CanonicalJsonObject()
+            .Add("access_route", AccessRoute)
+            .Add("artifact_kind", ArtifactKind)
+            .Add("byte_length", ByteLength)
+            .Add("evidence_id", EvidenceId)
+            .Add("http_status", HttpStatus)
+            .Add("input_digest", InputDigest.ToString())
+            .Add("media_type", MediaType)
+            .Add("raw_byte_digest", RawByteDigest)
+            .Add("raw_byte_digest_scope", RawByteDigestScope)
+            .AddTimestamp("received_at", ReceivedAt)
+            .Add("redirect_chain", new CanonicalJsonArray(RedirectChain.Select(item =>
+                new CanonicalJsonObject()
+                    .Add("status_code", item.StatusCode)
+                    .Add("url", item.RedirectUrl))))
+            .Add("response_complete", ResponseComplete)
+            .Add("retention_disposition", RetentionDisposition)
+            .Add("rights_reference", RightsReference)
+            .Add("rights_status", RightsStatus)
+            .Add("source_alias", SourceAlias)
+            .Add("source_reference", SourceReference)
+            .AddTimestamp("requested_at", RequestedAt);
+
+        if (ContentEncoding is not null)
+        {
+            content.Add("content_encoding", ContentEncoding);
+        }
+
+        if (TerminalFailureCategory is not null)
+        {
+            content
+                .Add("terminal_failure_category", TerminalFailureCategory)
+                .Add("terminal_failure_summary", TerminalFailureSummary!);
+        }
+
+        return new DigestEnvelope(
+            DigestScope.CanonicalJsonRecord,
+            SchemaId,
+            SchemaVersion,
+            content);
+    }
 }
 
 internal static class FullTextRetrievalUriPolicy
 {
-    private static readonly string[] SecretQueryMarkers =
-    [
-        "api_key",
-        "apikey",
-        "access_token",
-        "auth_token",
-        "authorization",
-        "credential",
-        "signature"
-    ];
-
     internal static void RejectCredentialBearingReference(string value, string parameterName)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
@@ -268,13 +311,34 @@ internal static class FullTextRetrievalUriPolicy
             return;
         }
 
-        if (uri.UserInfo.Length > 0 ||
-            SecretQueryMarkers.Any(marker => uri.Query.Contains(marker, StringComparison.OrdinalIgnoreCase)))
+        if (uri.UserInfo.Length > 0 || ContainsSensitiveQueryParameter(uri.Query))
         {
             throw new FullTextRuleException(
                 FullTextRetrievalErrorCodes.InvalidUriPolicy,
                 $"Recorded URI '{parameterName}' contains credential-shaped material.");
         }
+    }
+
+    private static bool ContainsSensitiveQueryParameter(string query)
+    {
+        foreach (var pair in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var separator = pair.IndexOf('=');
+            var rawName = separator < 0 ? pair : pair[..separator];
+            var name = Uri.UnescapeDataString(rawName).Trim().Replace('-', '_').ToLowerInvariant();
+            if (name is "key" or "sig" or "signature" or "authorization" or "credential" or "secret" ||
+                name.Contains("api_key", StringComparison.Ordinal) ||
+                name.Contains("apikey", StringComparison.Ordinal) ||
+                name.Contains("token", StringComparison.Ordinal) ||
+                name.Contains("credential", StringComparison.Ordinal) ||
+                name.Contains("signature", StringComparison.Ordinal) ||
+                name.EndsWith("_key", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

@@ -16,11 +16,17 @@ claim broad PHP compatibility.
 
 ## Current Status
 
-Protected `main` is documented at `ea665eb`. FE-09 and the remaining FE-08
-desktop slices landed through
+Protected `main` is at `bdd0d82`; the evidence-linked FE-09 implementation
+baseline is `ea665eb`. FE-09 and the remaining FE-08 desktop slices landed through
 [`PR #69`](https://github.com/nexus-scholar-org/core-csharp/pull/69), with
 protected-main closeout recorded in
 [`docs/release/FE-09-COMPLETION-EVIDENCE.md`](docs/release/FE-09-COMPLETION-EVIDENCE.md).
+The Astro Pages migration and public FE-09 baseline landed through
+[`PR #70`](https://github.com/nexus-scholar-org/core-csharp/pull/70).
+Post-FE-09 integrity remediation is governed by
+[`ADR 0044`](docs/adr/0044-fe09-deep-review-integrity-remediation.md) with
+branch evidence in
+[`docs/release/FE-09-DEEP-REVIEW-REMEDIATION.md`](docs/release/FE-09-DEEP-REVIEW-REMEDIATION.md).
 
 The current verified baseline is:
 

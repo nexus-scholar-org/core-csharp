@@ -19,6 +19,7 @@ No feature pull request is currently queued.
 | #62-67 | FE-08 desktop slices 1-4 and closeouts | Landed |
 | #68 | Public documentation and Pages closeout | Landed |
 | #69 | FE-08 desktop closeout and FE-09 providers, cache, recorded Full Text retrieval, and citation network | Landed |
+| #70 | Astro Pages migration and FE-09 public baseline | Landed |
 
 ## Admission Rule
 

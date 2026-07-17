@@ -5,4 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="../NexusScholar.Search/NexusScholar.Search.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="NexusScholar.Search.Providers.Cache.Tests" />
+  </ItemGroup>
 </Project>
