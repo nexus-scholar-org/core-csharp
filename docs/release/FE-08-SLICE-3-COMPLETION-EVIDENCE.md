@@ -5,7 +5,7 @@ Date: 2026-07-17
 Authority: ADR 0036 and
 `docs/gates/FE-08-DESKTOP-DEDUPLICATION-REVIEW-SLICE-3.md`.
 
-Status: local implementation and validation complete; hosted delivery pending.
+Status: implementation and local/hosted validation complete; protected merge pending.
 
 ## Delivered Scope
 
@@ -49,10 +49,11 @@ Final local results:
 - native Windows visual QA: passed after finding and closing the reusable-control
   re-render crash; see `FE-08-SLICE-3-VISUAL-QA.md`;
 - three independent implementation, scientific-invariant, and test/release
-  reviews: accepted with no blocking or high-severity finding.
+  reviews: accepted with no blocking or high-severity finding;
+- PR 64 hosted validation: Ubuntu, Windows, CodeQL/analyze, and automated review
+  passed.
 
-Branch commit, hosted validation, protected merge, and post-merge validation
-remain pending.
+Protected merge and post-merge validation remain pending.
 
 ## Claim Boundary
 
