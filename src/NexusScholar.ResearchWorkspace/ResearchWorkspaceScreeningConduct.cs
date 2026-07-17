@@ -146,7 +146,9 @@ public static class ResearchWorkspaceScreeningConductVerifier
         if (ContentDigest.Sha256(manifestBytes).ToString() != project.ScreeningConductManifestSha256)
             throw new InvalidOperationException("Screening conduct manifest failed project-pointer digest verification.");
         var manifest = ResearchWorkspaceScreeningConductManifestCodec.Rehydrate(manifestBytes);
-        if (manifest.GenerationId != project.CurrentScreeningConductGenerationId || manifest.WorkspaceId != project.WorkspaceId || manifest.ProjectRevision != project.Revision)
+        if (manifest.GenerationId != project.CurrentScreeningConductGenerationId ||
+            manifest.WorkspaceId != project.WorkspaceId ||
+            manifest.ProjectRevision > project.Revision)
             throw new InvalidOperationException("Screening conduct manifest is stale or bound to another workspace.");
         if (manifest.WorkflowGenerationId is not null &&
             (manifest.WorkflowGenerationId != project.CurrentWorkflowExecutionJournalGenerationId ||

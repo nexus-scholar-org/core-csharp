@@ -512,6 +512,58 @@ public sealed class FullTextAcquisitionRecord
 
     public ReadOnlyCollection<string> NonClaims { get; }
 
+    public static FullTextAcquisitionRecord CreateLocal(
+        string acquisitionId,
+        FullTextInput inputRef,
+        string sourceReference,
+        FullTextActor acquiredBy,
+        DateTimeOffset acquiredAt,
+        string artifactEvidenceId,
+        string artifactKind,
+        string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(inputRef);
+        ArgumentNullException.ThrowIfNull(acquiredBy);
+        var reference = Guard.NotBlank(sourceReference, nameof(sourceReference));
+        if (Uri.TryCreate(reference, UriKind.Absolute, out var uri) &&
+            uri.Scheme is "http" or "https")
+        {
+            throw new FullTextRuleException(
+                FullTextErrorCodes.UnsupportedAcquisitionKind,
+                "Local Full Text acquisition cannot identify a remote URL.");
+        }
+
+        var evidenceId = Guard.NotBlank(artifactEvidenceId, nameof(artifactEvidenceId));
+        return new FullTextAcquisitionRecord(
+            acquisitionId,
+            inputRef,
+            FullTextAcquisitionKinds.ManualAcquisition,
+            "local",
+            reference,
+            acquiredBy,
+            acquiredAt,
+            FullTextAttemptStatuses.Success,
+            [
+                new FullTextSourceAttempt(
+                    $"{Guard.NotBlank(acquisitionId, nameof(acquisitionId))}-attempt-1",
+                    "local",
+                    1,
+                    FullTextAcquisitionKinds.ManualAcquisition,
+                    FullTextAttemptStatuses.Success,
+                    sourceReference: reference,
+                    artifactKind: Guard.NotBlank(artifactKind, nameof(artifactKind)),
+                    mediaType: Guard.NotBlank(mediaType, nameof(mediaType)),
+                    artifactEvidenceId: evidenceId)
+            ],
+            artifactEvidenceId: evidenceId,
+            nonClaims:
+            [
+                "local-source-reference-not-artifact-identity",
+                "no-network-retrieval",
+                "no-content-ownership-transfer"
+            ]);
+    }
+
     private void Validate()
     {
         if (!FullTextAcquisitionKinds.IsAllowed(AcquisitionKind))

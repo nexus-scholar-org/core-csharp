@@ -4,6 +4,11 @@ using System.Text.RegularExpressions;
 
 namespace NexusScholar.ResearchWorkspace;
 
+public sealed record ResearchWorkspaceFullTextPointer(
+    string GenerationId,
+    string ManifestPath,
+    string ManifestSha256);
+
 public sealed record ResearchWorkspaceProject(
     string Schema,
     string WorkspaceId,
@@ -29,7 +34,12 @@ public sealed record ResearchWorkspaceProject(
     string? ScreeningAuthorityPackageManifestSha256 = null,
     string? CurrentFullTextGenerationId = null,
     string? FullTextManifestPath = null,
-    string? FullTextManifestSha256 = null)
+    string? FullTextManifestSha256 = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    IReadOnlyDictionary<string, ResearchWorkspaceFullTextPointer>? FullTextCases = null,
+    string? CurrentReportingWorkflowGenerationId = null,
+    string? ReportingWorkflowManifestPath = null,
+    string? ReportingWorkflowManifestSha256 = null)
 {
     public const string CurrentSchema = "nexus.project.v0";
 
@@ -140,6 +150,39 @@ public sealed record ResearchWorkspaceProject(
             CurrentWorkflowExecutionJournalGenerationId = workflowGenerationId,
             WorkflowExecutionJournalManifestPath = workflowManifestPath,
             WorkflowExecutionJournalManifestSha256 = workflowManifestSha256
+        };
+
+    public ResearchWorkspaceProject CommitFullTextGeneration(
+        string candidateId,
+        string generationId,
+        string manifestPath,
+        string manifestSha256)
+    {
+        var cases = new Dictionary<string, ResearchWorkspaceFullTextPointer>(
+            FullTextCases ?? new Dictionary<string, ResearchWorkspaceFullTextPointer>(StringComparer.Ordinal),
+            StringComparer.Ordinal)
+        {
+            [candidateId] = new(generationId, manifestPath, manifestSha256)
+        };
+        return this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentFullTextGenerationId = generationId,
+            FullTextManifestPath = manifestPath,
+            FullTextManifestSha256 = manifestSha256,
+            FullTextCases = cases
+        };
+    }
+
+    public ResearchWorkspaceProject CommitReportingWorkflowGeneration(
+        string generationId,
+        string manifestPath,
+        string manifestSha256) => this with
+        {
+            Revision = checked(Revision + 1),
+            CurrentReportingWorkflowGenerationId = generationId,
+            ReportingWorkflowManifestPath = manifestPath,
+            ReportingWorkflowManifestSha256 = manifestSha256
         };
 
     public ResearchWorkspaceProject CommitFullTextGeneration(

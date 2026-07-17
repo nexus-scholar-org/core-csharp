@@ -491,13 +491,29 @@ public sealed class ScreeningConductHandoff
     public const string SchemaId = "nexus.screening.conduct-handoff";
     public const string SchemaVersion = "1.0.0";
 
-    private ScreeningConductHandoff(string handoffId, ScreeningConductHeader header, ScreeningConductProjection projection, DateTimeOffset createdAt)
+    private ScreeningConductHandoff(
+        string handoffId,
+        ScreeningConductHeader header,
+        ScreeningConductProjection projection,
+        ScreeningConductActor publishedBy,
+        string rationale,
+        ContentDigest confirmationMaterialDigest,
+        bool includesPublicationEvidence,
+        DateTimeOffset createdAt)
     {
         HandoffId = Guard.NotBlank(handoffId, nameof(handoffId));
         ConductId = header.ConductId;
         PolicyDigest = header.PolicyDigest;
         JournalHeadDigest = projection.HeadDigest;
         Outcomes = Array.AsReadOnly(projection.Outcomes.Values.OrderBy(item => item.CandidateId, StringComparer.Ordinal).ToArray());
+        PublishedBy = publishedBy;
+        Rationale = Guard.NotBlank(rationale, nameof(rationale));
+        ConfirmationMaterialDigest = confirmationMaterialDigest.IsValid
+            ? confirmationMaterialDigest
+            : throw new ScreeningRuleException(
+                ScreeningErrorCodes.UnverifiedConductAuthority,
+                "Screening handoff confirmation material digest is invalid.");
+        IncludesPublicationEvidence = includesPublicationEvidence;
         CreatedAt = createdAt;
         Digest = Envelope().ComputeDigest();
     }
@@ -507,30 +523,74 @@ public sealed class ScreeningConductHandoff
     public ContentDigest PolicyDigest { get; }
     public ContentDigest JournalHeadDigest { get; }
     public IReadOnlyList<ScreeningConductOutcome> Outcomes { get; }
+    public ScreeningConductActor PublishedBy { get; }
+    public string Rationale { get; }
+    public ContentDigest ConfirmationMaterialDigest { get; }
+    public bool IncludesPublicationEvidence { get; }
     public DateTimeOffset CreatedAt { get; }
     public ContentDigest Digest { get; }
 
     public static ScreeningConductHandoff Create(string handoffId, ScreeningConductJournal journal, DateTimeOffset createdAt)
     {
         ArgumentNullException.ThrowIfNull(journal);
+        const string rationale = "Handoff derived from complete Screening conduct.";
+        var confirmationMaterialDigest = ContentDigest.Sha256CanonicalJson(
+            new CanonicalJsonObject()
+                .Add("handoff_id", handoffId)
+                .Add("journal_head_digest", journal.Projection.HeadDigest.ToString())
+                .Add("published_by", journal.Policy.ApprovedBy.ToCanonicalJson())
+                .Add("rationale", rationale)
+                .AddTimestamp("created_at", createdAt));
         if (!journal.Projection.HandoffReady)
             throw new ScreeningRuleException(ScreeningErrorCodes.InsufficientReview, "Current Screening conduct is not eligible for handoff.");
-        return new ScreeningConductHandoff(handoffId, journal.Header, journal.Projection, createdAt);
+        return new ScreeningConductHandoff(
+            handoffId, journal.Header, journal.Projection, journal.Policy.ApprovedBy,
+            rationale, confirmationMaterialDigest, false, createdAt);
+    }
+
+    public static ScreeningConductHandoff Create(
+        string handoffId,
+        ScreeningConductJournal journal,
+        ScreeningConductActor publishedBy,
+        string rationale,
+        ContentDigest confirmationMaterialDigest,
+        DateTimeOffset createdAt)
+    {
+        ArgumentNullException.ThrowIfNull(journal);
+        ArgumentNullException.ThrowIfNull(publishedBy);
+        if (!journal.Projection.HandoffReady)
+            throw new ScreeningRuleException(ScreeningErrorCodes.InsufficientReview, "Current Screening conduct is not eligible for handoff.");
+        if (!journal.Policy.Authorizes(publishedBy))
+            throw new ScreeningRuleException(
+                ScreeningErrorCodes.UnauthorizedReviewer,
+                "Screening handoff publication requires an authorized human policy member.");
+        return new ScreeningConductHandoff(
+            handoffId, journal.Header, journal.Projection, publishedBy,
+            rationale, confirmationMaterialDigest, true, createdAt);
     }
 
     public CanonicalJsonObject ToCanonicalJson() => Envelope().ToCanonicalJsonObject();
 
-    private DigestEnvelope Envelope() => new(DigestScope.CanonicalJsonRecord, SchemaId, SchemaVersion,
-        new CanonicalJsonObject().Add("handoff_id", HandoffId).Add("conduct_id", ConductId).Add("policy_digest", PolicyDigest.ToString())
-            .Add("journal_head_digest", JournalHeadDigest.ToString())
-            .Add("outcomes", CanonicalJsonValue.Array(Outcomes.Select(item =>
+    private DigestEnvelope Envelope()
+    {
+        var content = new CanonicalJsonObject().Add("handoff_id", HandoffId).Add("conduct_id", ConductId).Add("policy_digest", PolicyDigest.ToString())
+            .Add("journal_head_digest", JournalHeadDigest.ToString());
+        if (IncludesPublicationEvidence)
+        {
+            content.Add("published_by", PublishedBy.ToCanonicalJson())
+                .Add("rationale", Rationale)
+                .Add("confirmation_material_digest", ConfirmationMaterialDigest.ToString());
+        }
+        content.Add("outcomes", CanonicalJsonValue.Array(Outcomes.Select(item =>
             {
                 var value = new CanonicalJsonObject().Add("candidate_id", item.CandidateId).Add("verdict", item.Verdict)
                     .Add("supporting_decision_digests", CanonicalJsonValue.Array(item.SupportingDecisionDigests
                         .Select(digest => CanonicalJsonValue.From(digest.ToString())).ToArray()));
                 if (item.ExclusionReasonCode is not null) value.Add("exclusion_reason_code", item.ExclusionReasonCode);
                 return value;
-            }).ToArray())).AddTimestamp("created_at", CreatedAt));
+            }).ToArray())).AddTimestamp("created_at", CreatedAt);
+        return new DigestEnvelope(DigestScope.CanonicalJsonRecord, SchemaId, SchemaVersion, content);
+    }
 }
 
 public sealed class ScreeningConductJournal

@@ -26,6 +26,14 @@ public sealed class DesktopWorkspaceViewModel
 
     public DesktopScreeningReviewPreview? PendingScreeningPreview { get; private set; }
 
+    public DesktopScreeningResolutionPreview? PendingScreeningResolutionPreview { get; private set; }
+
+    public DesktopScreeningHandoffPreview? PendingScreeningHandoffPreview { get; private set; }
+    public DesktopFullTextIntakePreview? PendingFullTextIntakePreview { get; private set; }
+    public DesktopFullTextReviewPreview? PendingFullTextReviewPreview { get; private set; }
+    public DesktopReportingWorkflowPreview? PendingReportingWorkflowPreview { get; private set; }
+    public DesktopReviewExportPreview? PendingReviewExportPreview { get; private set; }
+
     public string Status { get; private set; }
 
     public DesktopWorkspaceCommandStatus StatusKind { get; private set; } = DesktopWorkspaceCommandStatus.Ready;
@@ -33,19 +41,49 @@ public sealed class DesktopWorkspaceViewModel
     public bool HasWorkspace => Overview is not null;
 
     public bool HasPendingConfirmation => PendingPreview is not null ||
-        PendingReviewPreview is not null || PendingScreeningPreview is not null;
+        PendingReviewPreview is not null || PendingScreeningPreview is not null ||
+        PendingScreeningResolutionPreview is not null ||
+        PendingScreeningHandoffPreview is not null ||
+        PendingFullTextIntakePreview is not null ||
+        PendingFullTextReviewPreview is not null ||
+        PendingReportingWorkflowPreview is not null ||
+        PendingReviewExportPreview is not null;
 
     public IReadOnlyList<string> PendingEffects =>
+        PendingReviewExportPreview?.ExpectedEffects ??
+        PendingReportingWorkflowPreview?.ExpectedEffects ??
+        PendingFullTextReviewPreview?.ExpectedEffects ??
+        PendingFullTextIntakePreview?.ExpectedEffects ??
+        PendingScreeningHandoffPreview?.ExpectedEffects ??
+        PendingScreeningResolutionPreview?.ExpectedEffects ??
         PendingScreeningPreview?.ExpectedEffects ??
         PendingReviewPreview?.ExpectedEffects ??
         PendingPreview?.ExpectedEffects ?? Array.Empty<string>();
 
     public string? PendingConfirmationToken =>
+        PendingReviewExportPreview?.ConfirmationToken ??
+        PendingReportingWorkflowPreview?.ConfirmationToken ??
+        PendingFullTextReviewPreview?.ConfirmationToken ??
+        PendingFullTextIntakePreview?.ConfirmationToken ??
+        PendingScreeningHandoffPreview?.ConfirmationToken ??
+        PendingScreeningResolutionPreview?.ConfirmationToken ??
         PendingScreeningPreview?.ConfirmationToken ??
         PendingReviewPreview?.ConfirmationToken ??
         PendingPreview?.ConfirmationToken;
 
-    public string PendingCommandLabel => PendingScreeningPreview is not null
+    public string PendingCommandLabel => PendingReviewExportPreview is not null
+        ? "Publish verified report and Bundle v2 export"
+        : PendingReportingWorkflowPreview is not null
+        ? "Publish reporting Workflow authority"
+        : PendingFullTextReviewPreview is not null
+        ? "Record human Full Text decision"
+        : PendingFullTextIntakePreview is not null
+        ? "Import local Full Text evidence"
+        : PendingScreeningHandoffPreview is not null
+        ? "Publish title/abstract Screening handoff"
+        : PendingScreeningResolutionPreview is not null
+        ? "Record human Screening correction or adjudication"
+        : PendingScreeningPreview is not null
         ? "Record human title/abstract decision"
         : PendingReviewPreview is not null
         ? "Record human deduplication review"
@@ -182,8 +220,182 @@ public sealed class DesktopWorkspaceViewModel
         StatusKind = result.Status;
     }
 
+    public void PreviewScreeningResolution(
+        string candidateId,
+        string decisionKind,
+        string verdict,
+        string actorId,
+        string actorRole,
+        string rationale,
+        string? exclusionReasonCode,
+        string? supersedesDecisionDigest,
+        string? resolvedConflictId,
+        IReadOnlyList<string> sourceDecisionDigests,
+        DateTimeOffset occurredAt)
+    {
+        if (string.IsNullOrWhiteSpace(WorkspacePath))
+        {
+            ApplyFailure("Open a workspace before recording a Screening resolution.");
+            return;
+        }
+
+        CancelPending();
+        var result = _facade.PreviewScreeningResolution(
+            new DesktopScreeningResolutionRequest(
+                WorkspacePath, candidateId, decisionKind, verdict, actorId, "human",
+                actorRole, rationale, exclusionReasonCode, supersedesDecisionDigest,
+                resolvedConflictId, sourceDecisionDigests, occurredAt));
+        PendingScreeningResolutionPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
+    public void PreviewScreeningHandoff(
+        string actorId,
+        string actorRole,
+        string rationale,
+        DateTimeOffset occurredAt)
+    {
+        if (string.IsNullOrWhiteSpace(WorkspacePath))
+        {
+            ApplyFailure("Open a workspace before publishing a Screening handoff.");
+            return;
+        }
+
+        CancelPending();
+        var result = _facade.PreviewScreeningHandoff(
+            new DesktopScreeningHandoffRequest(
+                WorkspacePath, actorId, "human", actorRole, rationale, occurredAt));
+        PendingScreeningHandoffPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
+    public void PreviewFullTextIntake(
+        string candidateId, string localPath, string actorId, DateTimeOffset occurredAt)
+    {
+        CancelPending();
+        var result = _facade.PreviewFullTextIntake(new DesktopFullTextIntakeRequest(
+            WorkspacePath, candidateId, localPath, "text", "text/plain",
+            actorId, "human", occurredAt, 50L * 1024 * 1024));
+        PendingFullTextIntakePreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
+    public void PreviewFullTextReview(
+        string candidateId, string verdict, string actorId, string actorRole,
+        string rationale, string inclusionCriteria, string exclusionCriteria,
+        string exclusionReasonCode, string? selectedReason, DateTimeOffset occurredAt)
+    {
+        CancelPending();
+        var result = _facade.PreviewFullTextReview(new DesktopFullTextReviewRequest(
+            WorkspacePath, verdict, actorId, "human", actorRole, rationale,
+            inclusionCriteria, exclusionCriteria, exclusionReasonCode,
+            selectedReason, occurredAt, candidateId));
+        PendingFullTextReviewPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
+    public void PreviewReportingWorkflow()
+    {
+        CancelPending();
+        var result = _facade.PreviewReportingWorkflow(WorkspacePath);
+        PendingReportingWorkflowPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
+    public void PreviewReviewExport(
+        string exportId, string actorId, string actorRole, DateTimeOffset occurredAt)
+    {
+        CancelPending();
+        var result = _facade.PreviewReviewExport(new DesktopReviewExportRequest(
+            WorkspacePath, exportId, actorId, actorRole, occurredAt,
+            ["Local-only review generated from verified authority records."],
+            ["No PRISMA certification claim.", "No external compatibility claim."]));
+        PendingReviewExportPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
     public void ConfirmPending()
     {
+        var exportPreview = PendingReviewExportPreview;
+        PendingReviewExportPreview = null;
+        if (exportPreview is not null)
+        {
+            var result = _facade.ExecuteReviewExport(exportPreview);
+            Status = result.Message; StatusKind = result.Status;
+            if (result.Overview is not null) Overview = result.Overview;
+            return;
+        }
+
+        var reportingPreview = PendingReportingWorkflowPreview;
+        PendingReportingWorkflowPreview = null;
+        if (reportingPreview is not null)
+        {
+            var result = _facade.ExecuteReportingWorkflow(reportingPreview);
+            Status = result.Message; StatusKind = result.Status;
+            if (result.Overview is not null) Overview = result.Overview;
+            return;
+        }
+
+        var fullTextReview = PendingFullTextReviewPreview;
+        PendingFullTextReviewPreview = null;
+        if (fullTextReview is not null)
+        {
+            var result = _facade.ExecuteFullTextReview(fullTextReview);
+            Status = result.Message; StatusKind = result.Status;
+            if (result.Overview is not null) Overview = result.Overview;
+            return;
+        }
+
+        var fullTextIntake = PendingFullTextIntakePreview;
+        PendingFullTextIntakePreview = null;
+        if (fullTextIntake is not null)
+        {
+            var result = _facade.ExecuteFullTextIntake(fullTextIntake);
+            Status = result.Message; StatusKind = result.Status;
+            if (result.Overview is not null) Overview = result.Overview;
+            return;
+        }
+
+        var handoffPreview = PendingScreeningHandoffPreview;
+        PendingScreeningHandoffPreview = null;
+        PendingFullTextIntakePreview = null;
+        PendingFullTextReviewPreview = null;
+        PendingReportingWorkflowPreview = null;
+        PendingReviewExportPreview = null;
+        if (handoffPreview is not null)
+        {
+            var handoffResult = _facade.ExecuteScreeningHandoff(handoffPreview);
+            Status = handoffResult.Message;
+            StatusKind = handoffResult.Status;
+            if (handoffResult.Overview is not null)
+            {
+                Overview = handoffResult.Overview;
+            }
+            RefreshScreeningQueue(applyStatus: false);
+            return;
+        }
+
+        var resolutionPreview = PendingScreeningResolutionPreview;
+        PendingScreeningResolutionPreview = null;
+        if (resolutionPreview is not null)
+        {
+            var resolutionResult = _facade.ExecuteScreeningResolution(resolutionPreview);
+            Status = resolutionResult.Message;
+            StatusKind = resolutionResult.Status;
+            if (resolutionResult.Overview is not null)
+            {
+                Overview = resolutionResult.Overview;
+            }
+            RefreshScreeningQueue(applyStatus: false);
+            return;
+        }
+
         var screeningPreview = PendingScreeningPreview;
         PendingScreeningPreview = null;
         if (screeningPreview is not null)
@@ -228,7 +440,7 @@ public sealed class DesktopWorkspaceViewModel
             return;
         }
 
-        var result = preview.CommandKind switch
+        var commandResult = preview.CommandKind switch
         {
             DesktopWorkspaceCommandKinds.Initialize => _facade.ExecuteInitialize(preview),
             DesktopWorkspaceCommandKinds.ImportSearch => _facade.ExecuteImportSearch(preview),
@@ -237,8 +449,8 @@ public sealed class DesktopWorkspaceViewModel
                 DesktopWorkspaceCommandStatus.Failed,
                 "The pending command kind is not admitted by this product slice.")
         };
-        Apply(result);
-        if (result.Completed && preview.CommandKind == DesktopWorkspaceCommandKinds.Initialize)
+        Apply(commandResult);
+        if (commandResult.Completed && preview.CommandKind == DesktopWorkspaceCommandKinds.Initialize)
         {
             WorkspacePath = preview.WorkspaceDirectory;
         }
@@ -249,12 +461,24 @@ public sealed class DesktopWorkspaceViewModel
         PendingPreview = null;
         PendingReviewPreview = null;
         PendingScreeningPreview = null;
+        PendingScreeningResolutionPreview = null;
+        PendingScreeningHandoffPreview = null;
+        PendingFullTextIntakePreview = null;
+        PendingFullTextReviewPreview = null;
+        PendingReportingWorkflowPreview = null;
+        PendingReviewExportPreview = null;
     }
 
     private void ApplyPreview(DesktopWorkspacePreviewResult result)
     {
         PendingReviewPreview = null;
         PendingScreeningPreview = null;
+        PendingScreeningResolutionPreview = null;
+        PendingScreeningHandoffPreview = null;
+        PendingFullTextIntakePreview = null;
+        PendingFullTextReviewPreview = null;
+        PendingReportingWorkflowPreview = null;
+        PendingReviewExportPreview = null;
         PendingPreview = result.Preview;
         Status = result.Message;
         StatusKind = result.Status;
@@ -275,6 +499,8 @@ public sealed class DesktopWorkspaceViewModel
         PendingPreview = null;
         PendingReviewPreview = null;
         PendingScreeningPreview = null;
+        PendingScreeningResolutionPreview = null;
+        PendingScreeningHandoffPreview = null;
         Status = message;
         StatusKind = DesktopWorkspaceCommandStatus.Failed;
     }

@@ -139,7 +139,7 @@ public sealed class WorkspaceExportLedgerTests
     public void App_orchestration_rejects_nonhuman_export_actor()
     {
         Assert.ThrowsExactly<InvalidOperationException>(() => BuildRequest("export-automation",
-            new ReviewExportActor("automation-1", ReviewExportActorKinds.Automation)));
+            new ReviewExportActor("automation-1", ReviewExportActorKinds.Automation, "reviewer")));
     }
 
     [TestMethod]
@@ -234,7 +234,7 @@ public sealed class WorkspaceExportLedgerTests
     {
         using var workspace = CreateWorkspace();
         _ = ResearchWorkspaceExportTransaction.Commit(workspace.Location, workspace.Project, BuildRequest("export-human"), null);
-        var second = BuildRequest("export-human", new ReviewExportActor("reviewer-2", ReviewExportActorKinds.Human));
+        var second = BuildRequest("export-human", new ReviewExportActor("reviewer-2", ReviewExportActorKinds.Human, "reviewer"));
 
         var error = Assert.ThrowsExactly<WorkspaceExportException>(() =>
             ResearchWorkspaceExportTransaction.Commit(workspace.Location, workspace.Project, second, null));
@@ -303,7 +303,7 @@ public sealed class WorkspaceExportLedgerTests
         ReviewFlowProjector.Project(ReportingTests.BuildAuthorities(includeFullText: true),
             ["Local-only review."], ["No PRISMA certification claim."]));
 
-    private static ReviewExportActor HumanActor() => new("reviewer-1", ReviewExportActorKinds.Human);
+    private static ReviewExportActor HumanActor() => new("reviewer-1", ReviewExportActorKinds.Human, "reviewer");
 
     private static BundleV2SourceBinding[] Sources(VerifiedReviewFlowReport report) => report.WorkspaceCut.Generations
         .Select(item => new BundleV2SourceBinding(item.Role, item.GenerationId,

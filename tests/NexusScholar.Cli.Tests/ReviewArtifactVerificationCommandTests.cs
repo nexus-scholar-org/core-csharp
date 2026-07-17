@@ -155,7 +155,8 @@ public sealed class ReviewArtifactVerificationCommandTests
                 new CanonicalJsonObject().Add("path", item.Path).Add("size_bytes", item.Bytes.LongLength)
                     .Add("digest", ContentDigest.Sha256(item.Bytes).ToString())).ToArray());
             var request = new CanonicalJsonObject().Add("export_id", "export-1").Add("actor_id", "reviewer-1")
-                .Add("actor_kind", "human").Add("recorded_at", "2026-07-16T08:00:00Z").Add("workspace_id", "workspace-cli-export")
+                .Add("actor_kind", "human").Add("actor_role", "reviewer")
+                .Add("recorded_at", "2026-07-16T08:00:00Z").Add("workspace_id", "workspace-cli-export")
                 .Add("project_revision", 0).Add("report_digest", reportDigest.ToString())
                 .Add("workspace_cut_digest", workspaceCutDigest.ToString()).Add("bundle_manifest_digest", verification.ManifestDigest.ToString())
                 .Add("observed_inventory_digest", verification.InventoryDigest.ToString()).Add("slice_digest", slice.ComputeDigest().ToString())

@@ -53,9 +53,10 @@ public static class ScreeningCriteriaCanonicalCodec
                 approvedProtocolStatus: OptionalText(content, "approved_protocol_status"),
                 currentProtocolContentDigest: OptionalText(content, "current_protocol_content_digest"));
 
-            if (!string.Equals(criteria.Stage, ScreeningStages.TitleAbstract, StringComparison.Ordinal))
+            if (criteria.Stage is not ScreeningStages.TitleAbstract and not ScreeningStages.FullText)
             {
-                throw Rule(ScreeningErrorCodes.InvalidCriteriaCanonicalRecord, "Screening criteria stage must be 'title_abstract'.");
+                throw Rule(ScreeningErrorCodes.InvalidCriteriaCanonicalRecord,
+                    "Screening criteria stage must be 'title_abstract' or 'full_text'.");
             }
 
             EnsureProtocolBinding(criteria, protocol);

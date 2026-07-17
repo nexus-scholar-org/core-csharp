@@ -109,6 +109,14 @@ public sealed class VerifiedSnapshotBoundScreeningPolicy
 
     public VerifiedScreeningCorpusBinding Binding { get; }
     public ScreeningConductPolicy Policy { get; }
+
+    public static VerifiedSnapshotBoundScreeningPolicy FromVerified(
+        VerifiedScreeningCorpusBinding binding,
+        ScreeningConductPolicy policy)
+    {
+        ScreeningCorpusBindingAuthority.VerifyConductPolicyBinding(binding, policy);
+        return new VerifiedSnapshotBoundScreeningPolicy(binding, policy);
+    }
 }
 
 public static class ScreeningCorpusBindingAuthority

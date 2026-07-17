@@ -19,7 +19,7 @@ public static class ReviewExportActorKinds
     public const string Automation = "automation";
 }
 
-public sealed record ReviewExportActor(string ActorId, string ActorKind);
+public sealed record ReviewExportActor(string ActorId, string ActorKind, string ActorRole);
 
 public sealed class VerifiedReviewExportRequest
 {
@@ -34,6 +34,7 @@ public sealed class VerifiedReviewExportRequest
         string exportId,
         string actor,
         string actorKind,
+        string actorRole,
         string occurredAt,
         string workspaceId,
         long projectRevision,
@@ -53,6 +54,7 @@ public sealed class VerifiedReviewExportRequest
         ExportId = exportId;
         Actor = actor;
         ActorKind = actorKind;
+        ActorRole = actorRole;
         OccurredAt = occurredAt;
         WorkspaceId = workspaceId;
         ProjectRevision = projectRevision;
@@ -73,6 +75,7 @@ public sealed class VerifiedReviewExportRequest
     public string ExportId { get; }
     public string Actor { get; }
     public string ActorKind { get; }
+    public string ActorRole { get; }
     public string OccurredAt { get; }
     public string WorkspaceId { get; }
     public long ProjectRevision { get; }
@@ -140,6 +143,7 @@ public static partial class ReviewExportOrchestrator
             throw new InvalidOperationException("Export id must be a safe identifier.");
         ArgumentNullException.ThrowIfNull(actor);
         var human = Required(actor.ActorId, nameof(actor));
+        var actorRole = Required(actor.ActorRole, nameof(actor));
         if (actor.ActorKind != ReviewExportActorKinds.Human)
             throw new InvalidOperationException("Only an identified human actor may record a workspace export.");
         if (!DateTimeOffset.TryParseExact(occurredAt, "yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture,
@@ -180,6 +184,7 @@ public static partial class ReviewExportOrchestrator
             .Add("export_id", id)
             .Add("actor_id", human)
             .Add("actor_kind", actor.ActorKind)
+            .Add("actor_role", actorRole)
             .Add("recorded_at", occurredAt)
             .Add("workspace_id", bundle.WorkspaceId)
             .Add("project_revision", bundle.ProjectRevision)
@@ -195,7 +200,7 @@ public static partial class ReviewExportOrchestrator
             .Add("source_generations", CanonicalJsonValue.Array(sources.Select(SourceJson).ToArray()));
         var requestBytes = CanonicalJsonSerializer.SerializeToUtf8Bytes(content);
         var requestDigest = ContentDigest.Sha256(requestBytes);
-        return new VerifiedReviewExportRequest(id, human, actor.ActorKind, occurredAt, bundle.WorkspaceId, bundle.ProjectRevision,
+        return new VerifiedReviewExportRequest(id, human, actor.ActorKind, actorRole, occurredAt, bundle.WorkspaceId, bundle.ProjectRevision,
             report.ReportDigest, report.WorkspaceCut.Digest, verification.ManifestDigest, verification.InventoryDigest,
             sources, reportBytes, sliceBytes, markdownBytes, bundleManifestBytes, inventory, requestBytes, requestDigest);
     }

@@ -169,8 +169,33 @@ public static class ScreeningConductCanonicalCodec
         ScreeningConductJournal journal)
     {
         var content = ParseEnvelope(bytes, expectedDigest, ScreeningConductHandoff.SchemaId);
-        RequireExact(content, ["conduct_id", "created_at", "handoff_id", "journal_head_digest", "outcomes", "policy_digest"]);
-        var handoff = ScreeningConductHandoff.Create(Text(content, "handoff_id"), journal, Timestamp(content, "created_at"));
+        var hasPublicationEvidence = content.Properties.ContainsKey("published_by");
+        ScreeningConductHandoff handoff;
+        if (hasPublicationEvidence)
+        {
+            RequireExact(content,
+            [
+                "conduct_id", "confirmation_material_digest", "created_at", "handoff_id",
+                "journal_head_digest", "outcomes", "policy_digest", "published_by", "rationale"
+            ]);
+            handoff = ScreeningConductHandoff.Create(
+                Text(content, "handoff_id"),
+                journal,
+                ParseActor(Object(content, "published_by")),
+                Text(content, "rationale"),
+                Digest(content, "confirmation_material_digest"),
+                Timestamp(content, "created_at"));
+        }
+        else
+        {
+            RequireExact(content,
+            [
+                "conduct_id", "created_at", "handoff_id", "journal_head_digest",
+                "outcomes", "policy_digest"
+            ]);
+            handoff = ScreeningConductHandoff.Create(
+                Text(content, "handoff_id"), journal, Timestamp(content, "created_at"));
+        }
         RequireReproduction(bytes, handoff.Digest, expectedDigest, Serialize(handoff), "Screening conduct handoff");
         return handoff;
     }

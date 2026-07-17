@@ -352,7 +352,7 @@ public static class ResearchWorkspaceExportLedgerVerifier
         var canonical = CanonicalJsonSerializer.SerializeToUtf8Bytes(CanonicalJsonValue.FromJsonElement(request.RootElement));
         if (!requestBytes.SequenceEqual(canonical)) throw Invalid("Export request is not canonical.");
         var root = request.RootElement;
-        WorkspaceExportLedgerEntryCodec.Exact(root, "actor_id", "actor_kind", "artifacts", "bundle_manifest_digest", "export_id",
+        WorkspaceExportLedgerEntryCodec.Exact(root, "actor_id", "actor_kind", "actor_role", "artifacts", "bundle_manifest_digest", "export_id",
             "observed_inventory_digest", "project_revision", "report_digest", "report_markdown_digest", "slice_digest",
             "source_generations", "recorded_at", "workspace_cut_digest", "workspace_id");
         if (WorkspaceExportLedgerEntryCodec.Text(root, "export_id") != entry.ExportId ||
@@ -365,6 +365,7 @@ public static class ResearchWorkspaceExportLedgerVerifier
             throw Invalid("Export request bindings do not match the ledger entry.");
         if (WorkspaceExportLedgerEntryCodec.Text(root, "actor_id") != entry.Actor ||
             WorkspaceExportLedgerEntryCodec.Text(root, "actor_kind") != entry.ActorKind ||
+            string.IsNullOrWhiteSpace(WorkspaceExportLedgerEntryCodec.Text(root, "actor_role")) ||
             WorkspaceExportLedgerEntryCodec.Text(root, "recorded_at") != entry.RecordedAt)
             throw Invalid("Export request human action does not match the ledger entry.");
         var requestSources = root.GetProperty("source_generations").EnumerateArray().Select(item =>
