@@ -22,21 +22,32 @@ public sealed class DesktopWorkspaceViewModel
 
     public DesktopDeduplicationReviewPreview? PendingReviewPreview { get; private set; }
 
+    public DesktopScreeningReviewQueue? ScreeningQueue { get; private set; }
+
+    public DesktopScreeningReviewPreview? PendingScreeningPreview { get; private set; }
+
     public string Status { get; private set; }
 
     public DesktopWorkspaceCommandStatus StatusKind { get; private set; } = DesktopWorkspaceCommandStatus.Ready;
 
     public bool HasWorkspace => Overview is not null;
 
-    public bool HasPendingConfirmation => PendingPreview is not null || PendingReviewPreview is not null;
+    public bool HasPendingConfirmation => PendingPreview is not null ||
+        PendingReviewPreview is not null || PendingScreeningPreview is not null;
 
     public IReadOnlyList<string> PendingEffects =>
-        PendingReviewPreview?.ExpectedEffects ?? PendingPreview?.ExpectedEffects ?? Array.Empty<string>();
+        PendingScreeningPreview?.ExpectedEffects ??
+        PendingReviewPreview?.ExpectedEffects ??
+        PendingPreview?.ExpectedEffects ?? Array.Empty<string>();
 
     public string? PendingConfirmationToken =>
-        PendingReviewPreview?.ConfirmationToken ?? PendingPreview?.ConfirmationToken;
+        PendingScreeningPreview?.ConfirmationToken ??
+        PendingReviewPreview?.ConfirmationToken ??
+        PendingPreview?.ConfirmationToken;
 
-    public string PendingCommandLabel => PendingReviewPreview is not null
+    public string PendingCommandLabel => PendingScreeningPreview is not null
+        ? "Record human title/abstract decision"
+        : PendingReviewPreview is not null
         ? "Record human deduplication review"
         : PendingPreview?.CommandKind switch
         {
@@ -55,12 +66,14 @@ public sealed class DesktopWorkspaceViewModel
         {
             WorkspacePath = Path.GetFullPath(path);
             RefreshReviewQueue(applyStatus: false);
+            RefreshScreeningQueue(applyStatus: false);
         }
         else
         {
             WorkspacePath = string.Empty;
             Overview = null;
             ReviewQueue = null;
+            ScreeningQueue = null;
         }
     }
 
@@ -144,8 +157,51 @@ public sealed class DesktopWorkspaceViewModel
         StatusKind = result.Status;
     }
 
+    public void PreviewScreeningReview(
+        string candidateId,
+        string verdict,
+        string actorId,
+        string actorRole,
+        string rationale,
+        string? exclusionReasonCode,
+        DateTimeOffset occurredAt)
+    {
+        if (string.IsNullOrWhiteSpace(WorkspacePath))
+        {
+            ApplyFailure("Open a workspace before recording a Screening decision.");
+            return;
+        }
+
+        PendingPreview = null;
+        PendingReviewPreview = null;
+        var result = _facade.PreviewScreeningReview(new DesktopScreeningReviewRequest(
+            WorkspacePath, candidateId, "review", verdict, actorId, "human", actorRole,
+            rationale, exclusionReasonCode, occurredAt));
+        PendingScreeningPreview = result.Preview;
+        Status = result.Message;
+        StatusKind = result.Status;
+    }
+
     public void ConfirmPending()
     {
+        var screeningPreview = PendingScreeningPreview;
+        PendingScreeningPreview = null;
+        if (screeningPreview is not null)
+        {
+            var screeningResult = _facade.ExecuteScreeningReview(screeningPreview);
+            Status = screeningResult.Message;
+            StatusKind = screeningResult.Status;
+            if (screeningResult.Overview is not null)
+            {
+                Overview = screeningResult.Overview;
+            }
+            if (screeningResult.Queue is not null)
+            {
+                ScreeningQueue = screeningResult.Queue;
+            }
+            return;
+        }
+
         var reviewPreview = PendingReviewPreview;
         PendingReviewPreview = null;
         if (reviewPreview is not null)
@@ -192,11 +248,13 @@ public sealed class DesktopWorkspaceViewModel
     {
         PendingPreview = null;
         PendingReviewPreview = null;
+        PendingScreeningPreview = null;
     }
 
     private void ApplyPreview(DesktopWorkspacePreviewResult result)
     {
         PendingReviewPreview = null;
+        PendingScreeningPreview = null;
         PendingPreview = result.Preview;
         Status = result.Message;
         StatusKind = result.Status;
@@ -216,6 +274,7 @@ public sealed class DesktopWorkspaceViewModel
     {
         PendingPreview = null;
         PendingReviewPreview = null;
+        PendingScreeningPreview = null;
         Status = message;
         StatusKind = DesktopWorkspaceCommandStatus.Failed;
     }
@@ -224,6 +283,17 @@ public sealed class DesktopWorkspaceViewModel
     {
         var result = _facade.LoadDeduplicationReviewQueue(WorkspacePath);
         ReviewQueue = result.Queue;
+        if (applyStatus)
+        {
+            Status = result.Message;
+            StatusKind = result.Status;
+        }
+    }
+
+    private void RefreshScreeningQueue(bool applyStatus)
+    {
+        var result = _facade.LoadScreeningReviewQueue(WorkspacePath);
+        ScreeningQueue = result.Queue;
         if (applyStatus)
         {
             Status = result.Message;

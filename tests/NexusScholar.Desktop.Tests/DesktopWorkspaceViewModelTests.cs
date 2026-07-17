@@ -170,6 +170,23 @@ public sealed class DesktopWorkspaceViewModelTests
     }
 
     [TestMethod]
+    public void Screening_preview_requires_human_rationale_and_exclusion_reason_when_excluding()
+    {
+        Assert.IsFalse(MainWindow.CanPreviewScreeningReview(
+            null, "include", "alice", "reviewer", "Eligible.", null));
+        Assert.IsFalse(MainWindow.CanPreviewScreeningReview(
+            "candidate", "include", null, "reviewer", "Eligible.", null));
+        Assert.IsFalse(MainWindow.CanPreviewScreeningReview(
+            "candidate", "include", "alice", "reviewer", null, null));
+        Assert.IsFalse(MainWindow.CanPreviewScreeningReview(
+            "candidate", "exclude", "alice", "reviewer", "Ineligible.", null));
+        Assert.IsTrue(MainWindow.CanPreviewScreeningReview(
+            "candidate", "include", "alice", "reviewer", "Eligible.", null));
+        Assert.IsTrue(MainWindow.CanPreviewScreeningReview(
+            "candidate", "exclude", "alice", "reviewer", "Ineligible.", "wrong-population"));
+    }
+
+    [TestMethod]
     public void Reusable_control_is_detached_before_a_render_tree_is_rebuilt()
     {
         var control = new TextBox();

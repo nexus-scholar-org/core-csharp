@@ -7,6 +7,7 @@ using NexusScholar.Kernel;
 using NexusScholar.Protocol;
 using NexusScholar.ResearchWorkspace;
 using NexusScholar.Screening;
+using NexusScholar.Screening.CorpusSnapshots;
 
 namespace NexusScholar.Core.Tests;
 
@@ -320,6 +321,224 @@ public sealed class ScreeningAuthorityPackageTests
         var reopened = ProtocolAuthorityPackageCanonicalCodec.Rehydrate(bytes, ContentDigest.Sha256(bytes));
 
         Assert.AreEqual("bob", reopened.Version.Decisions.Single().DecidedBy.ToString());
+    }
+
+    [TestMethod]
+    public void Workspace_screening_review_commits_and_reopens()
+    {
+        using var workspace = TestWorkspace.Create();
+        var protocol = BuildProtocol();
+        var packageCommit = ResearchWorkspaceScreeningAuthorityPackage.Commit(
+            workspace.Root, protocol, BuildCriteria(protocol));
+        var conduct = InitializeConduct(workspace, packageCommit.Package, requiredReviewCount: 1);
+        var candidateId = conduct.Header.CandidateIds[0];
+
+        var queue = ResearchWorkspaceScreeningReview.Inspect(workspace.Root);
+        ResearchWorkspaceScreeningReviewPreview? preview = null;
+        ResearchWorkspaceScreeningReviewCommitResult? commit = null;
+        for (var index = 0; index < conduct.Header.CandidateIds.Count; index++)
+        {
+            preview = ResearchWorkspaceScreeningReview.Preview(
+                new ResearchWorkspaceScreeningReviewRequest(
+                    workspace.Root, conduct.Header.CandidateIds[index], "review", ScreeningVerdicts.Include,
+                    "alice", ScreeningConductActorKinds.Human, "reviewer",
+                    "Eligible title and abstract.", null,
+                    FixedTime.AddMinutes(2 + index)));
+            commit = ResearchWorkspaceScreeningReview.Commit(preview);
+            Assert.IsTrue(commit.Completed);
+        }
+        var afterDecision = ResearchWorkspaceScreeningReview.Inspect(workspace.Root);
+        var project = ResearchWorkspaceStore.ReadProject(workspace.Location.ProjectFilePath);
+        var package = ResearchWorkspaceScreeningAuthorityPackage.VerifyCurrent(workspace.Root);
+        var reopened = ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(
+            workspace.Location, project, package.Deduplication, package.Protocol, package.Criteria,
+            package.SourceResultAuthority, package.DeduplicationAuthorityChain.CurrentSnapshot);
+
+        Assert.IsTrue(queue.Completed);
+        Assert.IsTrue(preview!.IsReady);
+        Assert.IsTrue(commit!.Completed);
+        Assert.AreEqual(ScreeningVerdicts.Include,
+            afterDecision.Targets.Single(item => item.CandidateId == candidateId).CurrentVerdict);
+        Assert.IsTrue(afterDecision.HandoffReady);
+        Assert.IsNull(reopened.Handoff);
+        var closedTarget = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                workspace.Root, candidateId, "review", ScreeningVerdicts.Exclude,
+                "bob", ScreeningConductActorKinds.Human, "reviewer",
+                "A closed target requires Slice 6 supersession.", "wrong-population",
+                FixedTime.AddMinutes(10)));
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, closedTarget.Status);
+    }
+
+    [TestMethod]
+    public void Workspace_screening_review_rejects_tampered_and_stale_previews()
+    {
+        using var workspace = TestWorkspace.Create();
+        var protocol = BuildProtocol();
+        var packageCommit = ResearchWorkspaceScreeningAuthorityPackage.Commit(
+            workspace.Root, protocol, BuildCriteria(protocol));
+        var conduct = InitializeConduct(workspace, packageCommit.Package, requiredReviewCount: 1);
+        var candidateId = conduct.Header.CandidateIds[0];
+        var preview = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                workspace.Root, candidateId, "review", ScreeningVerdicts.Include,
+                "alice", ScreeningConductActorKinds.Human, "reviewer", "Eligible.", null,
+                FixedTime.AddMinutes(2)));
+
+        var tampered = ResearchWorkspaceScreeningReview.Commit(
+            preview with { Verdict = ScreeningVerdicts.Exclude });
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Stale, tampered.Status);
+
+        var first = ResearchWorkspaceScreeningReview.Commit(preview);
+        Assert.IsTrue(first.Completed);
+        var stale = ResearchWorkspaceScreeningReview.Commit(preview);
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Stale, stale.Status);
+
+        var unauthorized = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                workspace.Root, candidateId, "review", ScreeningVerdicts.Include,
+                "mallory", ScreeningConductActorKinds.Human, "reviewer", "Unauthorized.", null,
+                FixedTime.AddMinutes(4)));
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, unauthorized.Status);
+    }
+
+    [TestMethod]
+    public void Workspace_screening_review_rejects_incomplete_cross_workspace_and_nonhuman_authority()
+    {
+        using var firstWorkspace = TestWorkspace.Create();
+        using var secondWorkspace = TestWorkspace.Create();
+        var firstProtocol = BuildProtocol();
+        var secondProtocol = BuildProtocol();
+        var firstPackage = ResearchWorkspaceScreeningAuthorityPackage.Commit(
+            firstWorkspace.Root, firstProtocol, BuildCriteria(firstProtocol)).Package;
+        var secondPackage = ResearchWorkspaceScreeningAuthorityPackage.Commit(
+            secondWorkspace.Root, secondProtocol, BuildCriteria(secondProtocol)).Package;
+        var firstConduct = InitializeConduct(firstWorkspace, firstPackage, requiredReviewCount: 1);
+        _ = InitializeConduct(secondWorkspace, secondPackage, requiredReviewCount: 1);
+        var candidateId = firstConduct.Header.CandidateIds[0];
+        var preview = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                firstWorkspace.Root, candidateId, "review", ScreeningVerdicts.Include,
+                "alice", ScreeningConductActorKinds.Human, "reviewer",
+                "Eligible.", null, FixedTime.AddMinutes(2)));
+        Assert.IsTrue(preview.IsReady);
+
+        ResearchWorkspaceScreeningReviewPreview[] incomplete =
+        [
+            preview with { SourceResultDigest = null },
+            preview with { SourceSnapshotRecordDigest = null },
+            preview with { DecisionSetDigest = null },
+            preview with { ProtocolContentDigest = null },
+            preview with { CriteriaDigest = null },
+            preview with { CorpusBindingDigest = null },
+            preview with { TargetDigest = null }
+        ];
+        foreach (var changed in incomplete)
+            Assert.AreEqual(ResearchWorkspaceOperationStatus.Stale,
+                ResearchWorkspaceScreeningReview.Commit(changed).Status);
+
+        var crossWorkspace = ResearchWorkspaceScreeningReview.Commit(
+            preview with { WorkspaceDirectory = secondWorkspace.Root });
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Stale, crossWorkspace.Status);
+        var pathTarget = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                firstWorkspace.Root, "nexus-output/row-1", "review", ScreeningVerdicts.Include,
+                "alice", ScreeningConductActorKinds.Human, "reviewer",
+                "UI row text is not authority.", null, FixedTime.AddMinutes(3)));
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, pathTarget.Status);
+        var automation = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                firstWorkspace.Root, candidateId, "review", ScreeningVerdicts.Include,
+                "automation-1", ScreeningConductActorKinds.Automation, "reviewer",
+                "Automation cannot finalize.", null, FixedTime.AddMinutes(4)));
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, automation.Status);
+        var correction = ResearchWorkspaceScreeningReview.Preview(
+            new ResearchWorkspaceScreeningReviewRequest(
+                firstWorkspace.Root, candidateId, "correction", ScreeningVerdicts.Include,
+                "alice", ScreeningConductActorKinds.Human, "reviewer",
+                "Slice 6 intent.", null, FixedTime.AddMinutes(5)));
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, correction.Status);
+        var noPreview = ResearchWorkspaceScreeningReview.Commit(
+            preview with
+            {
+                Status = ResearchWorkspaceOperationStatus.Failed,
+                ConfirmationToken = null
+            });
+        Assert.AreEqual(ResearchWorkspaceOperationStatus.Failed, noPreview.Status);
+    }
+
+    [TestMethod]
+    public void Workspace_screening_review_rejects_unverified_workflow_governance_claim()
+    {
+        using var workspace = TestWorkspace.Create();
+        var protocol = BuildProtocol();
+        var package = ResearchWorkspaceScreeningAuthorityPackage.Commit(
+            workspace.Root, protocol, BuildCriteria(protocol)).Package;
+        _ = InitializeConduct(workspace, package, requiredReviewCount: 1);
+        var project = ResearchWorkspaceStore.ReadProject(workspace.Location.ProjectFilePath);
+        var manifestPath = ResearchWorkspacePaths.InProject(
+            workspace.Root, project.ScreeningAuthorityPackageManifestPath!);
+        var bytes = File.ReadAllBytes(manifestPath);
+        var altered = System.Text.Encoding.UTF8.GetBytes(
+            System.Text.Encoding.UTF8.GetString(bytes)
+                .Replace("\"workflow_governed\":false", "\"workflow_governed\":true",
+                    StringComparison.Ordinal));
+        Assert.IsFalse(bytes.SequenceEqual(altered));
+        File.WriteAllBytes(manifestPath, altered);
+        ResearchWorkspaceStore.WriteProject(workspace.Location, project with
+        {
+            ScreeningAuthorityPackageManifestSha256 =
+                ContentDigest.Sha256(altered).ToString()
+        });
+
+        var result = ResearchWorkspaceScreeningReview.Inspect(workspace.Root);
+
+        Assert.IsFalse(result.Completed);
+        Assert.AreNotEqual(ResearchWorkspaceOperationStatus.Succeeded, result.Status);
+    }
+
+    private static VerifiedResearchWorkspaceScreeningConduct InitializeConduct(
+        TestWorkspace workspace,
+        VerifiedResearchWorkspaceScreeningAuthorityPackage package,
+        int requiredReviewCount)
+    {
+        var binding = ScreeningCorpusBindingAuthority.Create(
+            "binding-desktop-screening",
+            package.SourceResultAuthority,
+            package.DeduplicationAuthorityChain.CurrentSnapshot);
+        var policy = ScreeningCorpusBindingAuthority.CreateConductPolicy(
+            binding,
+            package.SourceResultAuthority,
+            "policy-desktop-screening",
+            "candidate-set-desktop-screening",
+            package.Protocol,
+            package.Criteria,
+            requiredReviewCount,
+            [
+                new ScreeningConductRoleAssignment("alice", "reviewer"),
+                new ScreeningConductRoleAssignment("bob", "reviewer"),
+                new ScreeningConductRoleAssignment("carol", "chair")
+            ],
+            ["chair"],
+            [new ScreeningExclusionReason("wrong-population", ScreeningStages.TitleAbstract)],
+            new ScreeningConductActor("alice", ScreeningConductActorKinds.Human, "reviewer"),
+            FixedTime.AddMinutes(1)).Policy;
+        var header = ScreeningConductHeader.Create(
+            "conduct-desktop-screening",
+            policy,
+            new ScreeningConductActor("alice", ScreeningConductActorKinds.Human, "reviewer"),
+            FixedTime.AddMinutes(1));
+        var project = ResearchWorkspaceStore.ReadProject(workspace.Location.ProjectFilePath);
+        var commit = ResearchWorkspaceScreeningConductTransaction.Commit(
+            workspace.Location, project, package.Deduplication, package.Protocol,
+            package.Criteria, policy, header, [],
+            corpusBinding: binding,
+            sourceAuthority: package.SourceResultAuthority,
+            corpusSnapshot: package.DeduplicationAuthorityChain.CurrentSnapshot);
+        return ResearchWorkspaceScreeningConductVerifier.VerifyCurrent(
+            workspace.Location, commit.Project, package.Deduplication,
+            package.Protocol, package.Criteria, package.SourceResultAuthority,
+            package.DeduplicationAuthorityChain.CurrentSnapshot);
     }
 
     private static VerifiedProtocolVersion BuildProtocol(

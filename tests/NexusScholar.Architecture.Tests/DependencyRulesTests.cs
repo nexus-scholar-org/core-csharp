@@ -607,6 +607,7 @@ public sealed class DependencyRulesTests
             typeof(WorkflowDefinition).Assembly.GetName().Name,
             typeof(WorkflowExecutionJournal).Assembly.GetName().Name,
             typeof(ScreeningConductJournal).Assembly.GetName().Name,
+            typeof(VerifiedScreeningCorpusBinding).Assembly.GetName().Name,
             typeof(ScreeningWorkflowExecutionBridge).Assembly.GetName().Name,
             typeof(VerifiedFullTextAdmission).Assembly.GetName().Name,
             typeof(FullTextInput).Assembly.GetName().Name,

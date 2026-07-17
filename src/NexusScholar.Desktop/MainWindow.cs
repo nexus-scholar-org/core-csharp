@@ -41,6 +41,13 @@ public sealed class MainWindow : Window
     private readonly TextBox _actorRole = Input("Policy-assigned role");
     private readonly TextBox _rationale = Input("Decision rationale");
     private readonly Button _reviewDecision = PrimaryButton("Review decision effects");
+    private readonly ComboBox _screeningTarget = Choice(Array.Empty<string>());
+    private readonly ComboBox _screeningVerdict = Choice(new[] { "include", "exclude" });
+    private readonly ComboBox _screeningReason = Choice(Array.Empty<string>());
+    private readonly TextBox _screeningActorId = Input("Human actor id");
+    private readonly TextBox _screeningActorRole = Input("Assigned Screening role");
+    private readonly TextBox _screeningRationale = Input("Decision rationale");
+    private readonly Button _screeningDecision = PrimaryButton("Review Screening effects");
     private readonly StackPanel _workspaceContent = new() { Spacing = 18 };
     private readonly StackPanel _confirmationContent = new() { Spacing = 10 };
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap };
@@ -82,7 +89,26 @@ public sealed class MainWindow : Window
                 DateTimeOffset.UtcNow);
             Render();
         };
+        _screeningTarget.SelectionChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningVerdict.SelectionChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningReason.SelectionChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningActorId.TextChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningActorRole.TextChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningRationale.TextChanged += (_, _) => UpdateScreeningPreviewAvailability();
+        _screeningDecision.Click += (_, _) =>
+        {
+            _viewModel.PreviewScreeningReview(
+                _screeningTarget.SelectedItem?.ToString() ?? string.Empty,
+                _screeningVerdict.SelectedItem?.ToString() ?? string.Empty,
+                _screeningActorId.Text ?? string.Empty,
+                _screeningActorRole.Text ?? string.Empty,
+                _screeningRationale.Text ?? string.Empty,
+                _screeningReason.SelectedItem?.ToString(),
+                DateTimeOffset.UtcNow);
+            Render();
+        };
         UpdateReviewPreviewAvailability();
+        UpdateScreeningPreviewAvailability();
         _workspacePath.Text = string.IsNullOrWhiteSpace(initialWorkspacePath) ? string.Empty : initialWorkspacePath;
         if (!string.IsNullOrWhiteSpace(initialWorkspacePath))
         {
@@ -177,12 +203,13 @@ public sealed class MainWindow : Window
                 BorderThickness = new Thickness(0),
                 CornerRadius = new CornerRadius(4),
                 IsEnabled = label is "Workspace" or "Imports" or "Evidence" ||
-                    label == "Review queue" && _viewModel.ReviewQueue is not null
+                    label == "Review queue" &&
+                    (_viewModel.ReviewQueue is not null || _viewModel.ScreeningQueue is not null)
             });
         }
         panel.Children.Add(new TextBlock
         {
-            Text = "Human-authorized deduplication review is available when a verified authority queue is present.",
+            Text = "Human-authorized review is available only when verified local authority queues are present.",
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brush("#bcd6d1"),
             FontSize = 12,
@@ -242,6 +269,10 @@ public sealed class MainWindow : Window
             {
                 _workspaceContent.Children.Add(BuildDeduplicationReview(queue));
             }
+            if (_viewModel.ScreeningQueue is { } screeningQueue)
+            {
+                _workspaceContent.Children.Add(BuildScreeningReview(screeningQueue));
+            }
             _workspaceContent.Children.Add(BuildImportForm());
         }
         else
@@ -266,6 +297,8 @@ public sealed class MainWindow : Window
             _workspacePath, _title, _workspaceId, _sourcePath, _source, _format,
             _inputId, _query, _reviewTarget, _reviewAction, _reviewReason,
             _supersedesDecision, _actorId, _actorRole, _rationale, _reviewDecision
+            , _screeningTarget, _screeningVerdict, _screeningReason,
+            _screeningActorId, _screeningActorRole, _screeningRationale, _screeningDecision
         ];
 
         foreach (var control in controls)
@@ -499,6 +532,41 @@ public sealed class MainWindow : Window
         _viewModel.ReviewQueue?.Targets.SingleOrDefault(target =>
             string.Equals(target.TargetId, _reviewTarget.SelectedItem?.ToString(), StringComparison.Ordinal));
 
+    private Control BuildScreeningReview(DesktopScreeningReviewQueue queue)
+    {
+        var panel = new StackPanel { Spacing = 10 };
+        _screeningTarget.ItemsSource = queue.Targets.Select(item => item.CandidateId).ToArray();
+        _screeningTarget.SelectedIndex = -1;
+        _screeningVerdict.SelectedIndex = -1;
+        _screeningReason.ItemsSource = queue.ExclusionReasons.ToArray();
+        _screeningReason.SelectedIndex = -1;
+
+        panel.Children.Add(Labeled("Title/abstract target", _screeningTarget));
+        var actor = new Grid { ColumnSpacing = 10 };
+        actor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        actor.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        Grid.SetColumn(_screeningActorId, 0);
+        Grid.SetColumn(_screeningActorRole, 1);
+        actor.Children.Add(_screeningActorId);
+        actor.Children.Add(_screeningActorRole);
+        panel.Children.Add(Labeled("Human actor and assigned role", actor));
+        panel.Children.Add(Labeled("Decision", _screeningVerdict));
+        panel.Children.Add(Labeled("Exclusion reason", _screeningReason));
+        panel.Children.Add(Labeled("Rationale", _screeningRationale));
+        panel.Children.Add(new TextBlock
+        {
+            Text = $"Policy {queue.PolicyId} | {queue.RequiredReviewCount} required review(s)",
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Muted
+        });
+        UpdateScreeningPreviewAvailability();
+        panel.Children.Add(_screeningDecision);
+        return Section(
+            "Title and abstract Screening",
+            "Decisions are reconstructed from the verified protocol, criteria, snapshot, corpus binding, and human assignment.",
+            panel);
+    }
+
     private void UpdateReviewReasons()
     {
         var action = _reviewAction.SelectedItem?.ToString();
@@ -537,6 +605,31 @@ public sealed class MainWindow : Window
         !string.IsNullOrWhiteSpace(reason) &&
         !string.IsNullOrWhiteSpace(actorId) &&
         !string.IsNullOrWhiteSpace(actorRole);
+
+    private void UpdateScreeningPreviewAvailability()
+    {
+        _screeningDecision.IsEnabled = CanPreviewScreeningReview(
+            _screeningTarget.SelectedItem?.ToString(),
+            _screeningVerdict.SelectedItem?.ToString(),
+            _screeningActorId.Text,
+            _screeningActorRole.Text,
+            _screeningRationale.Text,
+            _screeningReason.SelectedItem?.ToString());
+    }
+
+    internal static bool CanPreviewScreeningReview(
+        string? target,
+        string? verdict,
+        string? actorId,
+        string? actorRole,
+        string? rationale,
+        string? exclusionReason) =>
+        !string.IsNullOrWhiteSpace(target) &&
+        verdict is "include" or "exclude" &&
+        !string.IsNullOrWhiteSpace(actorId) &&
+        !string.IsNullOrWhiteSpace(actorRole) &&
+        !string.IsNullOrWhiteSpace(rationale) &&
+        (verdict != "exclude" || !string.IsNullOrWhiteSpace(exclusionReason));
 
     private void RenderConfirmation()
     {
@@ -582,7 +675,9 @@ public sealed class MainWindow : Window
             TextWrapping = TextWrapping.Wrap,
             Foreground = Muted
         });
-        _confirmationContent.Children.Add(BoundaryNote(_viewModel.PendingReviewPreview is not null));
+        _confirmationContent.Children.Add(BoundaryNote(
+            _viewModel.PendingReviewPreview is not null ||
+            _viewModel.PendingScreeningPreview is not null));
         var confirm = PrimaryButton("Confirm exact effects");
         confirm.Click += (_, _) => { _viewModel.ConfirmPending(); Render(); };
         var cancel = SecondaryButton("Cancel");

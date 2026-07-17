@@ -15,6 +15,82 @@ namespace NexusScholar.Desktop.AppServices.Tests;
 public sealed class DesktopWorkspaceCommandFacadeTests
 {
     [TestMethod]
+    public void Screening_review_queue_fails_closed_without_conduct_authority()
+    {
+        using var workspace = TemporaryInitializedWorkspace.Create();
+        var result = new DesktopWorkspaceCommandFacade()
+            .LoadScreeningReviewQueue(workspace.Root);
+
+        Assert.AreEqual(DesktopWorkspaceCommandStatus.Failed, result.Status);
+        Assert.IsNull(result.Queue);
+    }
+
+    [TestMethod]
+    public void Screening_review_confirmation_token_binds_every_authority_and_target_field()
+    {
+        var preview = new DesktopScreeningReviewPreview(
+            "missing", "workspace", 1, "authority", "sha256:" + new string('1', 64),
+            "sha256:" + new string('2', 64), "sha256:" + new string('3', 64),
+            "sha256:" + new string('4', 64), "sha256:" + new string('5', 64),
+            "sha256:" + new string('6', 64), "sha256:" + new string('7', 64),
+            "conduct", "sha256:" + new string('8', 64), "policy",
+            "sha256:" + new string('9', 64), "sha256:" + new string('a', 64),
+            "sha256:" + new string('b', 64), "sha256:" + new string('c', 64), 0,
+            "candidate", "sha256:" + new string('e', 64), "review", "include",
+            "alice", "human", "reviewer", "Eligible.", null, [], FixedTime, "decision",
+            "sha256:" + new string('d', 64), ["append decision"],
+            ["human-actor-required"], "pending");
+        preview = preview with
+        {
+            ConfirmationToken =
+                DesktopWorkspaceCommandFacade.CreateScreeningConfirmationToken(preview)
+        };
+        DesktopScreeningReviewPreview[] changed =
+        [
+            preview with { WorkspaceDirectory = "other-workspace" },
+            preview with { WorkspaceId = "other-workspace-id" },
+            preview with { ExpectedProjectRevision = 2 },
+            preview with { AuthorityPackageGenerationId = "other-authority" },
+            preview with { AuthorityPackageManifestDigest = null! },
+            preview with { SourceResultDigest = null! },
+            preview with { SourceSnapshotRecordDigest = null! },
+            preview with { DecisionSetDigest = null! },
+            preview with { ProtocolContentDigest = null! },
+            preview with { CriteriaDigest = null! },
+            preview with { CorpusBindingDigest = null! },
+            preview with { ConductGenerationId = "other-conduct" },
+            preview with { ConductManifestDigest = null! },
+            preview with { PolicyId = "other-policy" },
+            preview with { PolicyDigest = null! },
+            preview with { HeaderDigest = null! },
+            preview with { PriorHeadDigest = null! },
+            preview with { ResultingHeadDigest = null! },
+            preview with { PriorEntryCount = 1 },
+            preview with { TargetDigest = null! },
+            preview with { CandidateId = "nexus-output/row-1" },
+            preview with { DecisionKind = "correction" },
+            preview with { Verdict = "exclude" },
+            preview with { ActorId = "automation-1" },
+            preview with { ActorKind = "automation" },
+            preview with { ActorRole = "other-role" },
+            preview with { Rationale = "Changed rationale." },
+            preview with { ExclusionReasonCode = "other-reason" },
+            preview with { OccurredAt = FixedTime.AddMinutes(1) },
+            preview with { DecisionId = "other-decision" },
+            preview with { DecisionDigest = null! },
+            preview with { ExpectedEffects = ["other effect"] },
+            preview with { NonClaims = ["other-claim"] }
+        ];
+
+        foreach (var item in changed)
+        {
+            var result = new DesktopWorkspaceCommandFacade().ExecuteScreeningReview(item);
+            Assert.AreEqual(DesktopWorkspaceCommandStatus.Stale, result.Status);
+            StringAssert.Contains(result.Message, "stale-confirmation-screening-review");
+        }
+    }
+
+    [TestMethod]
     public void OpenWorkspace_reports_success_for_valid_workspace()
     {
         var facade = new DesktopWorkspaceCommandFacade();

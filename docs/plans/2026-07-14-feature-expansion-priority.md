@@ -2,8 +2,9 @@
 
 Status: active successor roadmap after Hardening 30.
 
-Current state: FE-01 through FE-07 and FE-08 slices 1 through 4 are complete.
-FE-08 Slice 5 is the next gate candidate; it is not implementation-authorized
+Current state: FE-01 through FE-07 and FE-08 slices 1 through 5 are complete locally.
+FE-08 Slice 6 is the next implementation slice under ADR 0038 and the accepted
+remaining-slices gate
 until its own ADR and gate are accepted.
 FE-09 through FE-12 remain sequenced future work and are not implementation-
 authorized by this roadmap.
@@ -547,11 +548,12 @@ fixtures, and package-boundary justification.
 
 ## FE-08 - Local Product Desktop Shell
 
-Status: slices 1 through 4 complete. Slices 1 and 2 are governed by ADR 0035,
+Status: slices 1 through 5 complete locally. Slices 1 and 2 are governed by ADR 0035,
 Slice 3 desktop deduplication review by ADR 0036, and Slice 4 durable Screening
 authority resolution by ADR 0037 and
-`docs/gates/FE-08-SCREENING-AUTHORITY-RESOLUTION-SLICE-4.md`. The first desktop
-Screening decision remains deferred to an accepted Slice 5 gate.
+`docs/gates/FE-08-SCREENING-AUTHORITY-RESOLUTION-SLICE-4.md`. Slice 5 desktop
+title/abstract Screening is implemented under ADR 0038 and
+`docs/gates/FE-08-REMAINING-SLICES-5-9.md`.
 
 ### Outcome
 
@@ -839,10 +841,9 @@ become compatibility obligations.
 
 ## Immediate Next Gate
 
-FE-08 Slice 4 durable Screening authority resolution is complete under ADR
-0037. Slice 5 may propose the first desktop Screening mutation, but must define
-its human-authority, stale-preview, supersession, recovery, and audit boundaries
-in an accepted ADR and gate before implementation.
+FE-08 Slice 5 local title/abstract Screening is complete under ADR 0038. Slice 6
+continues with correction, adjudication, and handoff over exact supersession and
+conflict authority under the accepted remaining-slices gate.
 
 ## Verification Baseline
 
