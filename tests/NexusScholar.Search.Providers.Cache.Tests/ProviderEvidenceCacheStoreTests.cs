@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NexusScholar.Kernel;
 using NexusScholar.Search;
@@ -143,6 +144,79 @@ public sealed class ProviderEvidenceCacheStoreTests
     }
 
     [TestMethod]
+    public void Historical_policy_entries_remain_verifiable_but_cannot_be_fresh_hits()
+    {
+        using var workspace = new TemporaryDirectory();
+        var firstPolicy = CachePolicy("openalex-policy-v1");
+        var secondPolicy = CachePolicy("openalex-policy-v2");
+        var firstStore = new ProviderEvidenceCacheStore(workspace.Root, (_, _) => firstPolicy);
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"historical-policy\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var historical = firstStore.Record(key, response, responseBody, ReceivedAt);
+
+        var successorStore = new ProviderEvidenceCacheStore(workspace.Root, (_, _) => secondPolicy);
+        Assert.IsTrue(successorStore.TryGet(key, ReceivedAt.AddHours(1), out var reopened));
+        Assert.IsFalse(reopened.IsFresh);
+        reopened.Entry.VerifyBody(reopened.BodyBytes ?? []);
+        Assert.AreEqual(historical.Digest, reopened.Entry.Digest);
+
+        successorStore.RebuildIndex();
+        Assert.IsTrue(successorStore.TryGet(key, ReceivedAt.AddHours(1), out var rebuilt));
+        Assert.IsFalse(rebuilt.IsFresh);
+        Assert.AreEqual(historical.Digest, rebuilt.Entry.Digest);
+
+        var successor = successorStore.Record(key, response, responseBody, ReceivedAt.AddDays(1));
+        Assert.AreNotEqual(historical.Digest, successor.Digest);
+        Assert.IsTrue(successorStore.TryGet(key, ReceivedAt.AddDays(1), out var current));
+        Assert.IsTrue(current.IsFresh);
+        Assert.AreEqual(successor.Digest, current.Entry.Digest);
+    }
+
+    [TestMethod]
+    public async Task Concurrent_rebuild_and_record_cannot_regress_latest_index()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        ProviderEvidenceCacheEntry? latest = null;
+
+        for (var index = 0; index < 20; index++)
+        {
+            var body = Encoding.UTF8.GetBytes($"{{\"result\":\"concurrent-{index}\"}}");
+            var storedAt = ReceivedAt.AddMinutes(index + 1);
+            var recordTask = Task.Run(() =>
+                store.Record(key, CaptureResponse(key, body, 200, "application/json"), body, storedAt));
+            var rebuildTask = Task.Run(store.RebuildIndex);
+            await Task.WhenAll(recordTask, rebuildTask);
+            latest = recordTask.Result;
+        }
+
+        Assert.IsNotNull(latest);
+        Assert.IsTrue(store.TryGet(key, latest.StoredAt, out var lookup));
+        Assert.AreEqual(latest.Digest, lookup.Entry.Digest);
+    }
+
+    [TestMethod]
+    public void Lock_timeout_reports_typed_store_busy_failure()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(
+            workspace.Root,
+            ProviderEvidenceCachePolicies.Resolve,
+            TimeSpan.FromMilliseconds(100));
+        using var heldLock = new FileStream(
+            Path.Combine(workspace.Root, "cache.lock"),
+            FileMode.OpenOrCreate,
+            FileAccess.ReadWrite,
+            FileShare.None);
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(store.RebuildIndex);
+
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.StoreBusy, exception.Category);
+    }
+
+    [TestMethod]
     public void Parser_mismatch_prevents_cache_record_creation()
     {
         using var workspace = new TemporaryDirectory();
@@ -200,6 +274,45 @@ public sealed class ProviderEvidenceCacheStoreTests
     }
 
     [TestMethod]
+    public void Cache_entry_manifest_timestamps_are_written_in_canonical_utc_format()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var body = Encoding.UTF8.GetBytes("{\"result\":\"canonical\"}");
+        var response = CaptureResponse(key, body, 200, "application/json");
+
+        var entry = store.Record(key, response, body);
+        var manifestPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "entry.json");
+        using var manifest = JsonDocument.Parse(File.ReadAllText(manifestPath));
+
+        Assert.IsTrue(CanonicalTimestamp.IsCanonicalUtc(manifest.RootElement.GetProperty("RequestedAt").GetString(), rejectDefault: true));
+        Assert.IsTrue(CanonicalTimestamp.IsCanonicalUtc(manifest.RootElement.GetProperty("ReceivedAt").GetString(), rejectDefault: true));
+        Assert.IsTrue(CanonicalTimestamp.IsCanonicalUtc(manifest.RootElement.GetProperty("StoredAt").GetString(), rejectDefault: true));
+        Assert.IsTrue(CanonicalTimestamp.IsCanonicalUtc(manifest.RootElement.GetProperty("ExpiresAt").GetString(), rejectDefault: true));
+    }
+
+    [TestMethod]
+    public void Cache_entry_manifest_rejects_non_canonical_timestamp_tamper()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var body = Encoding.UTF8.GetBytes("{\"result\":\"canonical\"}");
+        var response = CaptureResponse(key, body, 200, "application/json");
+
+        var entry = store.Record(key, response, body);
+        var manifestPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "entry.json");
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();
+        manifest["StoredAt"] = "2026-01-01T00:00:00Z";
+        File.WriteAllText(manifestPath, manifest.ToJsonString());
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() =>
+            store.TryGet(key, entry.StoredAt, out _));
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.StoreIndexCorrupt, exception.Category);
+    }
+
+    [TestMethod]
     public void Manifest_and_entry_dont_stash_request_urls_or_raw_url_fields()
     {
         using var workspace = new TemporaryDirectory();
@@ -222,6 +335,102 @@ public sealed class ProviderEvidenceCacheStoreTests
 
         Assert.IsFalse(manifest.Contains("http://", StringComparison.OrdinalIgnoreCase));
         Assert.IsFalse(manifest.Contains("https://", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void TryGet_rejects_missing_retained_body_with_typed_digest_mismatch()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"retained\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var entry = store.Record(key, response, responseBody);
+
+        var bodyPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "body.bin");
+        File.Delete(bodyPath);
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() =>
+            store.TryGet(key, entry.StoredAt.AddHours(1), out _));
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.DigestMismatch, exception.Category);
+    }
+
+    [TestMethod]
+    public void TryGet_rejects_tampered_retained_body_with_typed_digest_mismatch()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"retained\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var entry = store.Record(key, response, responseBody);
+
+        var bodyPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "body.bin");
+        var bytes = File.ReadAllBytes(bodyPath);
+        bytes[0] ^= 0x01;
+        File.WriteAllBytes(bodyPath, bytes);
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() =>
+            store.TryGet(key, entry.StoredAt.AddHours(1), out _));
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.DigestMismatch, exception.Category);
+    }
+
+    [TestMethod]
+    public void RebuildIndex_rejects_missing_retained_body_with_typed_digest_mismatch()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"retained\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var entry = store.Record(key, response, responseBody);
+
+        var bodyPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "body.bin");
+        File.Delete(bodyPath);
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() => store.RebuildIndex());
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.DigestMismatch, exception.Category);
+    }
+
+    [TestMethod]
+    public void RebuildIndex_rejects_tampered_retained_body_with_typed_digest_mismatch()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"retained\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var entry = store.Record(key, response, responseBody);
+
+        var bodyPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "body.bin");
+        var bytes = File.ReadAllBytes(bodyPath);
+        File.WriteAllBytes(bodyPath, bytes.Concat([(byte)'x']).ToArray());
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() => store.RebuildIndex());
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.DigestMismatch, exception.Category);
+    }
+
+    [TestMethod]
+    public void Record_rejects_tampered_existing_retained_body_on_idempotent_write()
+    {
+        using var workspace = new TemporaryDirectory();
+        var store = new ProviderEvidenceCacheStore(workspace.Root);
+
+        var key = BuildKey("openalex", "openalex.works", OpenAlexParserId, OpenAlexParserVersion);
+        var responseBody = Encoding.UTF8.GetBytes("{\"result\":\"retained\"}");
+        var response = CaptureResponse(key, responseBody, 200, "application/json");
+        var entry = store.Record(key, response, responseBody);
+
+        var bodyPath = Path.Combine(workspace.Root, "entries", entry.Digest.Value, "body.bin");
+        File.WriteAllBytes(bodyPath, responseBody[..^1]);
+
+        var exception = Assert.ThrowsExactly<SearchRuleException>(() =>
+            store.Record(key, response, responseBody, entry.StoredAt));
+        Assert.AreEqual(ProviderEvidenceCacheErrorCodes.DigestMismatch, exception.Category);
     }
 
     private static ProviderEvidenceCacheKey BuildKey(
@@ -266,6 +475,14 @@ public sealed class ProviderEvidenceCacheStoreTests
                 null
             ])!;
     }
+
+    private static ProviderEvidenceCachePolicy CachePolicy(string identity) =>
+        ProviderEvidenceCachePolicy.Create(
+            "openalex",
+            "openalex.works",
+            ProviderEvidenceCacheRetentionMode.RetainBody,
+            TimeSpan.FromDays(14),
+            identity);
 
     private sealed class TemporaryDirectory : IDisposable
     {

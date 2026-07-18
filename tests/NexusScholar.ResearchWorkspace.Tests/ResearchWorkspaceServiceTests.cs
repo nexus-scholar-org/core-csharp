@@ -428,6 +428,113 @@ public sealed class ResearchWorkspaceServiceTests
     }
 
     [TestMethod]
+    public void Path_resolver_rejects_reparse_point_workspace_root()
+    {
+        var probeRoot = Path.Combine(Path.GetTempPath(), $"nexus-rw-root-link-{Guid.NewGuid():N}");
+        var external = Path.Combine(probeRoot, "external");
+        var link = Path.Combine(probeRoot, "workspace");
+        Directory.CreateDirectory(external);
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                using var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{external}\"")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                });
+                process!.WaitForExit();
+                Assert.AreEqual(0, process.ExitCode);
+            }
+            else
+            {
+                Directory.CreateSymbolicLink(link, external);
+            }
+
+            Assert.IsFalse(ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+                link,
+                "nexus-input/future.csv",
+                out _));
+        }
+        finally
+        {
+            if (Directory.Exists(link))
+            {
+                Directory.Delete(link);
+            }
+
+            if (Directory.Exists(external))
+            {
+                Directory.Delete(external, recursive: true);
+            }
+
+            if (Directory.Exists(probeRoot))
+            {
+                Directory.Delete(probeRoot, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void Path_resolver_rejects_case_only_sibling_escape_on_linux()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            Assert.Inconclusive("Case-only sibling traversal checks are Linux-specific.");
+        }
+
+        var parent = Path.Combine(Path.GetTempPath(), $"nexus-rw-case-tests-{Guid.NewGuid():N}");
+        var workspaceRoot = Path.Combine(parent, "Workspace");
+        var siblingRoot = Path.Combine(parent, "workspace");
+        Directory.CreateDirectory(workspaceRoot);
+        Directory.CreateDirectory(siblingRoot);
+        try
+        {
+            File.WriteAllText(Path.Combine(siblingRoot, "outside.txt"), "outside");
+
+            Assert.IsFalse(ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+                workspaceRoot,
+                "../workspace/outside.txt",
+                out _));
+        }
+        finally
+        {
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void Path_resolver_rejects_case_mismatch_for_existing_segment_on_linux()
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            Assert.Inconclusive("Case-sensitive path-segment checks are Linux-specific.");
+        }
+
+        using var workspace = TemporaryWorkspace.Create();
+        var existingPath = $"{ResearchWorkspacePaths.SearchInputs}/casepath/child.txt";
+        var existingFullPath = ResearchWorkspacePaths.InProject(workspace.Root, existingPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(existingFullPath)!);
+        File.WriteAllText(existingFullPath, "baseline");
+
+        Assert.IsFalse(ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+            workspace.Root,
+            $"{ResearchWorkspacePaths.SearchInputs}/CasePath/child.txt",
+            out _));
+    }
+
+    [TestMethod]
+    public void Path_resolver_rejects_parent_segments_before_normalization()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+
+        Assert.IsFalse(ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+            workspace.Root,
+            $"{ResearchWorkspacePaths.SearchInputs}/../outside.txt",
+            out _));
+    }
+
+    [TestMethod]
     public void Read_models_report_initialized_workspace_without_absolute_paths()
     {
         using var workspace = TemporaryWorkspace.Create();

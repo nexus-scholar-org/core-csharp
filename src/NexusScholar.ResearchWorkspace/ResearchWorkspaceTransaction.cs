@@ -113,7 +113,9 @@ public static class ResearchWorkspaceTransaction
             }).ToArray();
 
             var manifestPath = $"{generationRelative}/authority-generation.manifest.json";
-            var committedProject = expectedProject.CommitAuthorityGeneration(authorityGenerationId, manifestPath, "sha256:" + new string('0', 64));
+            var committedProject = expectedProject
+                .ClearSuccessorBoundDownstreamCurrentState()
+                .CommitAuthorityGeneration(authorityGenerationId, manifestPath, "sha256:" + new string('0', 64));
             var manifest = new ResearchWorkspaceSuccessorAuthorityGenerationManifest(
                 ResearchWorkspaceSuccessorAuthorityGenerationManifest.CurrentSchema,
                 authorityGenerationId,
@@ -413,13 +415,27 @@ public static class ResearchWorkspaceTransaction
 
     public static ResearchWorkspaceAnalysisCommit AnalyzeAndCommit(
         ResearchWorkspaceLocation location,
-        ResearchWorkspaceProject expectedProject)
+        ResearchWorkspaceProject expectedProject,
+        Action<ResearchWorkspaceAnalysisFaultPoint>? faultInjector = null)
     {
         ArgumentNullException.ThrowIfNull(location);
         ArgumentNullException.ThrowIfNull(expectedProject);
         RejectActiveAuthority(expectedProject);
 
-        var analysis = ResearchWorkspaceAnalyzer.Analyze(location, expectedProject);
+        using var workspaceLock = AcquireLock(location);
+        var currentProject = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
+        RejectActiveAuthority(currentProject);
+        if (currentProject.Revision != expectedProject.Revision ||
+            !string.Equals(currentProject.WorkspaceId, expectedProject.WorkspaceId, StringComparison.Ordinal) ||
+            !currentProject.Inputs.SequenceEqual(expectedProject.Inputs))
+        {
+            throw new ResearchWorkspaceConcurrencyException(expectedProject.Revision, currentProject.Revision);
+        }
+
+        faultInjector?.Invoke(ResearchWorkspaceAnalysisFaultPoint.AfterLockAcquired);
+        using var inputSnapshots = AcquireDeclaredInputSnapshots(location, expectedProject, faultInjector);
+        faultInjector?.Invoke(ResearchWorkspaceAnalysisFaultPoint.AfterInputSnapshotsAcquired);
+        var analysis = ResearchWorkspaceAnalyzer.Analyze(location, expectedProject, inputSnapshots.Bytes);
         var generationId = $"gen-{Guid.NewGuid():N}";
         var stagingRelative = $"{ResearchWorkspacePaths.GenerationStaging}/{generationId}";
         var stagingRoot = ResearchWorkspacePaths.InProject(location.RootDirectory, stagingRelative);
@@ -451,23 +467,20 @@ public static class ResearchWorkspaceTransaction
             ResearchWorkspaceJson.WriteJsonFile(Path.Combine(stagingRoot, "generation.manifest.json"), manifest);
 
             Directory.CreateDirectory(Path.GetDirectoryName(generationRoot)!);
-            using var workspaceLock = AcquireLock(location);
-            var currentProject = ResearchWorkspaceStore.ReadProject(location.ProjectFilePath);
-            RejectActiveAuthority(currentProject);
-            if (currentProject.Revision != expectedProject.Revision ||
-                !string.Equals(currentProject.WorkspaceId, expectedProject.WorkspaceId, StringComparison.Ordinal))
-            {
-                throw new ResearchWorkspaceConcurrencyException(expectedProject.Revision, currentProject.Revision);
-            }
-
             Directory.Move(stagingRoot, generationRoot);
             try
             {
+                faultInjector?.Invoke(ResearchWorkspaceAnalysisFaultPoint.AfterPromotionBeforeFinalInputValidation);
+                ValidateDeclaredInputsNotMutated(location, expectedProject);
                 ResearchWorkspaceStore.WriteProject(location, committedProject);
             }
             catch
             {
-                Quarantine(location, generationRoot, generationId);
+                if (Directory.Exists(generationRoot))
+                {
+                    Quarantine(location, generationRoot, generationId);
+                }
+
                 throw;
             }
 
@@ -480,6 +493,112 @@ public static class ResearchWorkspaceTransaction
                 Directory.Delete(stagingRoot, recursive: true);
             }
         }
+    }
+
+    private static DeclaredInputSnapshotLease AcquireDeclaredInputSnapshots(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceProject project,
+        Action<ResearchWorkspaceAnalysisFaultPoint>? faultInjector)
+    {
+        var streams = new List<FileStream>();
+        var snapshots = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        try
+        {
+            foreach (var input in project.Inputs)
+            {
+                var stream = OpenDeclaredInputLease(
+                    location,
+                    input,
+                    () => faultInjector?.Invoke(ResearchWorkspaceAnalysisFaultPoint.AfterInputPathValidatedBeforeOpen));
+                streams.Add(stream);
+                using var buffer = new MemoryStream();
+                stream.CopyTo(buffer);
+                var bytes = buffer.ToArray();
+                if (ContentDigest.Sha256(bytes).ToString() != input.Sha256)
+                {
+                    throw new ResearchWorkspaceDigestMismatchException(
+                        $"Input digest mismatch: {input.EffectiveRelativePath}");
+                }
+
+                if (!snapshots.TryAdd(input.EffectiveInputId, bytes))
+                {
+                    throw new InvalidOperationException("Declared input identifiers must be unique.");
+                }
+            }
+
+            return new DeclaredInputSnapshotLease(streams, snapshots);
+        }
+        catch
+        {
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
+
+            throw;
+        }
+    }
+
+    private static FileStream OpenDeclaredInputLease(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceInput input,
+        Action? afterPathValidation)
+    {
+        if (!ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+                location.RootDirectory,
+                input.EffectiveRelativePath,
+                out var sourcePath) ||
+            !File.Exists(sourcePath))
+        {
+            throw new ResearchWorkspaceMissingInputException("A declared input is missing.");
+        }
+
+        afterPathValidation?.Invoke();
+
+        FileStream stream;
+        try
+        {
+            stream = new FileStream(
+                sourcePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 81920,
+                FileOptions.SequentialScan);
+        }
+        catch (FileNotFoundException)
+        {
+            throw new ResearchWorkspaceMissingInputException("A declared input is missing.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            throw new ResearchWorkspaceMissingInputException("A declared input is missing.");
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            throw new ResearchWorkspaceConcurrencyException(
+                "A declared input could not be leased for immutable analysis.",
+                exception);
+        }
+
+        if (!ResearchWorkspaceVerifier.IsOpenFileAtExpectedPath(stream, sourcePath) ||
+            !ResearchWorkspaceVerifier.TryResolveWorkspaceRelativePath(
+                location.RootDirectory,
+                input.EffectiveRelativePath,
+                out var revalidatedPath) ||
+            !File.Exists(revalidatedPath) ||
+            !string.Equals(
+                Path.GetFullPath(sourcePath),
+                Path.GetFullPath(revalidatedPath),
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+        {
+            stream.Dispose();
+            throw new ResearchWorkspaceConcurrencyException(
+                "A declared input path changed while its immutable analysis lease was acquired.",
+                new IOException("The opened file handle does not resolve to the admitted workspace path."));
+        }
+
+        return stream;
     }
 
     private static IReadOnlyList<ResearchWorkspaceGenerationArtifact> WriteTraces(
@@ -527,6 +646,22 @@ public static class ResearchWorkspaceTransaction
 
     private static ResearchWorkspaceGenerationArtifact Artifact(string name, string relativePath, string path) =>
         new(name, relativePath, ContentDigest.Sha256(File.ReadAllBytes(path)).ToString());
+
+    private static void ValidateDeclaredInputsNotMutated(
+        ResearchWorkspaceLocation location,
+        ResearchWorkspaceProject project)
+    {
+        foreach (var input in project.Inputs)
+        {
+            using var stream = OpenDeclaredInputLease(location, input, afterPathValidation: null);
+            using var buffer = new MemoryStream();
+            stream.CopyTo(buffer);
+            if (ContentDigest.Sha256(buffer.ToArray()).ToString() != input.Sha256)
+            {
+                throw new ResearchWorkspaceDigestMismatchException("A declared input digest changed before analysis publication.");
+            }
+        }
+    }
 
     private static string ResolveRequiredPath(ResearchWorkspaceLocation location, string relativePath)
     {
@@ -770,6 +905,29 @@ public static class ResearchWorkspaceTransaction
         }
     }
 
+    private sealed class DeclaredInputSnapshotLease : IDisposable
+    {
+        private readonly IReadOnlyList<FileStream> streams;
+
+        public DeclaredInputSnapshotLease(
+            IReadOnlyList<FileStream> streams,
+            IReadOnlyDictionary<string, byte[]> bytes)
+        {
+            this.streams = streams;
+            Bytes = bytes;
+        }
+
+        public IReadOnlyDictionary<string, byte[]> Bytes { get; }
+
+        public void Dispose()
+        {
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
+        }
+    }
+
     private static FileStream AcquireLock(ResearchWorkspaceLocation location)
     {
         var path = Path.Combine(location.RootDirectory, ResearchWorkspacePaths.ProjectLockFileName);
@@ -795,6 +953,14 @@ public enum ResearchWorkspaceAuthorityFaultPoint
 {
     AfterStaging,
     AfterPromotion
+}
+
+public enum ResearchWorkspaceAnalysisFaultPoint
+{
+    AfterLockAcquired,
+    AfterInputPathValidatedBeforeOpen,
+    AfterInputSnapshotsAcquired,
+    AfterPromotionBeforeFinalInputValidation
 }
 
 public sealed record ResearchWorkspaceAuthorityCommit(

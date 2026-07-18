@@ -50,10 +50,10 @@
             <li><code>CitationNetworkCitationTarget</code> keeps resolved and unresolved targets distinct. A resolved target must parse as a stable work ID and must exist in the snapshot node set.</li>
             <li><code>CitationNetworkEvidenceRef</code> binds evidence kind, stable evidence ID, and valid content digest.</li>
             <li><code>CitationNetworkEdge</code> currently admits only the directed <code>direct-citation</code> kind.</li>
-            <li><code>CitationNetworkSnapshot</code> validates the corpus binding, algorithm, node/edge consistency, evidence, and deterministic ordering before computing its digest.</li>
+            <li><code>CitationNetworkSnapshot</code> resolves the claimed corpus authority, verifies exact stable-node membership, and then validates the algorithm, node/edge consistency, evidence, and deterministic ordering before computing its digest.</li>
             <li><code>CitationNetworkMetrics</code> exposes node, edge, and isolated-node counts plus per-node in-degree and out-degree.</li>
           </ul>
-          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Network">NexusScholar.Network</a>. Authority: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0043-citation-graph-snapshot-and-basic-metrics.md">ADR 0043</a> and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-09C-CITATION-GRAPH-CONTRACT.md">FE-09C gate evidence</a>.</p>
+          <p>Source: <a href="https://github.com/nexus-scholar-org/core-csharp/tree/main/src/NexusScholar.Network">NexusScholar.Network</a>. Authority: <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0043-citation-graph-snapshot-and-basic-metrics.md">ADR 0043</a>, integrity remediation in <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/adr/0044-fe09-deep-review-integrity-remediation.md">ADR 0044</a>, and <a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/docs/gates/FE-09C-CITATION-GRAPH-CONTRACT.md">FE-09C gate evidence</a>.</p>
         </section>
 
         <section class="content-section" id="determinism">
@@ -75,7 +75,7 @@
 
         <section class="content-section" id="refusals">
           <h2>Failure and refusal behavior</h2>
-          <p>Construction rejects an invalid corpus digest, unsupported algorithm/version, duplicate node identity, a node without a stable work ID, a missing citing node, a resolved target absent from the node set, missing or invalid edge evidence, duplicate normalized edges, and every edge kind except direct citation. Unresolved targets remain explicit rather than being dropped or guessed.</p>
+          <p>Construction rejects an invalid or unresolved corpus authority, corpus membership drift, null nodes or edges, an unsupported algorithm/version, duplicate node identity, a node without a stable work ID, a missing citing node, a resolved target absent from the node set, missing or invalid edge evidence, duplicate normalized edges, and every edge kind except direct citation. Unresolved targets remain explicit rather than being dropped or guessed.</p>
         </section>
 
         <section class="content-section" id="dependencies">
@@ -85,7 +85,7 @@
 
         <section class="content-section" id="evidence">
           <h2>Tests and explicit nonclaims</h2>
-          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Network.Tests/CitationNetworkSnapshotTests.cs">CitationNetworkSnapshotTests</a> prove order-independent identity, count and degree behavior, unresolved-target preservation, and rejection of missing nodes, duplicate edges, invalid corpus digests, and unsupported edge kinds. The module participates in the 24-package reproducibility and local-source smoke gate.</p>
+          <p><a href="https://github.com/nexus-scholar-org/core-csharp/blob/main/tests/NexusScholar.Network.Tests/CitationNetworkSnapshotTests.cs">CitationNetworkSnapshotTests</a> prove order-independent identity, count and degree behavior, unresolved-target preservation, exact corpus membership, and rejection of malformed collections, missing nodes, duplicate edges, invalid corpus digests, and unsupported edge kinds. The module participates in the 24-package reproducibility and local-source smoke gate.</p>
           <p>No live citation provider, bibliographic coupling, co-citation, snowballing, shortest path, centrality, community detection, visualization, export, dissemination, PHP parity, scale, completeness, or impact interpretation is claimed.</p>
         </section>
       </div>

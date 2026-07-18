@@ -120,7 +120,11 @@ public sealed class CitationNetworkSnapshotTests
                 "snapshot-1",
                 default,
                 new[] { BuildNode("doi:10.1000/paper-a") },
-                Array.Empty<CitationNetworkEdge>());
+                Array.Empty<CitationNetworkEdge>(),
+                new CorpusAuthorityResolver(
+                    "snapshot-1",
+                    ContentDigest.Sha256Utf8("snapshot-1"),
+                    Array.Empty<string>()));
         });
 
         Assert.AreEqual(CitationNetworkErrorCodes.InvalidCorpusSnapshot, error.Category);
@@ -139,14 +143,69 @@ public sealed class CitationNetworkSnapshotTests
         Assert.AreEqual(CitationNetworkErrorCodes.UnsupportedEdgeKind, error.Category);
     }
 
-    private static CitationNetworkSnapshot BuildSnapshot(IEnumerable<CitationNetworkNode> nodes, IEnumerable<CitationNetworkEdge> edges) =>
-        CitationNetworkSnapshot.Create(
+    [TestMethod]
+    public void Snapshot_rejects_null_nodes_and_edges_instead_of_dropping_them()
+    {
+        var node = BuildNode("doi:10.1000/paper-a");
+        var digest = ContentDigest.Sha256Utf8("snapshot-1");
+        var resolver = new CorpusAuthorityResolver("corpus-snapshot-1", digest, [node.NodeId]);
+
+        var nullNode = Assert.ThrowsExactly<CitationNetworkRuleException>(() =>
+            CitationNetworkSnapshot.Create(
+                "corpus-snapshot-1",
+                digest,
+                [node, null!],
+                [],
+                resolver));
+        Assert.AreEqual(CitationNetworkErrorCodes.InvalidCorpusSnapshot, nullNode.Category);
+
+        var nullEdge = Assert.ThrowsExactly<CitationNetworkRuleException>(() =>
+            CitationNetworkSnapshot.Create(
+                "corpus-snapshot-1",
+                digest,
+                [node],
+                [null!],
+                resolver));
+        Assert.AreEqual(CitationNetworkErrorCodes.InvalidEvidence, nullEdge.Category);
+    }
+
+    [TestMethod]
+    public void Snapshot_rejects_nodes_that_do_not_reproduce_corpus_authority()
+    {
+        var node = BuildNode("doi:10.1000/paper-a");
+        var digest = ContentDigest.Sha256Utf8("snapshot-1");
+        var resolver = new CorpusAuthorityResolver(
             "corpus-snapshot-1",
-            ContentDigest.Sha256Utf8("snapshot-1"),
-            nodes,
+            digest,
+            ["doi:10.1000/different"]);
+
+        var error = Assert.ThrowsExactly<CitationNetworkRuleException>(() =>
+            CitationNetworkSnapshot.Create(
+                "corpus-snapshot-1",
+                digest,
+                [node],
+                [],
+                resolver));
+
+        Assert.AreEqual(CitationNetworkErrorCodes.InvalidCorpusSnapshot, error.Category);
+    }
+
+    private static CitationNetworkSnapshot BuildSnapshot(IEnumerable<CitationNetworkNode> nodes, IEnumerable<CitationNetworkEdge> edges)
+    {
+        var resolvedNodes = nodes.ToArray();
+        var digest = ContentDigest.Sha256Utf8("snapshot-1");
+        return CitationNetworkSnapshot.Create(
+            "corpus-snapshot-1",
+            digest,
+            resolvedNodes,
             edges,
+            new CorpusAuthorityResolver(
+                "corpus-snapshot-1",
+                digest,
+                resolvedNodes.Select(node => node.NodeId).ToArray()),
             CitationNetworkSchemas.DirectCitationAlgorithmId,
             CitationNetworkSchemas.DirectCitationAlgorithmVersion);
+    }
 
     private static CitationNetworkNode BuildNode(string workId) => CitationNetworkNode.FromWork(
         ScholarlyWork.Identified("Title", WorkIdSet.From(WorkId.Parse(workId))));
@@ -159,4 +218,13 @@ public sealed class CitationNetworkSnapshotTests
 
     private static CitationNetworkEvidenceRef BuildEvidence(string evidenceId) =>
         new CitationNetworkEvidenceRef("provider", evidenceId, ContentDigest.Sha256Utf8(evidenceId));
+
+    private sealed class CorpusAuthorityResolver(
+        string corpusSnapshotId,
+        ContentDigest corpusSnapshotDigest,
+        IReadOnlyCollection<string> nodeIds) : ICitationNetworkCorpusAuthorityResolver
+    {
+        public CitationNetworkCorpusAuthority Resolve(string requestedId, ContentDigest requestedDigest) =>
+            new(corpusSnapshotId, corpusSnapshotDigest, nodeIds);
+    }
 }

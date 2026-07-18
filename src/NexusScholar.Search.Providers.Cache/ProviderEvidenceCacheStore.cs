@@ -24,12 +24,29 @@ public sealed class ProviderEvidenceCacheStore
     private readonly string _indexPath;
     private readonly string _entryDirectory;
     private readonly string _lockPath;
+    private readonly Func<string, string, ProviderEvidenceCachePolicy> _resolvePolicy;
+    private readonly TimeSpan _lockTimeout;
 
     public ProviderEvidenceCacheStore(string rootDirectory)
+        : this(rootDirectory, ProviderEvidenceCachePolicies.Resolve)
+    {
+    }
+
+    internal ProviderEvidenceCacheStore(
+        string rootDirectory,
+        Func<string, string, ProviderEvidenceCachePolicy> resolvePolicy,
+        TimeSpan? lockTimeout = null)
     {
         if (string.IsNullOrWhiteSpace(rootDirectory))
         {
             throw new ArgumentException("Cache root directory is required.", nameof(rootDirectory));
+        }
+
+        _resolvePolicy = resolvePolicy ?? throw new ArgumentNullException(nameof(resolvePolicy));
+        _lockTimeout = lockTimeout ?? TimeSpan.FromSeconds(5);
+        if (_lockTimeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(lockTimeout), "Cache lock timeout must be positive.");
         }
 
         _rootDirectory = Path.GetFullPath(rootDirectory.Trim());
@@ -56,9 +73,14 @@ public sealed class ProviderEvidenceCacheStore
 
         var entry = ReadEntry(entryDigest, key);
         var bodyBytes = entry.IsBodyRetained
-            ? File.ReadAllBytes(GetBodyPath(GetEntryPath(entryDigest)))
+            ? ReadRetainedBody(entryDigest, entry)
             : null;
-        lookup = new ProviderEvidenceCacheLookup(entry, bodyBytes, entry.IsFresh(at));
+        var currentPolicy = _resolvePolicy(key.ProviderAlias, key.Operation);
+        var isCurrentPolicy = currentPolicy.IsAllowed &&
+            string.Equals(currentPolicy.PolicyIdentity, entry.PolicyIdentity, StringComparison.Ordinal) &&
+            currentPolicy.RetentionMode == entry.RetentionMode &&
+            currentPolicy.RetentionWindow == entry.RetentionWindow;
+        lookup = new ProviderEvidenceCacheLookup(entry, bodyBytes, isCurrentPolicy && entry.IsFresh(at));
         return true;
     }
 
@@ -71,7 +93,7 @@ public sealed class ProviderEvidenceCacheStore
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(response);
 
-        var policy = ProviderEvidenceCachePolicies.Resolve(key.ProviderAlias, key.Operation);
+        var policy = _resolvePolicy(key.ProviderAlias, key.Operation);
         var entry = ProviderEvidenceCacheEntry.Create(key, policy, response, storedAt);
 
         if (entry.IsBodyRetained)
@@ -95,8 +117,13 @@ public sealed class ProviderEvidenceCacheStore
         if (index.TryGetValue(keyDigest, out var existingEntryDigest))
         {
             var existing = ReadEntry(existingEntryDigest, key);
-            if (IsEquivalent(existing, response, bodyBytes))
+            if (IsEquivalent(existing, entry, response, bodyBytes))
             {
+                if (existing.IsBodyRetained)
+                {
+                    ReadRetainedBody(existingEntryDigest, existing);
+                }
+
                 return existing;
             }
         }
@@ -128,6 +155,11 @@ public sealed class ProviderEvidenceCacheStore
                         ProviderEvidenceCacheErrorCodes.IncompatiblePolicy,
                         "Immutable cache entry directory contains different evidence.");
                 }
+
+                if (existing.IsBodyRetained)
+                {
+                    ReadRetainedBody(entryDigest, existing);
+                }
             }
             else
             {
@@ -151,6 +183,7 @@ public sealed class ProviderEvidenceCacheStore
 
     public void RebuildIndex()
     {
+        using var _ = AcquireWriteLock();
         var latest = new Dictionary<string, (string EntryDigest, DateTimeOffset StoredAt)>(StringComparer.Ordinal);
         foreach (var entryDirectory in Directory.EnumerateDirectories(_entryDirectory))
         {
@@ -161,6 +194,11 @@ public sealed class ProviderEvidenceCacheStore
             }
 
             var entry = ReadEntry(entryDigest);
+            if (entry.IsBodyRetained)
+            {
+                ReadRetainedBody(entryDigest, entry);
+            }
+
             var keyDigest = entry.Key.Identity.Value;
             if (!latest.TryGetValue(keyDigest, out var current) ||
                 entry.StoredAt > current.StoredAt ||
@@ -175,18 +213,29 @@ public sealed class ProviderEvidenceCacheStore
             item => item.Key,
             item => item.Value.EntryDigest,
             StringComparer.Ordinal);
-        using var _ = AcquireWriteLock();
         WriteIndex(_indexPath, index);
     }
 
-    private static bool IsEquivalent(ProviderEvidenceCacheEntry entry, RuntimeProviderResponseEvidence response, byte[]? bodyBytes)
+    private static bool IsEquivalent(
+        ProviderEvidenceCacheEntry existing,
+        ProviderEvidenceCacheEntry candidate,
+        RuntimeProviderResponseEvidence response,
+        byte[]? bodyBytes)
     {
         try
         {
-            entry.VerifyResponseEvidence(response);
-            if (entry.IsBodyRetained)
+            if (!string.Equals(existing.PolicyIdentity, candidate.PolicyIdentity, StringComparison.Ordinal) ||
+                existing.RetentionMode != candidate.RetentionMode ||
+                existing.RetentionWindow != candidate.RetentionWindow ||
+                existing.IsBodyRetained != candidate.IsBodyRetained)
             {
-                entry.VerifyBody(bodyBytes ?? []);
+                return false;
+            }
+
+            existing.VerifyResponseEvidence(response);
+            if (existing.IsBodyRetained)
+            {
+                existing.VerifyBody(bodyBytes ?? []);
             }
 
             return true;
@@ -278,12 +327,6 @@ public sealed class ProviderEvidenceCacheStore
             throw new SearchRuleException(ProviderEvidenceCacheErrorCodes.IncompatiblePolicy, "Cached key does not match request.");
         }
 
-        var policy = ProviderEvidenceCachePolicies.Resolve(key.ProviderAlias, key.Operation);
-        if (!string.Equals(policy.PolicyIdentity, payload.PolicyIdentity, StringComparison.Ordinal))
-        {
-            throw new SearchRuleException(ProviderEvidenceCacheErrorCodes.IncompatiblePolicy, "Cached policy no longer matches current policy.");
-        }
-
         var entry = ProviderEvidenceCacheEntry.Restore(
             key,
             payload.PolicyIdentity,
@@ -309,14 +352,57 @@ public sealed class ProviderEvidenceCacheStore
         return entry;
     }
 
+    private byte[] ReadRetainedBody(string entryDigest, ProviderEvidenceCacheEntry entry)
+    {
+        var bodyPath = GetBodyPath(GetEntryPath(entryDigest));
+        if (!File.Exists(bodyPath))
+        {
+            throw new SearchRuleException(
+                ProviderEvidenceCacheErrorCodes.DigestMismatch,
+                "Cached response body is missing.");
+        }
+
+        byte[] bodyBytes;
+        try
+        {
+            bodyBytes = File.ReadAllBytes(bodyPath);
+        }
+        catch (IOException)
+        {
+            throw new SearchRuleException(
+                ProviderEvidenceCacheErrorCodes.DigestMismatch,
+                "Cached response body cannot be read.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new SearchRuleException(
+                ProviderEvidenceCacheErrorCodes.DigestMismatch,
+                "Cached response body cannot be read.");
+        }
+        catch (NotSupportedException)
+        {
+            throw new SearchRuleException(
+                ProviderEvidenceCacheErrorCodes.DigestMismatch,
+                "Cached response body cannot be read.");
+        }
+
+        entry.VerifyBody(bodyBytes);
+
+        return bodyBytes;
+    }
+
     private static DateTimeOffset ParseTimestamp(string value)
     {
-        if (!DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsed))
+        if (!CanonicalTimestamp.IsCanonicalUtc(value, rejectDefault: true))
         {
             throw new SearchRuleException(ProviderEvidenceCacheErrorCodes.StoreIndexCorrupt, "Cached timestamp is malformed.");
         }
 
-        return parsed;
+        return DateTimeOffset.ParseExact(
+            value,
+            CanonicalTimestamp.DefaultUtcFormat,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
     }
 
     private static void WriteEntryManifest(string entryDirectory, ProviderEvidenceCacheEntry entry)
@@ -341,10 +427,10 @@ public sealed class ProviderEvidenceCacheStore
             ByteLength = entry.ByteLength,
             RawResponseDigest = entry.ResponseDigest.ToString(),
             RawResponseEvidenceDigest = entry.ResponseEvidenceDigest.ToString(),
-            RequestedAt = entry.RequestedAt.ToString("o", CultureInfo.InvariantCulture),
-            ReceivedAt = entry.ReceivedAt.ToString("o", CultureInfo.InvariantCulture),
-            StoredAt = entry.StoredAt.ToString("o", CultureInfo.InvariantCulture),
-            ExpiresAt = entry.ExpiresAt.ToString("o", CultureInfo.InvariantCulture),
+            RequestedAt = CanonicalTimestamp.FormatUtc(entry.RequestedAt),
+            ReceivedAt = CanonicalTimestamp.FormatUtc(entry.ReceivedAt),
+            StoredAt = CanonicalTimestamp.FormatUtc(entry.StoredAt),
+            ExpiresAt = CanonicalTimestamp.FormatUtc(entry.ExpiresAt),
             IsBodyRetained = entry.IsBodyRetained
         };
 
@@ -397,11 +483,35 @@ public sealed class ProviderEvidenceCacheStore
     private string GetEntryPath(string keyDigest) => Path.Combine(_entryDirectory, keyDigest);
     private string GetBodyPath(string entryPath) => Path.Combine(entryPath, BodyFileName);
 
-    private FileStream AcquireReadLock() =>
-        new FileStream(_lockPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read);
+    private FileStream AcquireReadLock() => AcquireLock(FileAccess.Read, FileShare.Read);
 
-    private FileStream AcquireWriteLock() =>
-        new FileStream(_lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+    private FileStream AcquireWriteLock() => AcquireLock(FileAccess.ReadWrite, FileShare.None);
+
+    private FileStream AcquireLock(FileAccess access, FileShare share)
+    {
+        var deadline = DateTimeOffset.UtcNow.Add(_lockTimeout);
+        while (true)
+        {
+            try
+            {
+                return new FileStream(_lockPath, FileMode.OpenOrCreate, access, share);
+            }
+            catch (IOException) when (DateTimeOffset.UtcNow < deadline)
+            {
+                Thread.Sleep(10);
+            }
+            catch (UnauthorizedAccessException) when (DateTimeOffset.UtcNow < deadline)
+            {
+                Thread.Sleep(10);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                throw new SearchRuleException(
+                    ProviderEvidenceCacheErrorCodes.StoreBusy,
+                    "Provider evidence cache lock could not be acquired within the bounded wait.");
+            }
+        }
+    }
 }
 
 internal sealed class ProviderEvidenceCacheIndexArtifact

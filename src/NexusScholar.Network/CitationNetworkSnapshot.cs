@@ -51,11 +51,13 @@ public sealed class CitationNetworkSnapshot
         ContentDigest corpusSnapshotDigest,
         IEnumerable<CitationNetworkNode> nodes,
         IEnumerable<CitationNetworkEdge> edges,
+        ICitationNetworkCorpusAuthorityResolver corpusAuthorityResolver,
         string algorithmId = CitationNetworkSchemas.DirectCitationAlgorithmId,
         string algorithmVersion = CitationNetworkSchemas.DirectCitationAlgorithmVersion)
     {
         ArgumentNullException.ThrowIfNull(nodes);
         ArgumentNullException.ThrowIfNull(edges);
+        ArgumentNullException.ThrowIfNull(corpusAuthorityResolver);
 
         if (!corpusSnapshotDigest.IsValid)
         {
@@ -78,8 +80,15 @@ public sealed class CitationNetworkSnapshot
                 "Unknown direct-citation algorithm version.");
         }
 
-        var orderedNodes = nodes
-            .Where(node => node is not null)
+        var suppliedNodes = nodes.ToArray();
+        if (suppliedNodes.Any(node => node is null))
+        {
+            throw new CitationNetworkRuleException(
+                CitationNetworkErrorCodes.InvalidCorpusSnapshot,
+                "Citation network node collections must not contain null entries.");
+        }
+
+        var orderedNodes = suppliedNodes
             .OrderBy(node => node.NodeId, StringComparer.Ordinal)
             .ToArray();
         var nodeIds = orderedNodes.Select(node => node!.NodeId).ToArray();
@@ -88,6 +97,17 @@ public sealed class CitationNetworkSnapshot
             throw new CitationNetworkRuleException(
                 CitationNetworkErrorCodes.DuplicateResolvedNode,
                 "Resolved node identities must be unique.");
+        }
+
+        var corpusAuthority = corpusAuthorityResolver.Resolve(corpusSnapshotId, corpusSnapshotDigest);
+        if (corpusAuthority is null ||
+            !string.Equals(corpusAuthority.CorpusSnapshotId, corpusSnapshotId, StringComparison.Ordinal) ||
+            corpusAuthority.CorpusSnapshotDigest != corpusSnapshotDigest ||
+            !corpusAuthority.ResolvedNodeIds.SequenceEqual(nodeIds, StringComparer.Ordinal))
+        {
+            throw new CitationNetworkRuleException(
+                CitationNetworkErrorCodes.InvalidCorpusSnapshot,
+                "Citation network nodes do not reproduce the resolved corpus snapshot authority.");
         }
 
         var nodeById = orderedNodes.ToDictionary(
@@ -100,11 +120,18 @@ public sealed class CitationNetworkSnapshot
         var inDegree = orderedNodes.ToDictionary(node => node.NodeId, _ => 0, StringComparer.Ordinal);
         var outDegree = orderedNodes.ToDictionary(node => node.NodeId, _ => 0, StringComparer.Ordinal);
 
-        var orderedEdges = edges
-            .Where(edge => edge is not null)
+        var suppliedEdges = edges.ToArray();
+        if (suppliedEdges.Any(edge => edge is null))
+        {
+            throw new CitationNetworkRuleException(
+                CitationNetworkErrorCodes.InvalidEvidence,
+                "Citation network edge collections must not contain null entries.");
+        }
+
+        var orderedEdges = suppliedEdges
             .Select(edge =>
             {
-                if (!nodeById.ContainsKey(edge!.CitingNodeId))
+                if (!nodeById.ContainsKey(edge.CitingNodeId))
                 {
                     throw new CitationNetworkRuleException(
                         CitationNetworkErrorCodes.MissingCitingNode,
@@ -154,7 +181,7 @@ public sealed class CitationNetworkSnapshot
 
                 return edge;
             })
-            .OrderBy(edge => edge!.NormalizedEdgeKey, StringComparer.Ordinal)
+            .OrderBy(edge => edge.NormalizedEdgeKey, StringComparer.Ordinal)
             .ToArray();
 
         var degrees = orderedNodes

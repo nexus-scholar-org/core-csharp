@@ -61,11 +61,12 @@ public static class FullTextRetrievalVerifier
         FullTextActor? acquiredBy)
     {
         var metadata = BuildMetadata(evidence, failureCategory);
+        var acquisitionKind = ResolveAcquisitionKind(evidence);
         var attempt = new FullTextSourceAttempt(
             Guard.NotBlank(attemptId, nameof(attemptId)),
             evidence.SourceAlias,
             1,
-            FullTextAcquisitionKinds.OpenAccessSourceReference,
+            acquisitionKind,
             FullTextAttemptStatuses.Failure,
             sourceUrl: evidence.SourceReference,
             sourceReference: evidence.SourceReference,
@@ -78,7 +79,7 @@ public static class FullTextRetrievalVerifier
         var acquisition = new FullTextAcquisitionRecord(
             Guard.NotBlank(acquisitionId, nameof(acquisitionId)),
             evidence.Input,
-            FullTextAcquisitionKinds.OpenAccessSourceReference,
+            acquisitionKind,
             evidence.SourceAlias,
             evidence.SourceReference,
             acquiredBy,
@@ -110,12 +111,13 @@ public static class FullTextRetrievalVerifier
     {
         var metadata = BuildMetadata(evidence, null);
         var safeAcquiredAt = acquiredAt ?? evidence.ReceivedAt;
+        var acquisitionKind = ResolveAcquisitionKind(evidence);
 
         var attempt = new FullTextSourceAttempt(
             Guard.NotBlank(attemptId, nameof(attemptId)),
             evidence.SourceAlias,
             1,
-            FullTextAcquisitionKinds.OpenAccessSourceReference,
+            acquisitionKind,
             FullTextAttemptStatuses.Success,
             sourceUrl: evidence.SourceReference,
             sourceReference: evidence.RightsReference,
@@ -128,7 +130,7 @@ public static class FullTextRetrievalVerifier
         var acquisition = new FullTextAcquisitionRecord(
             Guard.NotBlank(acquisitionId, nameof(acquisitionId)),
             evidence.Input,
-            FullTextAcquisitionKinds.OpenAccessSourceReference,
+            acquisitionKind,
             evidence.SourceAlias,
             evidence.SourceReference,
             acquiredBy,
@@ -203,20 +205,9 @@ public static class FullTextRetrievalVerifier
             return (FullTextRetrievalErrorCodes.AccessRouteMissing, "Recorded access route is not an allowed route.");
         }
 
-        if (!FullTextRetrievalRights.IsAdmitted(evidence.RightsStatus))
-        {
-            return (FullTextRetrievalErrorCodes.RightsNotAdmitted,
-                $"Recorded rights status '{evidence.RightsStatus}' does not permit conversion.");
-        }
-
         if (evidence.RetentionDisposition != policy.RetentionDisposition)
         {
             return (FullTextRetrievalErrorCodes.InvalidEvidence, "Recorded retrieval retention disposition does not match policy.");
-        }
-
-        if (evidence.TerminalFailureCategory is not null)
-        {
-            return (evidence.TerminalFailureCategory, evidence.TerminalFailureSummary);
         }
 
         if (!string.Equals(evidence.SourceReference, evidence.SourceReference.Trim(), StringComparison.Ordinal))
@@ -228,6 +219,17 @@ public static class FullTextRetrievalVerifier
         if (redirectValidation is not null)
         {
             return redirectValidation;
+        }
+
+        if (evidence.TerminalFailureCategory is not null)
+        {
+            return (evidence.TerminalFailureCategory, evidence.TerminalFailureSummary);
+        }
+
+        if (!FullTextRetrievalRights.IsAdmitted(evidence.RightsStatus))
+        {
+            return (FullTextRetrievalErrorCodes.RightsNotAdmitted,
+                $"Recorded rights status '{evidence.RightsStatus}' does not permit conversion.");
         }
 
         if (!evidence.ResponseComplete)
@@ -264,6 +266,20 @@ public static class FullTextRetrievalVerifier
         }
 
         return null;
+    }
+
+    private static string ResolveAcquisitionKind(FullTextRecordedRetrievalEvidence evidence)
+    {
+        if (string.Equals(evidence.AccessRoute, FullTextRetrievalAccessRoutes.DoiLookup, StringComparison.Ordinal) ||
+            string.Equals(evidence.AccessRoute, FullTextRetrievalAccessRoutes.LandingPage, StringComparison.Ordinal))
+        {
+            return FullTextAcquisitionKinds.DoiOrLandingPageReference;
+        }
+
+        return string.Equals(evidence.RightsStatus, FullTextRetrievalRights.OpenAccess, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(evidence.RightsStatus, FullTextRetrievalRights.PublicDomain, StringComparison.OrdinalIgnoreCase)
+                ? FullTextAcquisitionKinds.OpenAccessSourceReference
+                : FullTextAcquisitionKinds.ExternalUrlReference;
     }
 
     private static (string category, string? summary)? ValidateRedirectChain(

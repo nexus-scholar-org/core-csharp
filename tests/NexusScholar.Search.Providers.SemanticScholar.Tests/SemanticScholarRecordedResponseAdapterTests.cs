@@ -56,6 +56,18 @@ public sealed class SemanticScholarRecordedResponseAdapterTests
         Assert.ThrowsExactly<SearchRuleException>(() =>
             SemanticScholarRecordedResponseAdapter.ValidateSanitizedDescriptor(
                 "/graph/v1/paper/search/bulk?query=api_key%3Dsecret"));
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.ValidateSanitizedDescriptor(
+                "/graph/v1/paper/search/bulk?token=not-a-validated-continuation"));
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.ValidateSanitizedDescriptor(
+                "/graph/v1/paper/search/bulk?query=token%253Dsecret"));
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.ValidateSanitizedDescriptor(
+                "/graph/v1/paper/search/bulk?query=%GG"));
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.ValidateSanitizedDescriptor(
+                "/graph/v1/paper/search/bulk?query=Bearer+abc"));
 
         var authorization = ProviderAcquisitionRequest.Create(
             "request-authorization",
@@ -71,6 +83,36 @@ public sealed class SemanticScholarRecordedResponseAdapterTests
             SemanticScholarRecordedResponseAdapter.Describe(
                 authorization,
                 ProviderPageRequest.Create(authorization, 0, 2, 0)));
+
+        var arbitraryToken = ProviderAcquisitionRequest.Create(
+            "request-arbitrary-token",
+            SemanticScholarRecordedResponseAdapter.ProviderAlias,
+            "token=arbitrary",
+            null,
+            null,
+            2,
+            0,
+            false,
+            RequestedAt);
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.Describe(
+                arbitraryToken,
+                ProviderPageRequest.Create(arbitraryToken, 0, 2, 0)));
+
+        var malformedPercentQuery = ProviderAcquisitionRequest.Create(
+            "request-malformed-percent",
+            SemanticScholarRecordedResponseAdapter.ProviderAlias,
+            "artificial%2intelligence",
+            null,
+            null,
+            2,
+            0,
+            false,
+            RequestedAt);
+        Assert.ThrowsExactly<SearchRuleException>(() =>
+            SemanticScholarRecordedResponseAdapter.Describe(
+                malformedPercentQuery,
+                ProviderPageRequest.Create(malformedPercentQuery, 0, 2, 0)));
     }
 
     [TestMethod]
@@ -130,6 +172,9 @@ public sealed class SemanticScholarRecordedResponseAdapterTests
         var firstResult = new SemanticScholarRecordedResponseAdapter().ParseRecordedResponse(request, firstPage, firstBytes, firstEvidence);
 
         var secondPage = ProviderPageRequest.Create(request, 1, 1000, 2, firstResult.NextCursor, firstResult.Digest);
+        StringAssert.Contains(
+            SemanticScholarRecordedResponseAdapter.Describe(request, secondPage).EndpointPathAndQuery,
+            "token=s2-token-next");
         var secondBytes = Fixture("search-s2-bulk-final.response.json");
         var secondEvidence = Capture(request, secondPage, secondBytes, 200, "application/json");
         var secondResult = new SemanticScholarRecordedResponseAdapter().ParseRecordedResponse(
