@@ -4,12 +4,12 @@ Status date: 2026-07-19
 
 ## Protected Main
 
-- Last pre-release `origin/main`: `425e9bc` (PR #71 integrity closeout).
-- Alpha.2 release authority: `v0.1.0-alpha.2` plus the exact commit in the
-  distribution manifest.
+- Alpha.2 release commit: `9658639`.
+- Alpha.2 release authority: `v0.1.0-alpha.2` plus
+  `desktop-distribution-manifest.json`.
 - `gh-pages`: retained as historical static-site source; deployments use
   `site/` on `main`.
-- Release candidate branch: `cdx/release-readiness-alpha2` (RR-01 through RR-06).
+- Release branches from PRs #72 and #73 are merged and deleted remotely.
 - FE-10 design has not started.
 - Active roadmap: `docs/plans/2026-07-14-feature-expansion-priority.md`.
 
@@ -20,8 +20,7 @@ Status date: 2026-07-19
 - FE-09A through FE-09F: complete within accepted scope and merged through
   PR #69.
 - Public Astro Pages baseline: merged through PR #70.
-- Protected-main full solution: 1,011 passed, 0 failed, 2 opt-in live smokes
-  skipped.
+- Release full solution: 1,111 passed, 0 failed, 4 expected skips.
 - ADR 0044 and ADR 0045 were historical integrity work and remain historical evidence.
 - Remote governance limitation: one repository collaborator cannot supply an
   independent GitHub approval; main also lacks required CODEOWNER review,
@@ -49,19 +48,21 @@ outside the accepted scope.
 
 ## Release Readiness Alpha 2
 
+- Status: complete and published as
+  [`v0.1.0-alpha.2`](https://github.com/nexus-scholar-org/core-csharp/releases/tag/v0.1.0-alpha.2).
 - Contract: ADR 0046 and accepted release gate.
 - Artifact: deterministic-inventory portable ZIP, manifest, checksums, SPDX
   SBOM, and GitHub attestation.
 - Runtime resilience: bounded sanitized local diagnostics.
 - Recovery: lock-aware manifest backup and byte-exact new-directory restore.
 - Acceptance: real Avalonia headless workflow, automation, focus, and scaling.
-- Publication: exact matching protected-main tag only; branch and manual runs
-  validate without publication credentials.
+- Publication: exact matching protected-main tag only; five assets published,
+  checksummed, attested, downloaded, and independently verified.
 
 ## Next
 
-After alpha.2 is verified, FE-10 remains blocked behind its own ADR and gate
-acceptance.
+FE-10 design and capability-security review is next. Runtime implementation
+remains blocked behind its own accepted ADR and gate.
 
 ## Pages
 

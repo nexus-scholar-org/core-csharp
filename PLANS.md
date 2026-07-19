@@ -5,8 +5,8 @@ This file is the concise gate map. The detailed active roadmap is
 
 ## Current Position
 
-The last pre-release protected-main baseline is `425e9bc`. The alpha.2 release
-commit is resolved by `v0.1.0-alpha.2` and its distribution manifest.
+The alpha.2 release commit is `9658639`, resolved by `v0.1.0-alpha.2` and its
+distribution manifest.
 
 | Work | Status |
 | --- | --- |
@@ -20,7 +20,7 @@ commit is resolved by `v0.1.0-alpha.2` and its distribution manifest.
 | FE-07 Extraction, Appraisal, and Synthesis | Complete |
 | FE-08 Slices 1-9 local desktop workflow | Complete |
 | FE-09 providers, cache, recorded Full Text retrieval, and citation network | Complete within accepted scope |
-| Release Readiness Alpha 2 (RR-01 through RR-06) | Implemented release gate; completion requires matching protected-main tag and verified assets |
+| Release Readiness Alpha 2 (RR-01 through RR-06) | Complete and published as `v0.1.0-alpha.2` |
 | FE-10 plugin runtime | Immediate design and capability-security gate |
 | FE-11 through FE-12 | Sequenced future work; not authorized |
 

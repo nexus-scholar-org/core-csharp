@@ -4,16 +4,15 @@ Status date: 2026-07-19
 
 ## Active Lanes
 
-- Main integration lane: last pre-release protected `main` at `425e9bc`.
-- Active implementation lane: `cdx/release-readiness-alpha2`; Windows portable
-  distribution, runtime recovery, native acceptance, and release execution.
+- Main integration lane: alpha.2 release commit `9658639`.
+- Active implementation lane: none; alpha.2 release branches are merged and
+  deleted remotely.
 - Product planning lane: FE-10 plugin-runtime design and capability security;
   no runtime implementation yet.
 - Public documentation lane: current project docs and `site/` on `main`.
 - Compatibility lane: case-scoped fixture evidence only; no broad PHP claim.
-- Release/security lane: validation-only NuGet packages, one unsigned desktop
-  prerelease, governance, dependency review, CodeQL, SBOM, checksums,
-  attestation, and release evidence.
+- Release/security lane: `v0.1.0-alpha.2` published and verified; NuGet packages
+  remain validation-only and the desktop remains unsigned.
 
 ## Ownership
 

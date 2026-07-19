@@ -16,10 +16,9 @@ claim broad PHP compatibility.
 
 ## Current Status
 
-The last pre-release protected-main baseline is `425e9bc` (PR #71). The
-`0.1.0-alpha.2` release commit is identified by the immutable
-`v0.1.0-alpha.2` tag and by `desktop-distribution-manifest.json`, which records
-the exact full commit.
+The `0.1.0-alpha.2` release commit is
+`96586395865ae5e4e976c15d5871a12be5578962`, identified by the immutable
+`v0.1.0-alpha.2` tag and by `desktop-distribution-manifest.json`.
 The FE-09 implementation closeout evidence is historically anchored at
 `ea665eb` and should be treated as historical baseline evidence.
 FE-09 and the remaining FE-08 desktop slices landed through
@@ -55,6 +54,11 @@ adds a self-contained Windows x64 portable artifact, verified workspace
 backup/restore, sanitized local crash diagnostics, native desktop acceptance,
 and tag-only GitHub prerelease automation. The desktop remains an unsigned
 technical preview. The 24 NuGet packages remain validation-only and unpublished.
+Delivery landed through
+[`PR #72`](https://github.com/nexus-scholar-org/core-csharp/pull/72) and
+[`PR #73`](https://github.com/nexus-scholar-org/core-csharp/pull/73), with
+verified closeout in
+[`docs/release/RELEASE-READINESS-ALPHA2-COMPLETION-EVIDENCE.md`](docs/release/RELEASE-READINESS-ALPHA2-COMPLETION-EVIDENCE.md).
 
 FE-10 plugin-runtime design and capability security is the next gate. Existing
 Extensibility contracts do not authorize third-party execution or constitute an

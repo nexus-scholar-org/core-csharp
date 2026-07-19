@@ -1,8 +1,6 @@
 # Release Readiness Alpha 2 Completion Evidence
 
-Status: implementation and local validation complete. Release closure is valid
-only when the exact protected-main commit is tagged `v0.1.0-alpha.2`, hosted
-checks pass, and the five immutable prerelease assets verify.
+Status: complete, merged, published, and independently verified.
 
 Date: 2026-07-19
 
@@ -12,6 +10,24 @@ Authority:
 - accepted Release Readiness Alpha 2 gate;
 - the protected-main commit resolved by `v0.1.0-alpha.2`;
 - `desktop-distribution-manifest.json` for exact source and artifact identity.
+
+## Protected-Main Delivery
+
+- Implementation: [PR #72](https://github.com/nexus-scholar-org/core-csharp/pull/72).
+- Linux release-evidence repair:
+  [PR #73](https://github.com/nexus-scholar-org/core-csharp/pull/73).
+- Release commit: `96586395865ae5e4e976c15d5871a12be5578962`.
+- Protected-main [Ubuntu and Windows gate](https://github.com/nexus-scholar-org/core-csharp/actions/runs/29677499983):
+  passed.
+- Protected-main [CodeQL](https://github.com/nexus-scholar-org/core-csharp/actions/runs/29677499974):
+  passed.
+- Non-publishing [release rehearsal](https://github.com/nexus-scholar-org/core-csharp/actions/runs/29677503733):
+  passed on the release commit.
+- Tag-bound [release workflow](https://github.com/nexus-scholar-org/core-csharp/actions/runs/29677685046):
+  passed Core validation, Windows distribution validation, attestation,
+  publication, and downloaded-byte verification.
+- Prerelease:
+  [Nexus Scholar Desktop 0.1.0-alpha.2 Technical Preview](https://github.com/nexus-scholar-org/core-csharp/releases/tag/v0.1.0-alpha.2).
 
 ## Delivered Scope
 
@@ -47,7 +63,8 @@ The complete pre-commit gate passed on Windows under pinned SDK `10.0.301`:
 - portable desktop: 268 files, two-publish inventory match, extracted clean
   smoke, and exact five-file release root;
 - release-policy regressions: tag reuse, wrong RID, branch publication,
-  existing-release mutation, and dirty-manifest publication all rejected;
+  existing-release mutation, dirty-manifest publication, and URI-based
+  filesystem paths all rejected;
 - CLI doctor, sample, and deterministic local demo: passed;
 - pinned-SDK format verification: passed;
 - public Astro site verification: 49 source files, 45 generated pages, and zero
@@ -55,9 +72,9 @@ The complete pre-commit gate passed on Windows under pinned SDK `10.0.301`:
 
 The four skips are two live-provider probes that require explicit opt-in and
 two Linux-only path assertions on the Windows host. Default CI remains free of
-live scholarly-provider calls. Dirty working-tree evidence is validation-only;
-the release artifact must be regenerated with `sourceTreeDirty=false` after
-the final commit.
+live scholarly-provider calls. Dirty working-tree evidence remains
+validation-only. The tag workflow regenerated the release artifact from the
+clean release commit with `sourceTreeDirty=false`.
 
 ## Independent Review
 
@@ -72,12 +89,11 @@ reviews reproduced and closed findings in:
 - exact release-root inventory and publication ordering;
 - rendered input, hit testing, focus, and scaling acceptance.
 
-No local code or test finding remains open. The only intentionally external
-closure condition is the protected-main tag and published GitHub prerelease.
+No local code or test finding remains open.
 
 ## Release Closure
 
-Completion requires all of the following to hold for one exact commit:
+All closure conditions hold for the exact release commit:
 
 1. protected-main `analyze`, `review`, Ubuntu, and Windows checks are green;
 2. `v0.1.0-alpha.2` resolves to that protected-main commit;
@@ -86,7 +102,14 @@ Completion requires all of the following to hold for one exact commit:
 5. the release exposes exactly the ZIP, manifest, checksums, SPDX SBOM, and
    SBOM-validation assets;
 6. downloaded bytes match local publication bytes and `SHA256SUMS.txt`; and
-7. GitHub artifact attestation verifies for the released ZIP.
+7. GitHub artifact attestation verifies for all five released assets.
+
+Independent post-publication verification downloaded exactly five assets,
+matched every GitHub asset digest, verified all four non-circular checksum
+entries, confirmed a 268-file clean-source manifest, and verified GitHub
+attestation for the ZIP, manifest, checksums, SPDX SBOM, and SBOM-validation
+record. The ZIP digest is
+`sha256:2f182514d62f09f8602aaa4e53702ebc739f2515bd893f9aa8fec9be4dbc77b3`.
 
 The authoritative release endpoint is:
 

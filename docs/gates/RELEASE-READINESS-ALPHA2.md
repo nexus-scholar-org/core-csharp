@@ -1,6 +1,6 @@
 # Release Readiness Alpha 2
 
-Status: Accepted on 2026-07-19.
+Status: Completed on 2026-07-19 by `v0.1.0-alpha.2`.
 
 Authority: ADR 0046.
 
@@ -161,11 +161,11 @@ Hosted verification additionally requires:
 
 ## Exit checklist
 
-- [ ] The tag, distribution manifest, and release identity bind the exact
+- [x] The tag, distribution manifest, and release identity bind the exact
   protected-main release commit.
 - [x] Version-specific changelog and release notes exist.
 - [x] Portable ZIP is self-contained and reproducible by file inventory.
-- [ ] Distribution manifest, checksums, SPDX SBOM, and attestation exist.
+- [x] Distribution manifest, checksums, SPDX SBOM, and attestation exist.
 - [x] Extracted executable passes clean-directory smoke without a .NET runtime.
 - [x] Backup archive reopens and verifies before success.
 - [x] Restore is byte-exact and new-directory-only.
@@ -173,9 +173,9 @@ Hosted verification additionally requires:
 - [x] Native headless acceptance covers the main desktop and recovery flow.
 - [x] Automation labels, keyboard focus, and three scaling levels pass.
 - [x] Full local build, tests, mutation, packages, format, and release evidence pass.
-- [ ] Protected-main CI is green at the release commit.
-- [ ] `v0.1.0-alpha.2` resolves to that commit.
-- [ ] GitHub prerelease assets download and match published checksums.
+- [x] Protected-main CI is green at the release commit.
+- [x] `v0.1.0-alpha.2` resolves to that commit.
+- [x] GitHub prerelease assets download and match published checksums.
 
 ## Claims
 
