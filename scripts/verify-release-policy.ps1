@@ -155,6 +155,12 @@ if ($desktopVerifier -cnotmatch [regex]::Escape(
     throw 'Desktop verification must bind the exact root asset set to the checked-out clean source commit.'
 }
 
+$releaseEvidenceScript = Get-Content -LiteralPath scripts/build-release-evidence.ps1 -Raw
+if ($releaseEvidenceScript -match 'MakeRelativeUri' -or
+    $releaseEvidenceScript -cnotmatch [regex]::Escape('[IO.Path]::GetRelativePath')) {
+    throw 'Release evidence paths must use the cross-platform Path.GetRelativePath API.'
+}
+
 $publicationScript = Get-Content -LiteralPath scripts/publish-github-prerelease.ps1 -Raw
 if ($publicationScript -match '(?is)(release\s+(delete|edit|upload)\b|[''"]release[''"]\s*,\s*[''"](delete|edit|upload)[''"]|--clobber\b|--method\s+DELETE\b)' -or
     $publicationScript -cnotmatch [regex]::Escape('if ($releaseExists)') -or
