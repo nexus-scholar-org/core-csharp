@@ -25,6 +25,7 @@ try {
     New-Item (Join-Path $tempRoot '.github/workflows') -ItemType Directory -Force | Out-Null
     New-Item (Join-Path $tempRoot 'docs/release') -ItemType Directory -Force | Out-Null
     Copy-Item (Join-Path $PSScriptRoot 'verify-release-policy.ps1') (Join-Path $tempRoot 'scripts/verify-release-policy.ps1')
+    Copy-Item (Join-Path $PSScriptRoot 'build-release-evidence.ps1') (Join-Path $tempRoot 'scripts/build-release-evidence.ps1')
     Copy-Item (Join-Path $PSScriptRoot 'publish-github-prerelease.ps1') (Join-Path $tempRoot 'scripts/publish-github-prerelease.ps1')
     Copy-Item (Join-Path $PSScriptRoot 'verify-desktop-portable.ps1') (Join-Path $tempRoot 'scripts/verify-desktop-portable.ps1')
 
@@ -213,6 +214,32 @@ jobs:
         }
         $validDesktopVerifier | Set-Content $desktopVerifierPath -Encoding utf8
 
+        $releaseEvidencePath = 'scripts/build-release-evidence.ps1'
+        $validReleaseEvidence = Get-Content -Raw $releaseEvidencePath
+        $invalidReleaseEvidence = $validReleaseEvidence.Replace(
+            '[IO.Path]::GetRelativePath',
+            '[Uri]::MakeRelativeUri')
+        if ($invalidReleaseEvidence -ceq $validReleaseEvidence) {
+            throw 'Unable to construct the cross-platform release-evidence path regression fixture.'
+        }
+        $invalidReleaseEvidence | Set-Content $releaseEvidencePath -Encoding utf8
+        $relativeUriRejected = $false
+        try {
+            & ./scripts/verify-release-policy.ps1
+        }
+        catch {
+            if ($_.Exception.Message -like '*cross-platform Path.GetRelativePath*') {
+                $relativeUriRejected = $true
+            }
+            else {
+                throw
+            }
+        }
+        if (-not $relativeUriRejected) {
+            throw 'Release policy accepted URI-based filesystem relative paths.'
+        }
+        $validReleaseEvidence | Set-Content $releaseEvidencePath -Encoding utf8
+
         'next commit' | Set-Content marker.txt -Encoding utf8
         Invoke-Git @('add', 'marker.txt')
         Invoke-Git @('commit', '--quiet', '-m', 'move head without version bump')
@@ -248,7 +275,7 @@ jobs:
         Pop-Location
     }
 
-    Write-Host 'Release policy regressions passed: tag reuse, wrong RID, branch publication, existing-release mutation, and dirty desktop manifests are rejected.'
+    Write-Host 'Release policy regressions passed: tag reuse, wrong RID, branch publication, existing-release mutation, dirty desktop manifests, and URI-based filesystem paths are rejected.'
 }
 finally {
     if (Test-Path -LiteralPath $resolvedTempRoot) {

@@ -173,9 +173,9 @@ try {
     }
 
     function Get-RelativePath([string]$path) {
-        $rootUri = [Uri]([IO.Path]::GetFullPath($root).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar)
-        $pathUri = [Uri]([IO.Path]::GetFullPath($path))
-        return [Uri]::UnescapeDataString($rootUri.MakeRelativeUri($pathUri).ToString()).Replace([IO.Path]::DirectorySeparatorChar, '/')
+        return [IO.Path]::GetRelativePath(
+            [IO.Path]::GetFullPath($root),
+            [IO.Path]::GetFullPath($path)).Replace('\', '/')
     }
 
     function Get-HashRecord([IO.FileInfo]$file) {
